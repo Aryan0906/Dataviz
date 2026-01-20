@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analyzer - HTML5 Semantic Web Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header with branding and theme toggle -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1>Data Analyzer Pro</h1>
+                <p class="subtitle">Advanced Data Analysis & Visualization Tool</p>
+            </div>
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
+                <span class="theme-icon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navigation">
+        <ul class="nav-list">
+            <li><a href="#main" class="nav-link">Home</a></li>
+            <li><a href="#input-section" class="nav-link">Input Data</a></li>
+            <li><a href="#visualization" class="nav-link">Visualization</a></li>
+            <li><a href="#analysis" class="nav-link">Analysis</a></li>
+            <li><a href="#about" class="nav-link">About</a></li>
+            <li><a href="#contact" class="nav-link">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main" class="main-content">
+        <div class="container">
+            <!-- Primary Article -->
+            <article class="main-article">
+                <header class="article-header">
+                    <h2>Welcome to Data Analyzer</h2>
+                    <p class="article-intro">
+                        This tool allows you to upload, analyze, and visualize your data with advanced
+                        regression analysis capabilities. Whether you're working with scientific data,
+                        business metrics, or research results, our analyzer provides comprehensive insights.
+                    </p>
+                </header>
+
+                <img src="https://via.placeholder.com/800x400?text=Data+Analysis+Banner" alt="Data Analysis Banner"
+                    class="article-image">
+
+                <p class="article-content">
+                    Our data analyzer uses advanced statistical methods to identify patterns and trends
+                    in your datasets. With support for multiple regression types including linear,
+                    polynomial, exponential, logarithmic, and power functions, you can find the best
+                    fit for your data.
+                </p>
+
+                <!-- Embedded video demonstration -->
+                <section class="video-section">
+                    <h3>How to Use - Video Tutorial</h3>
+                    <video width="100%" height="auto" controls class="demo-video">
+                        <source
+                            src="https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4"
+                            type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <p class="video-caption">Watch a quick demonstration of the Data Analyzer features</p>
+                </section>
+            </article>
+
+            <!-- Layout Container for Main Content and Sidebar -->
+            <div class="content-wrapper">
+                <!-- Left Content Area -->
+                <div class="primary-content">
+                    <!-- Input Section -->
+                    <section id="input-section" class="data-input-section">
+                        <h2>Input Your Data</h2>
+
+                        <!-- Manual Data Input Form -->
+                        <article class="input-form-article">
+                            <h3>Add Data Points Manually</h3>
+                            <form id="dataForm" class="data-form" aria-label="Add data points">
+                                <div class="form-group">
+                                    <label for="xInput">X Value:</label>
+                                    <input type="number" id="xInput" placeholder="Enter X coordinate" step="0.01"
+                                        required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="yInput">Y Value:</label>
+                                    <input type="number" id="yInput" placeholder="Enter Y coordinate" step="0.01"
+                                        required>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    ➕ Add Point
+                                </button>
+                                <button type="reset" class="btn btn-secondary">Clear</button>
+                            </form>
+                        </article>
+
+                        <!-- CSV Upload Section -->
+                        <article class="csv-upload-article">
+                            <h3>Upload CSV Data</h3>
+                            <form id="csvForm" class="csv-form" aria-label="Upload CSV file">
+                                <div class="form-group">
+                                    <label for="csvInput" class="file-input-label">
+                                        <span class="file-input-text">📁 Choose CSV File</span>
+                                        <input type="file" id="csvInput" accept=".csv" aria-label="Select CSV file">
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Upload & Parse</button>
+                            </form>
+                            <p class="csv-help-text">
+                                <strong>Format:</strong> Your CSV should have X and Y columns.
+                                <a href="#" onclick="downloadSampleCSV(event)">Download Sample CSV</a>
+                            </p>
+                        </article>
+                    </section>
+
+                    <!-- Data Visualization Section -->
+                    <section id="visualization" class="visualization-section">
+                        <h2>Data Visualization</h2>
+
+                        <!-- Chart Canvas -->
+                        <article class="chart-article">
+                            <h3>Interactive Chart</h3>
+                            <div class="chart-container">
+                                <canvas id="dataChart"></canvas>
+                            </div>
+                            <p class="chart-info">Your data points and regression line are displayed above</p>
+                        </article>
+                    </section>
+
+                    <!-- Data Table Section -->
+                    <section class="data-table-section">
+                        <h2>Data Table</h2>
+                        <article class="table-article">
+                            <h3>All Data Points</h3>
+                            <div class="table-container">
+                                <table id="dataTable" class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Index</th>
+                                            <th>X Value</th>
+                                            <th>Y Value</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                        <!-- Rows will be inserted here by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-actions">
+                                <button id="clearDataBtn" class="btn btn-danger">🗑️ Clear All Data</button>
+                                <button id="downloadDataBtn" class="btn btn-success">⬇️ Download Data</button>
+                            </div>
+                        </article>
+                    </section>
+                </div>
+
+                <!-- Sidebar (Aside) -->
+                <aside class="sidebar">
+                    <h2>Analysis & Information</h2>
+
+                    <!-- Statistics Card -->
+                    <section class="sidebar-section stats-section">
+                        <h3>📊 Statistics</h3>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Points:</span>
+                            <span id="pointCount" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg X:</span>
+                            <span id="avgX" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Y:</span>
+                            <span id="avgY" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Min X:</span>
+                            <span id="minX" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Max X:</span>
+                            <span id="maxX" class="stat-value">0</span>
+                        </div>
+                    </section>
+
+                    <!-- Regression Analysis Card -->
+                    <section id="analysis" class="sidebar-section analysis-section">
+                        <h3>🔬 Regression Analysis</h3>
+                        <div id="analysisContent" class="analysis-content">
+                            <p class="no-data-message">Add at least 2 data points to see regression analysis</p>
+                        </div>
+                    </section>
+
+                    <!-- Prediction Section -->
+                    <section class="sidebar-section prediction-section">
+                        <h3>🎯 Make Predictions</h3>
+                        <form id="predictionForm" aria-label="Prediction form">
+                            <div class="form-group">
+                                <label for="predictXInput">X Value:</label>
+                                <input type="number" id="predictXInput" placeholder="Enter X" step="0.01">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                Predict Y
+                            </button>
+                            <div id="predictionResult" class="prediction-result"></div>
+                        </form>
+                    </section>
+
+                    <!-- Help Section -->
+                    <section class="sidebar-section help-section">
+                        <h3>ℹ️ Tips & Help</h3>
+                        <ul class="help-list">
+                            <li>Add data manually or upload a CSV file</li>
+                            <li>The system finds the best-fit regression model</li>
+                            <li>Use predictions to estimate Y values from X</li>
+                            <li>Higher R² values indicate better fits</li>
+                            <li>Download your data for backup</li>
+                        </ul>
+                    </section>
+
+                    <!-- Links Section -->
+                    <section class="sidebar-section links-section">
+                        <h3>Useful Links</h3>
+                        <nav class="links-nav">
+                            <a href="https://en.wikipedia.org/wiki/Regression_analysis" target="_blank"
+                                rel="noopener noreferrer">📖 About Regression</a>
+                            <a href="https://www.khanacademy.org/math/statistics-probability" target="_blank"
+                                rel="noopener noreferrer">📚 Learn Statistics</a>
+                            <a href="#contact" class="nav-link">📧 Contact Support</a>
+                        </nav>
+                    </section>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <section class="footer-section">
+                <h4>About This Project</h4>
+                <p id="about">
+                    Data Analyzer Pro is a demonstration of HTML5 semantic elements combined with
+                    modern web technologies. Built with focus on accessibility and user experience.
+                </p>
+            </section>
+
+            <section class="footer-section">
+                <h4>Quick Links</h4>
+                <nav class="footer-nav">
+                    <a href="#main">Home</a>
+                    <a href="#input-section">Input Data</a>
+                    <a href="#visualization">Charts</a>
+                    <a href="#analysis">Analysis</a>
+                </nav>
+            </section>
+
+            <section class="footer-section" id="contact">
+                <h4>Contact</h4>
+                <address>
+                    <p>Email: <a href="mailto:info@dataanalyzer.com">info@dataanalyzer.com</a></p>
+                    <p>Website: <a href="https://www.dataanalyzer.com">www.dataanalyzer.com</a></p>
+                </address>
+            </section>
+
+            <section class="footer-section">
+                <h4>Supported By</h4>
+                <p>Built with ❤️ for educational purposes</p>
+            </section>
+        </div>
+
+        <hr class="footer-divider">
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 Data Analyzer Pro. All rights reserved. |
+                <a href="#privacy">Privacy Policy</a> |
+                <a href="#terms">Terms of Service</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+
+</html>
