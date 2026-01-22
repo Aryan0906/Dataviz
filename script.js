@@ -575,6 +575,22 @@ function performRegressionAnalysis() {
         return null;
     }
 
+    const models = [
+        calculateLinearRegression(),
+        calculateQuadraticRegression(),
+        calculateExponentialRegression(),
+        calculateLogarithmicRegression(),
+        calculatePowerRegression()
+    ].filter(m => m !== null);
+
+    if (models.length === 0) return null;
+
+    models.sort((a, b) => b.r2 - a.r2);
+    
+    return models[0];
+}
+
+function calculateLinearRegression() {
     const n = dataPoints.length;
     const sumX = dataPoints.reduce((sum, p) => sum + p.x, 0);
     const sumY = dataPoints.reduce((sum, p) => sum + p.y, 0);
@@ -592,18 +608,159 @@ function performRegressionAnalysis() {
     }, 0);
     const r2 = 1 - (ssResidual / ssTotal);
 
+    const sign = intercept >= 0 ? '+' : '';
+    
     return {
         type: 'Linear',
-        slope,
-        intercept,
-        equation: `y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)}`,
+        equation: `y = ${slope.toFixed(4)}x ${sign} ${intercept.toFixed(4)}`,
         r2,
         predict: (x) => slope * x + intercept,
-        points: dataPoints.map(p => ({
-            x: p.x,
-            y: p.y,
-            predicted: slope * p.x + intercept
-        }))
+        coefficients: { slope, intercept }
+    };
+}
+
+function calculateQuadraticRegression() {
+    if (dataPoints.length < 3) return null;
+    
+    const n = dataPoints.length;
+    const sumX = dataPoints.reduce((sum, p) => sum + p.x, 0);
+    const sumY = dataPoints.reduce((sum, p) => sum + p.y, 0);
+    const sumX2 = dataPoints.reduce((sum, p) => sum + p.x * p.x, 0);
+    const sumX3 = dataPoints.reduce((sum, p) => sum + Math.pow(p.x, 3), 0);
+    const sumX4 = dataPoints.reduce((sum, p) => sum + Math.pow(p.x, 4), 0);
+    const sumXY = dataPoints.reduce((sum, p) => sum + p.x * p.y, 0);
+    const sumX2Y = dataPoints.reduce((sum, p) => sum + p.x * p.x * p.y, 0);
+
+    const denominator = (n * sumX2 * sumX4 - n * sumX3 * sumX3 - sumX * sumX * sumX4 + 
+                        2 * sumX * sumX2 * sumX3 - sumX2 * sumX2 * sumX2);
+    
+    if (Math.abs(denominator) < 1e-10) return null;
+
+    const a = (n * sumX2 * sumX2Y - n * sumX3 * sumXY - sumX * sumX * sumX2Y + 
+               sumX * sumX2 * sumXY + sumX * sumX3 * sumY - sumX2 * sumX2 * sumY) / denominator;
+    
+    const b = (n * sumX4 * sumXY - n * sumX3 * sumX2Y - sumX * sumX3 * sumY + 
+               sumX * sumX2 * sumX2Y + sumX2 * sumX2 * sumY - sumX2 * sumX3 * sumXY) / denominator;
+    
+    const c = (sumX2 * sumX3 * sumXY - sumX2 * sumX4 * sumY - sumX * sumX3 * sumXY + 
+               sumX * sumX4 * sumY + sumX2 * sumX2 * sumX2Y - sumX2 * sumX2 * sumX2Y) / denominator;
+
+    const yMean = sumY / n;
+    const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0);
+    const ssResidual = dataPoints.reduce((sum, p) => {
+        const predicted = a * p.x * p.x + b * p.x + c;
+        return sum + Math.pow(p.y - predicted, 2);
+    }, 0);
+    const r2 = 1 - (ssResidual / ssTotal);
+
+    if (isNaN(r2) || r2 < 0) return null;
+
+    const signB = b >= 0 ? '+' : '';
+    const signC = c >= 0 ? '+' : '';
+
+    return {
+        type: 'Quadratic',
+        equation: `y = ${a.toFixed(4)}x² ${signB} ${b.toFixed(4)}x ${signC} ${c.toFixed(4)}`,
+        r2,
+        predict: (x) => a * x * x + b * x + c,
+        coefficients: { a, b, c }
+    };
+}
+
+function calculateExponentialRegression() {
+    if (dataPoints.some(p => p.y <= 0)) return null;
+    
+    const n = dataPoints.length;
+    const sumX = dataPoints.reduce((sum, p) => sum + p.x, 0);
+    const sumLnY = dataPoints.reduce((sum, p) => sum + Math.log(p.y), 0);
+    const sumXLnY = dataPoints.reduce((sum, p) => sum + p.x * Math.log(p.y), 0);
+    const sumX2 = dataPoints.reduce((sum, p) => sum + p.x * p.x, 0);
+
+    const b = (n * sumXLnY - sumX * sumLnY) / (n * sumX2 - sumX * sumX);
+    const lnA = (sumLnY - b * sumX) / n;
+    const a = Math.exp(lnA);
+
+    const yMean = dataPoints.reduce((sum, p) => sum + p.y, 0) / n;
+    const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0);
+    const ssResidual = dataPoints.reduce((sum, p) => {
+        const predicted = a * Math.exp(b * p.x);
+        return sum + Math.pow(p.y - predicted, 2);
+    }, 0);
+    const r2 = 1 - (ssResidual / ssTotal);
+
+    if (isNaN(r2) || r2 < 0) return null;
+
+    return {
+        type: 'Exponential',
+        equation: `y = ${a.toFixed(4)}e^(${b.toFixed(4)}x)`,
+        r2,
+        predict: (x) => a * Math.exp(b * x),
+        coefficients: { a, b }
+    };
+}
+
+function calculateLogarithmicRegression() {
+    if (dataPoints.some(p => p.x <= 0)) return null;
+    
+    const n = dataPoints.length;
+    const sumLnX = dataPoints.reduce((sum, p) => sum + Math.log(p.x), 0);
+    const sumY = dataPoints.reduce((sum, p) => sum + p.y, 0);
+    const sumLnXY = dataPoints.reduce((sum, p) => sum + Math.log(p.x) * p.y, 0);
+    const sumLnX2 = dataPoints.reduce((sum, p) => sum + Math.pow(Math.log(p.x), 2), 0);
+
+    const b = (n * sumLnXY - sumLnX * sumY) / (n * sumLnX2 - sumLnX * sumLnX);
+    const a = (sumY - b * sumLnX) / n;
+
+    const yMean = sumY / n;
+    const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0);
+    const ssResidual = dataPoints.reduce((sum, p) => {
+        const predicted = a + b * Math.log(p.x);
+        return sum + Math.pow(p.y - predicted, 2);
+    }, 0);
+    const r2 = 1 - (ssResidual / ssTotal);
+
+    if (isNaN(r2) || r2 < 0) return null;
+
+    const sign = a >= 0 ? '+' : '';
+
+    return {
+        type: 'Logarithmic',
+        equation: `y = ${b.toFixed(4)}ln(x) ${sign} ${a.toFixed(4)}`,
+        r2,
+        predict: (x) => a + b * Math.log(x),
+        coefficients: { a, b }
+    };
+}
+
+function calculatePowerRegression() {
+    if (dataPoints.some(p => p.x <= 0 || p.y <= 0)) return null;
+    
+    const n = dataPoints.length;
+    const sumLnX = dataPoints.reduce((sum, p) => sum + Math.log(p.x), 0);
+    const sumLnY = dataPoints.reduce((sum, p) => sum + Math.log(p.y), 0);
+    const sumLnXLnY = dataPoints.reduce((sum, p) => sum + Math.log(p.x) * Math.log(p.y), 0);
+    const sumLnX2 = dataPoints.reduce((sum, p) => sum + Math.pow(Math.log(p.x), 2), 0);
+
+    const b = (n * sumLnXLnY - sumLnX * sumLnY) / (n * sumLnX2 - sumLnX * sumLnX);
+    const lnA = (sumLnY - b * sumLnX) / n;
+    const a = Math.exp(lnA);
+
+    const yMean = dataPoints.reduce((sum, p) => sum + p.y, 0) / n;
+    const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0);
+    const ssResidual = dataPoints.reduce((sum, p) => {
+        const predicted = a * Math.pow(p.x, b);
+        return sum + Math.pow(p.y - predicted, 2);
+    }, 0);
+    const r2 = 1 - (ssResidual / ssTotal);
+
+    if (isNaN(r2) || r2 < 0) return null;
+
+    return {
+        type: 'Power',
+        equation: `y = ${a.toFixed(4)}x^${b.toFixed(4)}`,
+        r2,
+        predict: (x) => a * Math.pow(x, b),
+        coefficients: { a, b }
     };
 }
 
@@ -618,34 +775,75 @@ function updateAnalysis() {
     const r2Percent = (analysis.r2 * 100).toFixed(2);
     const correlation = Math.sqrt(Math.abs(analysis.r2)).toFixed(4);
 
+    let coefficientsHTML = '';
+    
+    switch(analysis.type) {
+        case 'Linear':
+            coefficientsHTML = `
+                <div class="analysis-item">
+                    <span class="analysis-label">Slope (m):</span>
+                    <span class="analysis-value">${analysis.coefficients.slope.toFixed(4)}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Intercept (b):</span>
+                    <span class="analysis-value">${analysis.coefficients.intercept.toFixed(4)}</span>
+                </div>
+            `;
+            break;
+        case 'Quadratic':
+            coefficientsHTML = `
+                <div class="analysis-item">
+                    <span class="analysis-label">Coefficient a:</span>
+                    <span class="analysis-value">${analysis.coefficients.a.toFixed(4)}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Coefficient b:</span>
+                    <span class="analysis-value">${analysis.coefficients.b.toFixed(4)}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Coefficient c:</span>
+                    <span class="analysis-value">${analysis.coefficients.c.toFixed(4)}</span>
+                </div>
+            `;
+            break;
+        case 'Exponential':
+        case 'Logarithmic':
+        case 'Power':
+            coefficientsHTML = `
+                <div class="analysis-item">
+                    <span class="analysis-label">Coefficient a:</span>
+                    <span class="analysis-value">${analysis.coefficients.a.toFixed(4)}</span>
+                </div>
+                <div class="analysis-item">
+                    <span class="analysis-label">Coefficient b:</span>
+                    <span class="analysis-value">${analysis.coefficients.b.toFixed(4)}</span>
+                </div>
+            `;
+            break;
+    }
+
     DOM.analysisContent.innerHTML = `
         <div class="analysis-box">
-            <div class="analysis-item">
-                <span class="analysis-label">Model Type:</span>
-                <span class="analysis-value">${analysis.type}</span>
+            <div class="analysis-item analysis-highlight">
+                <span class="analysis-label" style="font-weight: 700;">Best Fit Model:</span>
+                <span class="analysis-value" style="font-weight: 700;">${analysis.type}</span>
             </div>
             <div class="analysis-item">
                 <span class="analysis-label">Equation:</span>
-                <span class="analysis-value">${analysis.equation}</span>
+                <span class="analysis-value" style="font-family: monospace; font-size: 13px;">${analysis.equation}</span>
             </div>
             <div class="analysis-item">
                 <span class="analysis-label">R² Value:</span>
-                <span class="analysis-value">${r2Percent}%</span>
+                <span class="analysis-value r2-value" style="font-weight: 600;" data-r2="${r2Percent}">${r2Percent}%</span>
             </div>
-            <div class="analysis-item">
-                <span class="analysis-label">Slope:</span>
-                <span class="analysis-value">${analysis.slope.toFixed(4)}</span>
-            </div>
-            <div class="analysis-item">
-                <span class="analysis-label">Intercept:</span>
-                <span class="analysis-value">${analysis.intercept.toFixed(4)}</span>
-            </div>
+            ${coefficientsHTML}
             <div class="analysis-item">
                 <span class="analysis-label">Correlation:</span>
                 <span class="analysis-value">${correlation}</span>
             </div>
-            <p style="font-size: 12px; margin-top: 10px; color: #999;">
-                R² indicates goodness of fit (1.0 = perfect, 0 = poor)
+            <p style="font-size: 11px; margin-top: 10px; color: var(--color-text-light); line-height: 1.4;">
+                R² indicates goodness of fit (1.0 = perfect, 0 = poor)<br>
+                The model with highest R² is automatically selected
             </p>
         </div>
     `;
@@ -704,12 +902,36 @@ function updateChart() {
         ctx.lineWidth = 3;
         ctx.setLineDash([5, 3]);
         ctx.beginPath();
-        const x1 = xMin;
-        const y1 = analysis.predict(x1);
-        const x2 = xMax;
-        const y2 = analysis.predict(x2);
-        ctx.moveTo(scaleX(x1), scaleY(y1));
-        ctx.lineTo(scaleX(x2), scaleY(y2));
+        
+        const numPoints = 200;
+        const step = (xMax - xMin) / numPoints;
+        
+        for (let i = 0; i <= numPoints; i++) {
+            const x = xMin + i * step;
+            let y;
+            
+            try {
+                y = analysis.predict(x);
+                
+                if (!isFinite(y)) continue;
+                
+                if (y < yMin - (yMax - yMin) * 0.5 || y > yMax + (yMax - yMin) * 0.5) {
+                    continue;
+                }
+                
+                const px = scaleX(x);
+                const py = scaleY(y);
+                
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            } catch (e) {
+                continue;
+            }
+        }
+        
         ctx.stroke();
         ctx.setLineDash([]);
     }
