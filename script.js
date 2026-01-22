@@ -1,21 +1,7 @@
-// ============================================
-// Data Analyzer Pro - Main JavaScript
-// HTML5 Semantic Web Application
-// ============================================
-
-// ============================================
-// GLOBAL STATE & VARIABLES
-// ============================================
-
 let dataPoints = [];
 let currentChart = null;
 
-// ============================================
-// DOM ELEMENTS
-// ============================================
-
 const DOM = {
-    // Forms
     dataForm: document.getElementById('dataForm'),
     xInput: document.getElementById('xInput'),
     yInput: document.getElementById('yInput'),
@@ -23,13 +9,9 @@ const DOM = {
     csvInput: document.getElementById('csvInput'),
     predictionForm: document.getElementById('predictionForm'),
     predictXInput: document.getElementById('predictXInput'),
-
-    // Buttons
     clearDataBtn: document.getElementById('clearDataBtn'),
     downloadDataBtn: document.getElementById('downloadDataBtn'),
     themeToggle: document.getElementById('themeToggle'),
-
-    // Display Elements
     tableBody: document.getElementById('tableBody'),
     dataChart: document.getElementById('dataChart'),
     pointCount: document.getElementById('pointCount'),
@@ -41,37 +23,67 @@ const DOM = {
     predictionResult: document.getElementById('predictionResult'),
 };
 
-// ============================================
-// INITIALIZATION
-// ============================================
+function checkAuthentication() {
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+    
+    if (isLoggedIn !== 'true') {
+        window.location.href = 'login.html';
+        return false;
+    }
+    
+    const username = sessionStorage.getItem('username');
+    if (username) {
+        displayUserInfo(username);
+    }
+    
+    return true;
+}
+
+function displayUserInfo(username) {
+    const headerContent = document.querySelector('.header-content');
+    if (headerContent && !document.getElementById('userInfo')) {
+        const userInfo = document.createElement('div');
+        userInfo.id = 'userInfo';
+        userInfo.className = 'user-info';
+        userInfo.innerHTML = `
+            <span class="username">Welcome, ${username}!</span>
+            <button id="logoutBtn" class="btn-logout">Logout</button>
+        `;
+        
+        const themeToggle = document.getElementById('themeToggle');
+        headerContent.insertBefore(userInfo, themeToggle);
+        
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    }
+}
+
+function handleLogout() {
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('loginTime');
+    
+    alert('You have been logged out successfully!');
+    
+    window.location.href = 'login.html';
+}
 
 document.addEventListener('DOMContentLoaded', function () {
+    checkAuthentication();
+    
     initializeEventListeners();
     initializeTheme();
 
-    // Load sample data for demonstration
     loadSampleData();
 });
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
-
 function initializeEventListeners() {
-    // Form submissions
     DOM.dataForm.addEventListener('submit', handleAddDataPoint);
     DOM.csvForm.addEventListener('submit', handleCSVUpload);
     DOM.predictionForm.addEventListener('submit', handlePrediction);
-
-    // Button clicks
     DOM.clearDataBtn.addEventListener('click', handleClearData);
     DOM.downloadDataBtn.addEventListener('click', handleDownloadData);
     DOM.themeToggle.addEventListener('click', toggleTheme);
 }
-
-// ============================================
-// DATA MANAGEMENT - Add, Remove, Clear
-// ============================================
 
 function handleAddDataPoint(e) {
     e.preventDefault();
@@ -79,26 +91,16 @@ function handleAddDataPoint(e) {
     const x = parseFloat(DOM.xInput.value);
     const y = parseFloat(DOM.yInput.value);
 
-    // Validation
     if (isNaN(x) || isNaN(y)) {
         showNotification('Please enter valid numbers for both X and Y', 'error');
         return;
     }
 
-    // Add point to array
     dataPoints.push({ x, y });
-
-    // Sort by X value
     dataPoints.sort((a, b) => a.x - b.x);
-
-    // Clear form
     DOM.dataForm.reset();
-
-    // Update UI
     updateDisplay();
     showNotification('Data point added successfully!', 'success');
-
-    // Focus back on X input
     DOM.xInput.focus();
 }
 
@@ -120,10 +122,6 @@ function handleClearData() {
         showNotification('All data cleared!', 'success');
     }
 }
-
-// ============================================
-// CSV HANDLING
-// ============================================
 
 function handleCSVUpload(e) {
     e.preventDefault();
@@ -147,14 +145,13 @@ function handleCSVUpload(e) {
                 return;
             }
 
-            // Parse CSV
             const newPoints = [];
             let headerSkipped = false;
 
             for (const line of lines) {
                 if (!headerSkipped) {
                     headerSkipped = true;
-                    continue; // Skip header row
+                    continue;
                 }
 
                 const values = line.split(',').map(v => v.trim());
@@ -174,7 +171,6 @@ function handleCSVUpload(e) {
                 return;
             }
 
-            // Ask if user wants to append or replace
             if (dataPoints.length > 0) {
                 if (confirm(`Found ${newPoints.length} data points. Replace existing data?`)) {
                     dataPoints = newPoints;
@@ -185,7 +181,6 @@ function handleCSVUpload(e) {
                 dataPoints = newPoints;
             }
 
-            // Sort by X
             dataPoints.sort((a, b) => a.x - b.x);
 
             DOM.csvForm.reset();
@@ -224,10 +219,6 @@ function downloadSampleCSV(e) {
     a.click();
     URL.revokeObjectURL(url);
 }
-
-// ============================================
-// DISPLAY UPDATE FUNCTIONS
-// ============================================
 
 function updateDisplay() {
     updateTable();
@@ -285,16 +276,11 @@ function updateStatistics() {
     DOM.maxX.textContent = maxXVal;
 }
 
-// ============================================
-// REGRESSION ANALYSIS
-// ============================================
-
 function performRegressionAnalysis() {
     if (dataPoints.length < 2) {
         return null;
     }
 
-    // Simple Linear Regression
     const n = dataPoints.length;
     const sumX = dataPoints.reduce((sum, p) => sum + p.x, 0);
     const sumY = dataPoints.reduce((sum, p) => sum + p.y, 0);
@@ -304,7 +290,6 @@ function performRegressionAnalysis() {
     const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
     const intercept = (sumY - slope * sumX) / n;
 
-    // Calculate R²
     const yMean = sumY / n;
     const ssTotal = dataPoints.reduce((sum, p) => sum + Math.pow(p.y - yMean, 2), 0);
     const ssResidual = dataPoints.reduce((sum, p) => {
@@ -372,15 +357,10 @@ function updateAnalysis() {
     `;
 }
 
-// ============================================
-// CHART VISUALIZATION
-// ============================================
-
 function updateChart() {
     const canvas = DOM.dataChart;
     const ctx = canvas.getContext('2d');
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (dataPoints.length === 0) {
@@ -391,7 +371,6 @@ function updateChart() {
         return;
     }
 
-    // Calculate bounds
     const xs = dataPoints.map(p => p.x);
     const ys = dataPoints.map(p => p.y);
 
@@ -404,7 +383,6 @@ function updateChart() {
     const width = canvas.width - 2 * padding;
     const height = canvas.height - 2 * padding;
 
-    // Add padding to ranges
     const xRange = maxX - minX || 1;
     const yRange = maxY - minY || 1;
     const xPad = xRange * 0.1;
@@ -415,7 +393,6 @@ function updateChart() {
     const yMin = minY - yPad;
     const yMax = maxY + yPad;
 
-    // Drawing functions
     function scaleX(x) {
         return padding + ((x - xMin) / (xMax - xMin)) * width;
     }
@@ -424,10 +401,8 @@ function updateChart() {
         return canvas.height - padding - ((y - yMin) / (yMax - yMin)) * height;
     }
 
-    // Draw axes
     drawAxes(ctx, padding, canvas.width, canvas.height, xMin, xMax, yMin, yMax, scaleX, scaleY);
 
-    // Draw regression line if applicable
     const analysis = performRegressionAnalysis();
     if (analysis) {
         ctx.strokeStyle = '#ff6b6b';
@@ -442,18 +417,15 @@ function updateChart() {
         ctx.stroke();
     }
 
-    // Draw data points
     ctx.fillStyle = '#3b82f6';
     dataPoints.forEach(point => {
         const x = scaleX(point.x);
         const y = scaleY(point.y);
 
-        // Draw point
         ctx.beginPath();
         ctx.arc(x, y, 6, 0, 2 * Math.PI);
         ctx.fill();
 
-        // Draw point outline
         ctx.strokeStyle = '#1e40af';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -464,19 +436,16 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 1;
 
-    // X axis
     ctx.beginPath();
     ctx.moveTo(padding, height - padding);
     ctx.lineTo(width - padding, height - padding);
     ctx.stroke();
 
-    // Y axis
     ctx.beginPath();
     ctx.moveTo(padding, padding);
     ctx.lineTo(padding, height - padding);
     ctx.stroke();
 
-    // X labels
     ctx.fillStyle = '#666';
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
@@ -486,7 +455,6 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
         const px = scaleX(x);
         ctx.fillText(x.toFixed(1), px, height - padding + 20);
 
-        // Grid line
         ctx.strokeStyle = '#eee';
         ctx.beginPath();
         ctx.moveTo(px, padding);
@@ -494,14 +462,12 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
         ctx.stroke();
     }
 
-    // Y labels
     ctx.textAlign = 'right';
     for (let i = 0; i <= 5; i++) {
         const y = yMin + (yMax - yMin) * (i / 5);
         const py = scaleY(y);
         ctx.fillText(y.toFixed(1), padding - 10, py + 4);
 
-        // Grid line
         ctx.strokeStyle = '#eee';
         ctx.beginPath();
         ctx.moveTo(padding, py);
@@ -509,7 +475,6 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
         ctx.stroke();
     }
 
-    // Axis labels
     ctx.fillStyle = '#333';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
@@ -521,10 +486,6 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
     ctx.fillText('Y', 0, 0);
     ctx.restore();
 }
-
-// ============================================
-// PREDICTION
-// ============================================
 
 function handlePrediction(e) {
     e.preventDefault();
@@ -560,23 +521,17 @@ function clearPredictionResult() {
     DOM.predictionResult.innerHTML = '';
 }
 
-// ============================================
-// FILE DOWNLOAD
-// ============================================
-
 function handleDownloadData() {
     if (dataPoints.length === 0) {
         showNotification('No data to download', 'error');
         return;
     }
 
-    // Create CSV content
     let csv = 'X,Y\n';
     dataPoints.forEach(point => {
         csv += `${point.x},${point.y}\n`;
     });
 
-    // Create and download file
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -587,10 +542,6 @@ function handleDownloadData() {
 
     showNotification('Data downloaded successfully!', 'success');
 }
-
-// ============================================
-// THEME MANAGEMENT
-// ============================================
 
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -619,12 +570,7 @@ function setTheme(theme) {
     localStorage.setItem('theme', theme);
 }
 
-// ============================================
-// NOTIFICATIONS
-// ============================================
-
 function showNotification(message, type = 'info') {
-    // Create notification element
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;
@@ -637,7 +583,6 @@ function showNotification(message, type = 'info') {
         animation: slideIn 0.3s ease-out;
     `;
 
-    // Set colors based on type
     const colors = {
         success: { bg: '#10b981', text: 'white' },
         error: { bg: '#ef4444', text: 'white' },
@@ -651,19 +596,13 @@ function showNotification(message, type = 'info') {
 
     document.body.appendChild(notification);
 
-    // Auto-remove after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'fadeOut 0.3s ease-out';
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
 
-// ============================================
-// SAMPLE DATA LOADER
-// ============================================
-
 function loadSampleData() {
-    // Load some sample data for demonstration
     dataPoints = [
         { x: 1, y: 2.5 },
         { x: 2, y: 4.1 },
@@ -677,10 +616,6 @@ function loadSampleData() {
     showNotification('Sample data loaded. Ready to analyze!', 'success');
 }
 
-// ============================================
-// SMOOTH SCROLL BEHAVIOR (Fallback)
-// ============================================
-
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         const href = this.getAttribute('href');
@@ -693,18 +628,12 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// ============================================
-// KEYBOARD SHORTCUTS
-// ============================================
-
 document.addEventListener('keydown', function (e) {
-    // Ctrl+S or Cmd+S to download data
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleDownloadData();
     }
 
-    // Ctrl+K or Cmd+K to clear data
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         if (dataPoints.length > 0) {
@@ -712,10 +641,6 @@ document.addEventListener('keydown', function (e) {
         }
     }
 });
-
-// ============================================
-// EXPORT FUNCTIONS
-// ============================================
 
 window.handleRemoveDataPoint = handleRemoveDataPoint;
 window.downloadSampleCSV = downloadSampleCSV;
