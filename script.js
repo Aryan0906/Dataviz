@@ -1,5 +1,7 @@
 let dataPoints = [];
 let currentChart = null;
+let hoveredPoint = null;
+let tooltip = null;
 
 const DOM = {
     dataForm: document.getElementById('dataForm'),
@@ -72,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     initializeEventListeners();
     initializeTheme();
+    initializeChartInteractivity();
 
     loadSampleData();
 });
@@ -83,6 +86,297 @@ function initializeEventListeners() {
     DOM.clearDataBtn.addEventListener('click', handleClearData);
     DOM.downloadDataBtn.addEventListener('click', handleDownloadData);
     DOM.themeToggle.addEventListener('click', toggleTheme);
+}
+
+function initializeChartInteractivity() {
+    const canvas = DOM.dataChart;
+    
+    canvas.addEventListener('mousemove', handleChartMouseMove);
+    canvas.addEventListener('mouseout', handleChartMouseOut);
+    canvas.addEventListener('click', handleChartClick);
+    
+    createTooltip();
+}
+
+function createTooltip() {
+    tooltip = document.createElement('div');
+    tooltip.id = 'chart-tooltip';
+    tooltip.style.cssText = `
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 1000;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    `;
+    document.body.appendChild(tooltip);
+}
+
+function handleChartMouseMove(e) {
+    const canvas = DOM.dataChart;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const canvasX = mouseX * scaleX;
+    const canvasY = mouseY * scaleY;
+    
+    const point = findPointAtPosition(canvasX, canvasY);
+    
+    if (point !== null) {
+        hoveredPoint = point;
+        canvas.style.cursor = 'pointer';
+        showTooltip(e.clientX, e.clientY, dataPoints[point]);
+        highlightPoint();
+    } else {
+        hoveredPoint = null;
+        canvas.style.cursor = 'crosshair';
+        hideTooltip();
+        updateChart();
+    }
+}
+
+function handleChartMouseOut() {
+    hoveredPoint = null;
+    hideTooltip();
+    updateChart();
+}
+
+function handleChartClick(e) {
+    const canvas = DOM.dataChart;
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const canvasX = mouseX * scaleX;
+    const canvasY = mouseY * scaleY;
+    
+    const point = findPointAtPosition(canvasX, canvasY);
+    
+    if (point !== null) {
+        hideTooltip();
+        showRemoveConfirmation(e.clientX, e.clientY, point);
+    }
+}
+
+function showRemoveConfirmation(x, y, pointIndex) {
+    const existingConfirm = document.getElementById('point-remove-confirm');
+    if (existingConfirm) {
+        existingConfirm.remove();
+    }
+    
+    const confirmBox = document.createElement('div');
+    confirmBox.id = 'point-remove-confirm';
+    confirmBox.style.cssText = `
+        position: fixed;
+        left: ${x + 10}px;
+        top: ${y - 50}px;
+        background: white;
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        z-index: 99999;
+        animation: fadeIn 0.2s ease;
+        min-width: 200px;
+    `;
+    
+    const point = dataPoints[pointIndex];
+    confirmBox.innerHTML = `
+        <div style="color: #1f2937; font-size: 14px; margin-bottom: 10px; font-weight: 600;">
+            Remove Point?
+        </div>
+        <div style="color: #6b7280; font-size: 12px; margin-bottom: 12px;">
+            X: ${point.x.toFixed(2)}, Y: ${point.y.toFixed(2)}
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <button id="confirmRemove" style="
+                background: #ef4444;
+                color: white;
+                border: none;
+                padding: 8px 18px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+                flex: 1;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                Remove
+            </button>
+            <button id="cancelRemove" style="
+                background: #e5e7eb;
+                color: #374151;
+                border: none;
+                padding: 8px 18px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 600;
+                flex: 1;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#d1d5db'" onmouseout="this.style.background='#e5e7eb'">
+                Cancel
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(confirmBox);
+    
+    document.getElementById('confirmRemove').onclick = (e) => {
+        e.stopPropagation();
+        handleRemoveDataPoint(pointIndex);
+        confirmBox.remove();
+    };
+    
+    document.getElementById('cancelRemove').onclick = (e) => {
+        e.stopPropagation();
+        confirmBox.remove();
+    };
+    
+    setTimeout(() => {
+        const clickOutside = (e) => {
+            if (confirmBox && !confirmBox.contains(e.target)) {
+                confirmBox.remove();
+                document.removeEventListener('click', clickOutside);
+            }
+        };
+        document.addEventListener('click', clickOutside);
+    }, 100);
+}
+
+function findPointAtPosition(x, y) {
+    if (dataPoints.length === 0) return null;
+    
+    const xs = dataPoints.map(p => p.x);
+    const ys = dataPoints.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    
+    const padding = 60;
+    const canvas = DOM.dataChart;
+    const width = canvas.width - 2 * padding;
+    const height = canvas.height - 2 * padding;
+    
+    const xRange = maxX - minX || 1;
+    const yRange = maxY - minY || 1;
+    const xPad = xRange * 0.1;
+    const yPad = yRange * 0.1;
+    
+    const xMin = minX - xPad;
+    const xMax = maxX + xPad;
+    const yMin = minY - yPad;
+    const yMax = maxY + yPad;
+    
+    function scaleX(px) {
+        return padding + ((px - xMin) / (xMax - xMin)) * width;
+    }
+    
+    function scaleY(py) {
+        return canvas.height - padding - ((py - yMin) / (yMax - yMin)) * height;
+    }
+    
+    const hitRadius = 10;
+    
+    for (let i = 0; i < dataPoints.length; i++) {
+        const px = scaleX(dataPoints[i].x);
+        const py = scaleY(dataPoints[i].y);
+        
+        const distance = Math.sqrt(Math.pow(x - px, 2) + Math.pow(y - py, 2));
+        
+        if (distance <= hitRadius) {
+            return i;
+        }
+    }
+    
+    return null;
+}
+
+function showTooltip(x, y, point) {
+    const analysis = performRegressionAnalysis();
+    const predicted = analysis ? analysis.predict(point.x) : null;
+    const error = predicted !== null ? Math.abs(point.y - predicted) : null;
+    
+    let content = `<strong>X:</strong> ${point.x.toFixed(2)}<br><strong>Y:</strong> ${point.y.toFixed(2)}`;
+    
+    if (error !== null) {
+        content += `<br><strong>Predicted Y:</strong> ${predicted.toFixed(2)}`;
+        content += `<br><strong>Error:</strong> ${error.toFixed(2)}`;
+    }
+    
+    tooltip.innerHTML = content;
+    tooltip.style.left = (x + 15) + 'px';
+    tooltip.style.top = (y - 10) + 'px';
+    tooltip.style.opacity = '1';
+}
+
+function hideTooltip() {
+    if (tooltip) {
+        tooltip.style.opacity = '0';
+    }
+}
+
+function highlightPoint() {
+    if (hoveredPoint === null) return;
+    
+    updateChart();
+    
+    const canvas = DOM.dataChart;
+    const ctx = canvas.getContext('2d');
+    
+    const xs = dataPoints.map(p => p.x);
+    const ys = dataPoints.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    
+    const padding = 60;
+    const width = canvas.width - 2 * padding;
+    const height = canvas.height - 2 * padding;
+    
+    const xRange = maxX - minX || 1;
+    const yRange = maxY - minY || 1;
+    const xPad = xRange * 0.1;
+    const yPad = yRange * 0.1;
+    
+    const xMin = minX - xPad;
+    const xMax = maxX + xPad;
+    const yMin = minY - yPad;
+    const yMax = maxY + yPad;
+    
+    function scaleX(px) {
+        return padding + ((px - xMin) / (xMax - xMin)) * width;
+    }
+    
+    function scaleY(py) {
+        return canvas.height - padding - ((py - yMin) / (yMax - yMin)) * height;
+    }
+    
+    const point = dataPoints[hoveredPoint];
+    const x = scaleX(point.x);
+    const y = scaleY(point.y);
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.3)';
+    ctx.fill();
 }
 
 function handleAddDataPoint(e) {
@@ -364,8 +658,9 @@ function updateChart() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (dataPoints.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '14px sans-serif';
+        const isDark = document.body.classList.contains('dark-theme');
+        ctx.fillStyle = isDark ? '#9ca3af' : '#6b7280';
+        ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('No data to display. Add data points to visualize.', canvas.width / 2, canvas.height / 2);
         return;
@@ -405,8 +700,9 @@ function updateChart() {
 
     const analysis = performRegressionAnalysis();
     if (analysis) {
-        ctx.strokeStyle = '#ff6b6b';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 3]);
         ctx.beginPath();
         const x1 = xMin;
         const y1 = analysis.predict(x1);
@@ -415,17 +711,28 @@ function updateChart() {
         ctx.moveTo(scaleX(x1), scaleY(y1));
         ctx.lineTo(scaleX(x2), scaleY(y2));
         ctx.stroke();
+        ctx.setLineDash([]);
     }
 
-    ctx.fillStyle = '#3b82f6';
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 8);
+    gradient.addColorStop(0, '#3b82f6');
+    gradient.addColorStop(1, '#1e40af');
+    
     dataPoints.forEach(point => {
         const x = scaleX(point.x);
         const y = scaleY(point.y);
 
+        ctx.shadowColor = 'rgba(59, 130, 246, 0.5)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.arc(x, y, 7, 0, 2 * Math.PI);
         ctx.fill();
 
+        ctx.shadowBlur = 0;
         ctx.strokeStyle = '#1e40af';
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -433,8 +740,13 @@ function updateChart() {
 }
 
 function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, scaleY) {
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1;
+    const isDark = document.body.classList.contains('dark-theme');
+    const axisColor = isDark ? '#6b7280' : '#374151';
+    const gridColor = isDark ? '#374151' : '#e5e7eb';
+    const textColor = isDark ? '#d1d5db' : '#1f2937';
+    
+    ctx.strokeStyle = axisColor;
+    ctx.lineWidth = 2;
 
     ctx.beginPath();
     ctx.moveTo(padding, height - padding);
@@ -446,7 +758,7 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
     ctx.lineTo(padding, height - padding);
     ctx.stroke();
 
-    ctx.fillStyle = '#666';
+    ctx.fillStyle = textColor;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
 
@@ -455,11 +767,14 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
         const px = scaleX(x);
         ctx.fillText(x.toFixed(1), px, height - padding + 20);
 
-        ctx.strokeStyle = '#eee';
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
         ctx.beginPath();
         ctx.moveTo(px, padding);
         ctx.lineTo(px, height - padding);
         ctx.stroke();
+        ctx.setLineDash([]);
     }
 
     ctx.textAlign = 'right';
@@ -468,22 +783,25 @@ function drawAxes(ctx, padding, width, height, xMin, xMax, yMin, yMax, scaleX, s
         const py = scaleY(y);
         ctx.fillText(y.toFixed(1), padding - 10, py + 4);
 
-        ctx.strokeStyle = '#eee';
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
         ctx.beginPath();
         ctx.moveTo(padding, py);
         ctx.lineTo(width - padding, py);
         ctx.stroke();
+        ctx.setLineDash([]);
     }
 
-    ctx.fillStyle = '#333';
-    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = '#3b82f6';
+    ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('X', width - 20, height - 20);
+    ctx.fillText('X Axis', width / 2, height - 15);
 
     ctx.save();
-    ctx.translate(15, padding + (height - 2 * padding) / 2);
+    ctx.translate(20, height / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Y', 0, 0);
+    ctx.fillText('Y Axis', 0, 0);
     ctx.restore();
 }
 
