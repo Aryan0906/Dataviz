@@ -1,0 +1,40 @@
+{
+  "name": "dataviz-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend for Dataviz - Data Visualization and Analysis Tool",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "npm run build && node dist/server.js",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "data",
+    "visualization",
+    "analysis",
+    "regression"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "regression": "^2.0.1",
+    "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.17",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.0.0",
+    "@types/regression": "^2.0.6",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.0"
+  }
+}

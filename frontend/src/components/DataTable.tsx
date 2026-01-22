@@ -124,7 +124,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
                         type="number"
                         step="any"
                         value={editX}
-                        onChange={(e) => setEditX(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditX(e.target.value)}
                         className="h-8"
                       />
                     ) : (
@@ -137,7 +137,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
                         type="number"
                         step="any"
                         value={editY}
-                        onChange={(e) => setEditY(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditY(e.target.value)}
                         className="h-8"
                       />
                     ) : (

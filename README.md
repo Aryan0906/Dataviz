@@ -1,59 +1,96 @@
-# Dataviz - Interactive Data Visualization & Analysis Tool
+# Dataviz - Interactive Data Visualization & Analysis Platform
 
-A powerful React-based web application for data analysis and visualization. Upload CSV files or manually input data points to perform regression analysis, visualize trends, and make predictions. The tool automatically selects the best-fit regression model (linear, polynomial, exponential, logarithmic, or power) and provides interactive plotting capabilities with a modern, responsive UI.
+A full-stack application for data analysis and visualization with user authentication, regression analysis, and interactive plotting.
 
-## Table of Contents
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+## 🚀 Quick Start
 
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd Dataviz
-   ```
-3. Install the dependencies:
-   ```bash
-   npm install
-   ```
-
-## Usage
-
-Provide instructions and examples for using the project. Include code snippets if necessary.
-
+### Automatic Setup (Windows)
 ```bash
-# Example command to run the project
-npm run dev
+start-dev.bat
 ```
 
-## Contributing
+### Automatic Setup (macOS/Linux)
+```bash
+bash start-dev.sh
+```
 
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-3. Make your changes and commit them:
-   ```bash
-   git commit -m 'Add some feature'
-   ```
-4. Push to the branch:
-   ```bash
-   git push origin feature/YourFeature
-   ```
-5. Open a pull request.
+### Manual Setup
+```bash
+# Terminal 1 - Backend
+cd backend && npm install && npm run dev
 
-## License
+# Terminal 2 - Frontend
+cd frontend && npm install && npm run dev
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Then open **http://localhost:5173** in your browser.
 
-## Acknowledgments
+## 📁 Project Structure
 
-- Mention any resources, libraries, or individuals that helped you.
+```
+Dataviz/
+├── frontend/        # React + TypeScript + Vite
+├── backend/         # Express.js + TypeScript
+├── QUICKSTART.md    # Quick start guide
+└── ROOT_README.md   # Detailed documentation
+```
+
+## ✨ Features
+
+- **User Authentication** - Secure signup/login with JWT
+- **Data Input** - Manual entry or CSV upload
+- **Regression Analysis** - Automatic best-fit model selection
+- **Visualization** - Interactive charts with Recharts
+- **Predictions** - Predict Y from X and vice versa
+- **Data Persistence** - Save analyses to database
+- **Dark Mode** - Theme toggle support
+- **Responsive Design** - Mobile-friendly UI
+
+## 🛠️ Technology Stack
+
+### Frontend
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS + shadcn/ui
+- Recharts
+- React Router
+
+### Backend
+- Express.js + TypeScript
+- SQLite3
+- JWT Authentication
+- Regression Analysis
+
+## 📖 Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide and troubleshooting
+- **[ROOT_README.md](ROOT_README.md)** - Comprehensive documentation
+- **[backend/README.md](backend/README.md)** - Backend API documentation
+
+## 🔐 Authentication
+
+Create an account or login to access the data analysis features. Your session is secured with JWT tokens.
+
+## 💾 Database
+
+SQLite database automatically created in `backend/data/dataviz.db`
+
+## 🎯 Usage
+
+1. Sign up or login
+2. Add data points (manually or via CSV)
+3. Click "Analyze Data" 
+4. View regression results and charts
+5. Make predictions
+6. Save your analysis
+
+## 📝 License
+
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+For detailed setup instructions and troubleshooting, see [QUICKSTART.md](QUICKSTART.md).
 
