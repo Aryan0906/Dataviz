@@ -44,6 +44,7 @@ node_modules
 dist
 dist-ssr
 *.local
+*.tsbuildinfo
 
 # Environment variables
 .env
@@ -81,3 +82,9 @@ yarn.lock
 *.tmp
 *.temp
 .cache/
+.DS_Store
+pnpm-lock.yaml
+package-lock.json
+package-lock.json
+*.log
+*.log.*
