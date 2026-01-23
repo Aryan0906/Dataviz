@@ -37,7 +37,7 @@ const Login = () => {
     try {
       await login(loginEmail, loginPassword);
       toast.success("Login successful!");
-      navigate("/analyzer");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Login failed");
     } finally {
@@ -67,7 +67,7 @@ const Login = () => {
     try {
       await signup(signupName, signupEmail, signupPassword);
       toast.success("Account created successfully!");
-      navigate("/analyzer");
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Signup failed");
     } finally {

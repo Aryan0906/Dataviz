@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
@@ -11,6 +11,21 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.match(/react|react-dom|react-router/)) return "react-vendor";
+            if (id.match(/@radix-ui/)) return "radix-ui";
+            if (id.match(/recharts|regression/)) return "charts";
+            return "vendor";
+          }
+        },
+      },
     },
   },
 });
