@@ -70,20 +70,27 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Chart
-          </CardTitle>
-          <div className="flex gap-2">
-            <Badge variant="outline">{data.length} points</Badge>
-            {regression && (
-              <Badge variant="secondary">
-                R² = {regression.r2.toFixed(3)}
-              </Badge>
-            )}
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Chart
+            </CardTitle>
+            <div className="flex flex-col gap-2 items-end">
+              <div className="flex gap-2">
+                <Badge variant="outline">{data.length} points</Badge>
+                {regression && (
+                  <Badge variant="secondary">
+                    R² = {regression.r2.toFixed(3)}
+                  </Badge>
+                )}
+              </div>
+              {regression?.equation && (
+                <div className="text-xs text-muted-foreground max-w-md text-right">
+                  {regression.equation}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
       </CardHeader>
       <CardContent>
         <div className="h-80">

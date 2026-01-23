@@ -16,10 +16,16 @@ bash start-dev.sh
 
 ### Manual Setup
 ```bash
-# Terminal 1 - Backend
-cd backend && npm install && npm run dev
+# Terminal 1 - Backend (Django)
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+# or
+source venv/bin/activate # macOS/Linux
+pip install -r backend_django/requirements.txt
+python backend_django/manage.py migrate
+python backend_django/manage.py runserver 5000
 
-# Terminal 2 - Frontend
+# Terminal 2 - Frontend (React)
 cd frontend && npm install && npm run dev
 ```
 
@@ -29,10 +35,9 @@ Then open **http://localhost:5173** in your browser.
 
 ```
 Dataviz/
-├── frontend/        # React + TypeScript + Vite
-├── backend/         # Express.js + TypeScript
-├── QUICKSTART.md    # Quick start guide
-└── ROOT_README.md   # Detailed documentation
+├── frontend/         # React + TypeScript + Vite
+├── backend_django/   # Django + DRF (Supabase-ready)
+└── README.md         # This documentation
 ```
 
 ## ✨ Features
@@ -56,16 +61,14 @@ Dataviz/
 - React Router
 
 ### Backend
-- Express.js + TypeScript
-- SQLite3
+- Django + Django REST Framework
+- Supabase Postgres (or SQLite fallback)
 - JWT Authentication
-- Regression Analysis
+- NumPy for regression analysis
 
 ## 📖 Documentation
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide and troubleshooting
-- **[ROOT_README.md](ROOT_README.md)** - Comprehensive documentation
-- **[backend/README.md](backend/README.md)** - Backend API documentation
+- **[backend_django/README.md](backend_django/README.md)** - Backend setup & API documentation
 
 ## 🔐 Authentication
 
@@ -73,16 +76,16 @@ Create an account or login to access the data analysis features. Your session is
 
 ## 💾 Database
 
-SQLite database automatically created in `backend/data/dataviz.db`
+- **Production**: Supabase Postgres via `DATABASE_URL` environment variable
+- **Local Dev**: SQLite fallback at `backend_django/db.sqlite3`
 
 ## 🎯 Usage
 
 1. Sign up or login
 2. Add data points (manually or via CSV)
-3. Click "Analyze Data" 
+3. Click "Analyze Data"
 4. View regression results and charts
-5. Make predictions
-6. Save your analysis
+5. Save your analysis
 
 ## 📝 License
 
@@ -92,5 +95,5 @@ MIT License - see LICENSE file for details
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-For detailed setup instructions and troubleshooting, see [QUICKSTART.md](QUICKSTART.md).
+For detailed setup instructions and Supabase configuration, see [backend_django/README.md](backend_django/README.md).
 

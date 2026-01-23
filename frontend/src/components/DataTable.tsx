@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,7 +124,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
                         type="number"
                         step="any"
                         value={editX}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditX(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setEditX(e.target.value)}
                         className="h-8"
                       />
                     ) : (
@@ -137,7 +137,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
                         type="number"
                         step="any"
                         value={editY}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditY(e.target.value)}
+                        onChange={(e: ChangeEvent<HTMLInputElement>) => setEditY(e.target.value)}
                         className="h-8"
                       />
                     ) : (
