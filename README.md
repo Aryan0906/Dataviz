@@ -87,6 +87,27 @@ Create an account or login to access the data analysis features. Your session is
 4. View regression results and charts
 5. Save your analysis
 
+## 🚢 Production Deploy (quick notes)
+
+- **Frontend build**
+	```bash
+	cd frontend
+	npm install
+	npm run build
+	# serve the dist/ folder via your host (e.g., nginx) or `npm run preview`
+	```
+- **Frontend env**: set `VITE_API_URL` in `.env` (or use `.env.example`) to your public backend URL (e.g., `https://api.example.com/api`).
+- **Backend env**: create `backend_django/.env` with `DATABASE_URL`, `DJANGO_SECRET_KEY`, `JWT_SECRET`, `FRONTEND_URL`. See [backend_django/README.md](backend_django/README.md) for full values.
+- **Backend run**
+	```bash
+	cd backend_django
+	pip install -r requirements.txt
+	python manage.py migrate
+	python manage.py collectstatic --noinput
+	python manage.py runserver 0.0.0.0:5000  # or your WSGI/ASGI host
+	```
+- **Chunking**: Vite splits bundles into `react-vendor`, `radix-ui`, and `charts` chunks; keep `build.chunkSizeWarningLimit` at 1200 KB in [frontend/vite.config.ts](frontend/vite.config.ts).
+
 ## 📝 License
 
 MIT License - see LICENSE file for details

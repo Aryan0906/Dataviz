@@ -18,12 +18,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.match(/react|react-dom|react-router/)) return "react-vendor";
-            if (id.match(/@radix-ui/)) return "radix-ui";
-            if (id.match(/recharts|regression/)) return "charts";
-            return "vendor";
-          }
+          if (!id.includes("node_modules")) return;
+          if (id.match(/react|react-dom|react-router/)) return "react-vendor";
+          if (id.match(/@radix-ui/)) return "radix-ui";
+          if (id.match(/recharts|regression/)) return "charts";
         },
       },
     },
