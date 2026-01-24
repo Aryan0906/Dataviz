@@ -1,15 +1,15 @@
-import { useState, useRef, useMemo, useEffect, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Plus, Zap, Save, AlertCircle, FileUp } from "lucide-react";
 import { toast } from "sonner";
-import { DataPlot } from "./DataPlot";
+
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import Papa from "papaparse";
@@ -30,7 +30,7 @@ export interface CategoryPoint {
 export interface RegressionResult {
   r2: number;
   predict: (x: number) => number;
-  type: string;
+  type: "linear" | `polynomial-${number}`;
   equation?: string;
   meanY: number;
   varianceY: number;
@@ -42,9 +42,9 @@ export interface RegressionResult {
 
 export const DataAnalyzer = () => {
   const [searchParams] = useSearchParams();
-  const { token } = useAuth();
+  const { session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [data, setData] = useState<DataPoint[]>([]);
   const [categories, setCategories] = useState<CategoryPoint[]>([]);
   const [regressionResult, setRegressionResult] = useState<RegressionResult | null>(null);
@@ -104,14 +104,14 @@ export const DataAnalyzer = () => {
     }
 
     try {
-      const dataPoints = data.map(d => [d.x, d.y]);
+      const dataPoints: [number, number][] = data.map(d => [d.x, d.y]);
       let result: any;
-      let type = regressionType;
+      let type: "linear" | `polynomial-${number}` = "linear";
       let equation = "";
 
       if (regressionType === "polynomial") {
-        result = regression.polynomial(dataPoints, polynomialDegree);
-        
+        result = regression.polynomial(dataPoints, { order: polynomialDegree });
+
         // Generate equation string
         const coefficients = result.equation;
         const terms: string[] = [];
@@ -170,7 +170,7 @@ export const DataAnalyzer = () => {
         adjustedR2,
       });
       toast.success("Analysis complete!");
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to analyze data");
     }
   };
@@ -203,7 +203,7 @@ export const DataAnalyzer = () => {
           setData(newData);
           setCsvText("");
           toast.success(`Imported ${newData.length} data points`);
-        } catch (err) {
+        } catch (_err) {
           setError("Failed to parse CSV data");
         }
       },
@@ -216,7 +216,7 @@ export const DataAnalyzer = () => {
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     setError("");
     const file = event.target.files?.[0];
-    
+
     if (!file) {
       return;
     }
@@ -250,12 +250,12 @@ export const DataAnalyzer = () => {
             setData(newData);
             setCsvText("");
             toast.success(`Imported ${newData.length} data points from file`);
-            
+
             // Reset file input
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
-          } catch (err) {
+          } catch (_err) {
             setError("Failed to parse CSV file");
           }
         },
@@ -273,10 +273,10 @@ export const DataAnalyzer = () => {
   // Load analysis by id from query params
   useEffect(() => {
     const id = searchParams.get("analysis");
-    if (!id || !token) return;
+    if (!id || !session) return;
     const load = async () => {
       try {
-        const a = await dataAPI.getAnalysis(token, parseInt(id));
+        const a = await dataAPI.getAnalysis(parseInt(id));
         const points = (a as any).data_points as { x: number; y: number }[];
         setData(points || []);
         // Configure regression type from saved entry
@@ -295,7 +295,7 @@ export const DataAnalyzer = () => {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, token]);
+  }, [searchParams, session]);
 
   const saveAnalysis = async () => {
     if (!regressionResult || data.length === 0) {
@@ -305,14 +305,13 @@ export const DataAnalyzer = () => {
 
     setLoading(true);
     try {
-      if (!token) throw new Error("Not authenticated");
-      
-      const typeLabel = regressionResult.type.includes("polynomial") 
+      if (!session) throw new Error("Not authenticated");
+
+      const typeLabel = regressionResult.type.includes("polynomial")
         ? `Polynomial Regression (Degree ${polynomialDegree})`
         : "Linear Regression";
-      
+
       await dataAPI.save(
-        token,
         typeLabel,
         data,
         regressionResult.type,
@@ -320,7 +319,7 @@ export const DataAnalyzer = () => {
         regressionResult.r2
       );
       toast.success("Analysis saved successfully");
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to save analysis");
     } finally {
       setLoading(false);
@@ -354,7 +353,7 @@ export const DataAnalyzer = () => {
           <CardTitle>Add Data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "regression" | "categorical") }>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "regression" | "categorical")}>
             <TabsList>
               <TabsTrigger value="regression">Regression Analysis</TabsTrigger>
               <TabsTrigger value="categorical">Categorical Plotting</TabsTrigger>

@@ -7,6 +7,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret")
+SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 

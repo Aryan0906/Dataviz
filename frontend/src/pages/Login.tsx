@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +13,8 @@ import { UserPlus, LogIn, TrendingUp, Loader, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, signup, isLoading: authLoading } = useAuth();
-  
+  const { loading: authLoading, isAuthenticated } = useAuth();
+
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -27,7 +28,7 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!loginEmail || !loginPassword) {
       toast.error("Please fill in all fields");
       return;
@@ -35,11 +36,28 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      await login(loginEmail, loginPassword);
-      toast.success("Login successful!");
-      navigate("/dashboard");
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      });
+
+      if (error) {
+        // Provide more helpful error messages
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password. Don't have an account? Try the Sign Up tab.");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Please check your email and confirm your account before logging in.");
+        } else if (error.message.includes("Email link is invalid or has expired")) {
+          toast.error("Confirmation link expired. Please sign up again.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Login failed");
+      toast.error(error.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +65,7 @@ const Login = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!signupName || !signupEmail || !signupPassword || !signupConfirmPassword) {
       toast.error("Please fill in all fields");
       return;
@@ -65,11 +83,43 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      await signup(signupName, signupEmail, signupPassword);
-      toast.success("Account created successfully!");
-      navigate("/dashboard");
+      const { data, error } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword,
+        options: {
+          data: {
+            name: signupName,
+          }
+        }
+      });
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Try logging in instead.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        // Check if email confirmation is required
+        if (data?.user?.identities?.length === 0) {
+          toast.error("This email is already registered. Try logging in instead.");
+        } else if (data?.user && !data.session) {
+          toast.success("Account created! Please check your email to confirm your account before logging in.", {
+            duration: 6000,
+          });
+        } else {
+          toast.success("Account created successfully! You can now log in.", {
+            duration: 4000,
+          });
+          // Auto-switch to login tab after successful signup
+          setTimeout(() => {
+            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+            loginTab?.click();
+          }, 1000);
+        }
+      }
     } catch (error: any) {
-      toast.error(error.message || "Signup failed");
+      toast.error(error.message || "Signup failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +138,7 @@ const Login = () => {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      
+
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
@@ -113,7 +163,7 @@ const Login = () => {
                 Sign Up
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
@@ -155,14 +205,9 @@ const Login = () => {
                   )}
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
-                <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
-                  <p className="text-muted-foreground font-medium mb-2">Demo Credentials:</p>
-                  <p className="text-muted-foreground">Email: <span className="font-mono text-foreground">demo@example.com</span></p>
-                  <p className="text-muted-foreground">Password: <span className="font-mono text-foreground">password123</span></p>
-                </div>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="space-y-2">
@@ -245,3 +290,4 @@ const Login = () => {
 };
 
 export default Login;
+

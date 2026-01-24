@@ -11,16 +11,16 @@ import { Plus, Trash2, RefreshCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const { token } = useAuth();
+  const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [query, setQuery] = useState("");
 
   const fetchHistory = async () => {
-    if (!token) return;
+    if (!session) return;
     setLoading(true);
     try {
-      const items = await dataAPI.getAnalyses(token);
+      const items = await dataAPI.getAnalyses();
       setAnalyses(items);
     } catch {
       toast.error("Failed to load history");
@@ -32,17 +32,17 @@ const Dashboard = () => {
   useEffect(() => {
     fetchHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [session]);
 
   const filtered = analyses.filter(a =>
     a.title.toLowerCase().includes(query.toLowerCase())
   );
 
   const handleDelete = async (id: number) => {
-    if (!token) return;
+    if (!session) return;
     if (!confirm("Delete this analysis?")) return;
     try {
-      await dataAPI.deleteAnalysis(token, id);
+      await dataAPI.deleteAnalysis(id);
       toast.success("Deleted");
       setAnalyses(prev => prev.filter(a => a.id !== id));
     } catch {
@@ -57,10 +57,10 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
           <div className="flex items-center gap-2">
             <Link to="/manual-plot">
-              <Button className="gap-2"><Plus className="h-4 w-4"/> New Analysis</Button>
+              <Button className="gap-2"><Plus className="h-4 w-4" /> New Analysis</Button>
             </Link>
             <Button variant="outline" onClick={fetchHistory} className="gap-2">
-              <RefreshCcw className="h-4 w-4"/> Refresh
+              <RefreshCcw className="h-4 w-4" /> Refresh
             </Button>
           </div>
         </div>
@@ -102,7 +102,7 @@ const Dashboard = () => {
                             <Button variant="outline">View</Button>
                           </Link>
                           <Button variant="destructive" onClick={() => handleDelete(item.id)} className="gap-2">
-                            <Trash2 className="h-4 w-4"/> Delete
+                            <Trash2 className="h-4 w-4" /> Delete
                           </Button>
                         </div>
                       </div>

@@ -7,9 +7,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
+from django.conf import settings
 from .models import AnalysisResult
 
 JWT_SECRET = os.getenv("JWT_SECRET", "secret")
+SUPABASE_JWT_SECRET = settings.SUPABASE_JWT_SECRET
 JWT_EXP_HOURS = 24
 
 
@@ -81,15 +83,32 @@ def verify(request):
 
 
 def _require_auth(request):
+    """Verify Supabase JWT token and extract user_id (UUID)"""
     auth = request.headers.get("Authorization", "")
     token = auth.split(" ")[1] if auth.startswith("Bearer ") else None
     if not token:
         return (None, JsonResponse({"error": "Access token required"}, status=401))
     try:
-        decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        user = User.objects.get(id=decoded["userId"])
-        return (user, None)
-    except Exception:
+        # Verify using Supabase JWT Secret
+        if SUPABASE_JWT_SECRET:
+            # Use Supabase authentication
+            decoded = jwt.decode(
+                token, 
+                SUPABASE_JWT_SECRET, 
+                algorithms=['HS256'],
+                audience="authenticated"  # Supabase audience validation
+            )
+            user_id = decoded['sub']  # Supabase UUID from 'sub' claim
+        else:
+            # Fallback to custom JWT for backward compatibility
+            decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            user_id = str(decoded["userId"])
+        return (user_id, None)
+    except jwt.ExpiredSignatureError:
+        return (None, JsonResponse({"error": "Token expired"}, status=401))
+    except jwt.InvalidTokenError:
+        return (None, JsonResponse({"error": "Invalid token"}, status=401))
+    except Exception as e:
         return (None, JsonResponse({"error": "Invalid or expired token"}, status=403))
 
 
@@ -97,7 +116,7 @@ def _require_auth(request):
 def save_analysis(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    user, err = _require_auth(request)
+    user_id, err = _require_auth(request)
     if err:
         return err
     body = json.loads(request.body.decode() or "{}")
@@ -109,7 +128,7 @@ def save_analysis(request):
     if not title or not data_points:
         return JsonResponse({"error": "Title and data points are required"}, status=400)
     ar = AnalysisResult.objects.create(
-        user=user,
+        user_id=user_id,
         title=title,
         data_points=data_points,
         regression_type=regression_type,
@@ -120,10 +139,10 @@ def save_analysis(request):
 
 
 def list_analyses(request):
-    user, err = _require_auth(request)
+    user_id, err = _require_auth(request)
     if err:
         return err
-    qs = AnalysisResult.objects.filter(user=user).order_by("-created_at")
+    qs = AnalysisResult.objects.filter(user_id=user_id).order_by("-created_at")
     return JsonResponse({
         "analyses": [
             {
@@ -140,17 +159,17 @@ def list_analyses(request):
 
 
 def get_analysis(request, pk: int):
-    user, err = _require_auth(request)
+    user_id, err = _require_auth(request)
     if err:
         return err
     if request.method == "DELETE":
-        a = get_object_or_404(AnalysisResult, pk=pk, user=user)
+        a = get_object_or_404(AnalysisResult, pk=pk, user_id=user_id)
         a.delete()
         return JsonResponse({"message": "Analysis deleted successfully"})
-    a = get_object_or_404(AnalysisResult, pk=pk, user=user)
+    a = get_object_or_404(AnalysisResult, pk=pk, user_id=user_id)
     return JsonResponse({
         "id": a.id,
-        "user_id": a.user.id,
+        "user_id": a.user_id,
         "title": a.title,
         "data_points": a.data_points,
         "regression_type": a.regression_type,
