@@ -15,7 +15,7 @@ import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
 import regression from "regression";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import { UniversalChart } from "./UniversalChart";
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, FileImage, FileText } from "lucide-react";
-import { exportChartAsPNG, exportChartAsPDF, generateFilename, type ExportTheme } from "@/lib/chartExport";
+import { exportChartAsPNG, exportChartAsPDF, type ExportTheme } from "@/lib/chartExport";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,10 +75,9 @@ export const DataAnalyzer = () => {
   const [error, setError] = useState("");
   const [regressionType, setRegressionType] = useState<"linear" | "polynomial">("linear");
   const [polynomialDegree, setPolynomialDegree] = useState(2);
-  const [draftId, setDraftId] = useState<number | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
   const chartContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Export theme dialog state
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exportFormat, setExportFormat] = useState<"png" | "pdf">("png");
@@ -95,7 +94,7 @@ export const DataAnalyzer = () => {
           setData(draft.dataPoints || []);
           setRegressionType(draft.regressionType || "linear");
           setPolynomialDegree(draft.polynomialDegree || 2);
-          setDraftId(draft.id);
+
         }
       } catch (error) {
         console.error("Failed to load draft:", error);
@@ -110,15 +109,13 @@ export const DataAnalyzer = () => {
     debounce(async (draftData: any) => {
       if (!session) return;
 
-      setIsSaving(true);
+
       try {
         const result = await dataAPI.saveDraft(draftData);
-        setDraftId(result.id);
+
         console.log("Draft auto-saved:", result.updated_at);
       } catch (error) {
         console.error("Failed to auto-save draft:", error);
-      } finally {
-        setIsSaving(false);
       }
     }, 2000),
     [session]
@@ -381,9 +378,7 @@ export const DataAnalyzer = () => {
 
       // Clear local state after saving
       setData([]);
-      setCategories([]);
       setRegressionResult(null);
-      setDraftId(null);
 
       toast.success("Analysis saved successfully");
     } catch (_err) {
@@ -406,7 +401,7 @@ export const DataAnalyzer = () => {
         setRegressionResult(null);
         setCsvText("");
         setError("");
-        setDraftId(null);
+
 
         toast.success("Data cleared");
       } catch (error) {
@@ -687,11 +682,11 @@ export const DataAnalyzer = () => {
       )}
 
       {data.length > 0 && (
-        <UniversalChart 
+        <UniversalChart
           ref={chartContainerRef}
-          type="regression" 
-          data={data} 
-          regression={regressionResult} 
+          type="regression"
+          data={data}
+          regression={regressionResult}
         />
       )}
 
