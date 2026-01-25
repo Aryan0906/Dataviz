@@ -1,4 +1,8 @@
 import { useMemo, useState, useRef, type ReactNode } from "react";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+import HCHeatmap from "highcharts/modules/heatmap";
+import HCExporting from "highcharts/modules/exporting";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,12 +51,6 @@ import { toast } from "sonner";
 import Papa from "papaparse";
 import { exportChartAsPNG, exportChartAsPDF, type ExportTheme } from "@/lib/chartExport";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -61,6 +59,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+HCHeatmap(Highcharts);
+HCExporting(Highcharts);
 
 type ChartType = "bar" | "pie" | "histogram" | "scatter" | "heatmap";
 
@@ -161,19 +162,37 @@ const buildHistogram = (data: CategoryPoint[]) => {
   return bins;
 };
 
-const colorScale = (value: number, min: number, max: number) => {
-  if (max === min) return "#60a5fa";
-  const ratio = (value - min) / (max - min);
-  const start = [96, 165, 250]; // blue-400
-  const end = [236, 72, 153]; // pink-500
-  const mix = start.map((s, i) => Math.round(s + (end[i] - s) * ratio));
-  return `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
-};
-
 const findClosestLabelForRange = (data: CategoryPoint[], range: [number, number]) => {
   const [start, end] = range;
   const within = data.filter((d) => d.value >= start && d.value <= end);
   return within[0]?.label;
+};
+
+const extractParagraphPairs = (text: string) => {
+  const pairs: { label: string; value: number }[] = [];
+  const patterns = [
+    /([A-Za-z][A-Za-z0-9\s'_-]{1,40})\s*(?:=|:|were|was|are|is|at|of|with|had|has)\s*(-?\d+(?:\.\d+)?)/gi,
+    /([A-Za-z][A-Za-z0-9\s'_-]{1,40})\s+(-?\d+(?:\.\d+)?)(?=[.,;]|$)/gi,
+  ];
+
+  patterns.forEach((pattern) => {
+    let m;
+    while ((m = pattern.exec(text)) !== null) {
+      const label = m[1].trim();
+      const value = parseFloat(m[2]);
+      if (!Number.isNaN(value)) {
+        pairs.push({ label, value });
+      }
+    }
+  });
+
+  const seen = new Set<string>();
+  return pairs.filter(({ label }) => {
+    const key = normalizeLabel(label);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 };
 
 const interpretCommand = (
@@ -186,6 +205,18 @@ const interpretCommand = (
   let nextData = [...current];
   let nextChart: ChartType = currentChart;
   const notes: string[] = [];
+  let dataChanged = false;
+
+  const upsertPoint = (label: string, value: number) => {
+    if (Number.isNaN(value)) return;
+    const idx = nextData.findIndex((d) => normalizeLabel(d.label) === normalizeLabel(label));
+    if (idx >= 0) {
+      nextData[idx] = { label: nextData[idx].label, value };
+    } else {
+      nextData.push({ label, value });
+    }
+    dataChanged = true;
+  };
 
   const chartMatch = lower.match(/(bar|pie|histogram|scatter|heatmap)/);
   if (chartMatch) {
@@ -203,15 +234,8 @@ const interpretCommand = (
   while ((match = addPattern.exec(input)) !== null) {
     const label = match[1].trim();
     const value = parseFloat(match[2]);
-    if (Number.isNaN(value)) continue;
-    const idx = nextData.findIndex((d) => normalizeLabel(d.label) === normalizeLabel(label));
-    if (idx >= 0) {
-      nextData[idx] = { label: nextData[idx].label, value };
-      notes.push(`Updated ${label} to ${value}.`);
-    } else {
-      nextData.push({ label, value });
-      notes.push(`Added ${label} (${value}).`);
-    }
+    upsertPoint(label, value);
+    notes.push(`Added ${label} (${value}).`);
   }
 
   const loosePairs = [...input.matchAll(/([A-Za-z][A-Za-z0-9\s_-]+)\s+(-?\d+(?:\.\d+)?)/g)];
@@ -219,15 +243,17 @@ const interpretCommand = (
     loosePairs.forEach((m) => {
       const label = m[1].trim();
       const value = parseFloat(m[2]);
-      if (Number.isNaN(value)) return;
-      const idx = nextData.findIndex((d) => normalizeLabel(d.label) === normalizeLabel(label));
-      if (idx >= 0) {
-        nextData[idx] = { label: nextData[idx].label, value };
-      } else {
-        nextData.push({ label, value });
-      }
+      upsertPoint(label, value);
     });
     notes.push("Parsed multiple values from the paragraph.");
+  }
+
+  if (!dataChanged) {
+    const paragraphPairs = extractParagraphPairs(input);
+    if (paragraphPairs.length > 0) {
+      paragraphPairs.forEach(({ label, value }) => upsertPoint(label, value));
+      notes.push("Parsed values from paragraph-style text.");
+    }
   }
 
   const updatePattern = /(set|update|change)\s+([A-Za-z0-9\s_-]+)\s+(?:to|=)\s+(-?\d+(?:\.\d+)?)/gi;
@@ -237,6 +263,7 @@ const interpretCommand = (
     const idx = nextData.findIndex((d) => normalizeLabel(d.label) === normalizeLabel(label));
     if (idx >= 0 && !Number.isNaN(value)) {
       nextData[idx] = { label: nextData[idx].label, value };
+      dataChanged = true;
       notes.push(`Changed ${label} to ${value}.`);
     }
   }
@@ -247,6 +274,7 @@ const interpretCommand = (
     const before = nextData.length;
     nextData = nextData.filter((d) => normalizeLabel(d.label) !== normalizeLabel(label));
     if (nextData.length !== before) {
+      dataChanged = true;
       notes.push(`Removed ${label}.`);
     }
   }
@@ -263,27 +291,6 @@ const interpretCommand = (
   }
 
   return { nextData, nextChart, reply: notes.join(" ") };
-};
-
-const HeatmapGrid = ({ data, onPick }: { data: CategoryPoint[]; onPick: (label: string) => void }) => {
-  const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      {data.map((item) => (
-        <button
-          key={item.label}
-          onClick={() => onPick(item.label)}
-          className="rounded-lg p-3 text-left shadow-sm border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
-          style={{ backgroundColor: colorScale(item.value, min, max) }}
-        >
-          <div className="text-sm font-semibold text-white drop-shadow">{item.label}</div>
-          <div className="text-xs text-white/90">{item.value}</div>
-        </button>
-      ))}
-    </div>
-  );
 };
 
 export const CategoricalChatPanel = () => {
@@ -590,12 +597,128 @@ export const CategoricalChatPanel = () => {
             </ScatterChart>
           </ResponsiveContainer>
         );
-      case "heatmap":
+      case "heatmap": {
+        const values = data.map((d) => d.value);
+        const hasData = values.length > 0;
+        const min = hasData ? Math.min(...values) : 0;
+        const max = hasData ? Math.max(...values) : 1;
+        const stops: [number, string][] = hasData
+          ? [
+              [0, "#60a5fa"],
+              [0.5, "#a855f7"],
+              [1, "#ec4899"],
+            ]
+          : [
+              [0, "#e2e8f0"],
+              [1, "#cbd5e1"],
+            ];
+
+        const heatmapOptions: Highcharts.Options = {
+          chart: {
+            type: "heatmap",
+            height: 380,
+            backgroundColor: "transparent",
+            spacing: [10, 10, 16, 10],
+          },
+          title: { text: undefined },
+          credits: { enabled: false },
+          exporting: {
+            enabled: true,
+            buttons: {
+              contextButton: {
+                menuItems: [
+                  "viewFullscreen",
+                  "separator",
+                  "printChart",
+                  "separator",
+                  "downloadPNG",
+                  "downloadJPEG",
+                  "downloadPDF",
+                  "downloadSVG"
+                ],
+                theme: {
+                  fill: "hsl(var(--background))",
+                  stroke: "hsl(var(--border))",
+                },
+                symbolStroke: "hsl(var(--foreground))",
+                symbolFill: "hsl(var(--foreground))",
+                x: -10,
+                y: 0,
+                align: "right"
+              }
+            }
+          },
+          xAxis: {
+            categories: data.map((d) => d.label),
+            lineWidth: 0,
+            tickLength: 0,
+            labels: {
+              style: { color: "hsl(var(--muted-foreground))", fontSize: "12px" },
+              rotation: -25,
+            },
+          },
+          yAxis: {
+            categories: ["Value"],
+            title: { text: undefined },
+            gridLineWidth: 0,
+            labels: { enabled: false },
+          },
+          legend: {
+            align: "right",
+            layout: "vertical",
+            verticalAlign: "middle",
+            symbolHeight: 180,
+            itemStyle: { color: "hsl(var(--muted-foreground))" },
+          },
+          colorAxis: {
+            min: hasData ? (min === max ? min - 1 : min) : 0,
+            max: hasData ? max : 1,
+            stops,
+          },
+          tooltip: {
+            useHTML: true,
+            formatter: function () {
+              const point = this.point as Highcharts.Point;
+              return `<div><strong>${point.name}</strong><br/>Value: ${formatNumber(point.value as number)}</div>`;
+            },
+          },
+          plotOptions: {
+            series: {
+              borderColor: "rgba(15,23,42,0.25)",
+              borderWidth: 1,
+              animation: false,
+              dataLabels: {
+                enabled: true,
+                style: { color: "#fff", textOutline: "none", fontWeight: "600" },
+                formatter: function () {
+                  const point = this.point as Highcharts.Point;
+                  return formatNumber(point.value as number);
+                },
+              },
+              point: {
+                events: {
+                  click: function () {
+                    handleChartClick(this.name as string);
+                  },
+                },
+              },
+            },
+          },
+          series: [
+            {
+              type: "heatmap",
+              name: "Categories",
+              data: data.map((d, idx) => ({ x: idx, y: 0, value: d.value, name: d.label })),
+            },
+          ],
+        };
+
         return (
           <div className="h-full">
-            <HeatmapGrid data={rechartsData} onPick={(label) => handleChartClick(label)} />
+            <HighchartsReact highcharts={Highcharts} options={heatmapOptions} />
           </div>
         );
+      }
       default:
         return null;
     }

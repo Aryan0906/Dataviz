@@ -27,11 +27,13 @@ MANIFEST
 *.sqlite3
 db.sqlite3
 local_settings.py
-/media
-/staticfiles
+/media/
+/staticfiles/
+*.pyc
+backend_django/**/__pycache__/
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -40,11 +42,12 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Node/React
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
 *.local
 *.tsbuildinfo
+.vite/
 
 # Environment variables
 .env
@@ -53,11 +56,13 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
@@ -71,16 +76,50 @@ dist-ssr
 .DS_Store
 ._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 .Spotlight-V100
 .Trashes
+.AppleDouble
+.LSOverride
 
 # Package managers
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
+# Build outputs
+frontend/dist/
+frontend/build/
+backend_django/staticfiles/
+backend_django/media/csv_uploads/
+dist/
+
 # Miscellaneous
 .cache/
 *.tmp
 *.temp
 *.log.*
+*.bak
+*.orig
+coverage/
+.nyc_output/
+
+# IDE & Debug
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# Docker
+*.dockerignore
+docker-compose.override.yml
+
+# Certificates & Keys
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx

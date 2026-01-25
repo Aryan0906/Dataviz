@@ -14,6 +14,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
+const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -56,6 +57,14 @@ const App = () => (
               <Route path="regression" element={<ManualPlotRegression />} />
               <Route path="categorical" element={<ManualPlotCategorical />} />
             </Route>
+            <Route
+              path="/categorical"
+              element={
+                <ProtectedRoute>
+                  <CategoricalChat />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/ai"
               element={
