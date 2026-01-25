@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ interface DataPlotProps {
   regression: RegressionResult | null;
 }
 
-export const DataPlot = ({ data, regression }: DataPlotProps) => {
+export const DataPlot = forwardRef<HTMLDivElement, DataPlotProps>(({ data, regression }, externalRef) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -205,4 +205,6 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
       </CardContent>
     </Card>
   );
-};
+});
+
+DataPlot.displayName = 'DataPlot';

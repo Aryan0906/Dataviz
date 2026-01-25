@@ -31,7 +31,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
             </Link>
             <nav className="hidden md:flex items-center gap-1">
               <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
-              <NavLink to="/manual-plot" className={navLinkClass}>Manual Plot</NavLink>
+              <NavLink to="/manual-plot/regression" className={navLinkClass}>Manual Plot</NavLink>
               <NavLink to="/ai" className={navLinkClass}>AI Features</NavLink>
               <NavLink to="/profile" className={navLinkClass}>Profile</NavLink>
             </nav>
@@ -55,7 +55,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         <div className="md:hidden border-t">
           <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2 overflow-x-auto">
             <NavLink to="/dashboard" className={navLinkClass}>Dashboard</NavLink>
-            <NavLink to="/manual-plot" className={navLinkClass}>Manual Plot</NavLink>
+            <NavLink to="/manual-plot/regression" className={navLinkClass}>Manual Plot</NavLink>
             <NavLink to="/ai" className={navLinkClass}>AI Features</NavLink>
             <NavLink to="/profile" className={navLinkClass}>Profile</NavLink>
           </div>

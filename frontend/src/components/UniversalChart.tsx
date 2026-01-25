@@ -1,7 +1,7 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import type { DataPoint, RegressionResult } from "./DataAnalyzer";
 import type { CategoryPoint } from "./DataAnalyzer";
-import { useMemo } from "react";
+import { useMemo, forwardRef } from "react";
 import { DataPlot } from "./DataPlot";
 
 interface UniversalChartProps {
@@ -11,13 +11,12 @@ interface UniversalChartProps {
   categories?: CategoryPoint[];
 }
 
-export const UniversalChart = ({ type, data = [], regression = null, categories = [] }: UniversalChartProps) => {
+export const UniversalChart = forwardRef<HTMLDivElement, UniversalChartProps>(
+  ({ type, data = [], regression = null, categories = [] }, ref) => {
   if (type === 'regression') {
-    return <DataPlot data={data} regression={regression} />;
+    return <DataPlot ref={ref} data={data} regression={regression} />;
   }
 
-  const barData = useMemo(() => {
-    return categories.map(c => ({ label: c.label, value: c.value }));
   }, [categories]);
 
   const pieData = useMemo(() => {
@@ -31,33 +30,40 @@ export const UniversalChart = ({ type, data = [], regression = null, categories 
 
   if (type === 'bar') {
     return (
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
-          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-          <Bar dataKey="value" fill="hsl(var(--chart-primary))" />
-        </BarChart>
-      </ResponsiveContainer>
+      <div ref={ref}>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={barData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+            <Bar dataKey="value" fill="hsl(var(--chart-primary))" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     );
   }
 
   if (type === 'pie') {
     return (
-      <ResponsiveContainer width="100%" height={320}>
-        <PieChart>
-          <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
-            {pieData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Legend />
-          <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
-        </PieChart>
-      </ResponsiveContainer>
+      <div ref={ref}>
+        <ResponsiveContainer width="100%" height={320}>
+          <PieChart>
+            <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} label>
+              {pieData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Legend />
+            <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     );
   }
 
   return null;
-}
+  }
+);
+
+UniversalChart.displayName = 'UniversalChart';

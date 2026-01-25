@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type ChangeEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, Plus, Zap, Save, AlertCircle, FileUp } from "lucide-react";
+import { Upload, Plus, Zap, Save, AlertCircle, FileUp, ArrowRight, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "./DataTable";
@@ -24,7 +24,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Download, FileImage, FileText } from "lucide-react";
-import { exportChartAsPNG, exportChartAsPDF, generateFilename } from "@/lib/chartExport";
+import { exportChartAsPNG, exportChartAsPDF, generateFilename, type ExportTheme } from "@/lib/chartExport";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export interface DataPoint {
   x: number;
@@ -52,40 +62,14 @@ export interface RegressionResult {
 export const DataAnalyzer = () => {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const barChartRef = useRef<HTMLDivElement>(null);
-  const pieChartRef = useRef<HTMLDivElement>(null);
-  const [exportingBar, setExportingBar] = useState(false);
-  const [exportingPie, setExportingPie] = useState(false);
-
-  const handleExport = async (type: 'bar' | 'pie', format: 'png' | 'pdf') => {
-    const ref = type === 'bar' ? barChartRef : pieChartRef;
-    const setExporting = type === 'bar' ? setExportingBar : setExportingPie;
-    const filename = generateFilename(`${type}-chart`);
-
-    if (!ref.current) return;
-
-    setExporting(true);
-    try {
-      if (format === 'png') {
-        await exportChartAsPNG(ref.current, filename);
-      } else {
-        await exportChartAsPDF(ref.current, filename);
-      }
-    } finally {
-      setExporting(false);
-    }
-  };
 
   // State initialization - will be loaded from Supabase
   const [data, setData] = useState<DataPoint[]>([]);
-  const [categories, setCategories] = useState<CategoryPoint[]>([]);
   const [regressionResult, setRegressionResult] = useState<RegressionResult | null>(null);
-  const [tab, setTab] = useState<"regression" | "categorical">("regression");
   const [xValue, setXValue] = useState("");
   const [yValue, setYValue] = useState("");
-  const [catLabel, setCatLabel] = useState("");
-  const [catValue, setCatValue] = useState("");
   const [csvText, setCsvText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -93,6 +77,12 @@ export const DataAnalyzer = () => {
   const [polynomialDegree, setPolynomialDegree] = useState(2);
   const [draftId, setDraftId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Export theme dialog state
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"png" | "pdf">("png");
+  const [exportTheme, setExportTheme] = useState<ExportTheme>("light");
 
   // Load draft from Supabase on mount
   useEffect(() => {
@@ -103,8 +93,6 @@ export const DataAnalyzer = () => {
         const { draft } = await dataAPI.getDraft();
         if (draft) {
           setData(draft.dataPoints || []);
-          setCategories(draft.categories || []);
-          setTab(draft.tabType || "regression");
           setRegressionType(draft.regressionType || "linear");
           setPolynomialDegree(draft.polynomialDegree || 2);
           setDraftId(draft.id);
@@ -139,16 +127,16 @@ export const DataAnalyzer = () => {
   // Trigger auto-save when data changes
   useEffect(() => {
     if (!session) return;
-    if (data.length === 0 && categories.length === 0) return; // Don't save empty drafts
+    if (data.length === 0) return; // Don't save empty drafts
 
     debouncedSave({
       dataPoints: data,
-      categories: categories,
-      tabType: tab,
+      categories: [],
+      tabType: "regression",
       regressionType: regressionType,
       polynomialDegree: polynomialDegree,
     });
-  }, [data, categories, tab, regressionType, polynomialDegree, session, debouncedSave]);
+  }, [data, regressionType, polynomialDegree, session, debouncedSave]);
 
   const addPoint = () => {
     setError("");
@@ -166,25 +154,6 @@ export const DataAnalyzer = () => {
     setXValue("");
     setYValue("");
     toast.success("Data point added");
-  };
-
-  const addCategory = () => {
-    setError("");
-    const label = catLabel.trim();
-    const value = parseFloat(catValue);
-    if (!label) {
-      setError("Please enter a category name");
-      return;
-    }
-    if (isNaN(value)) {
-      setError("Please enter a valid numeric value");
-      return;
-    }
-    const next = [...categories, { label, value }];
-    setCategories(next);
-    setCatLabel("");
-    setCatValue("");
-    toast.success("Category added");
   };
 
   const analyzeData = useCallback(() => {
@@ -434,7 +403,6 @@ export const DataAnalyzer = () => {
 
         // Clear local state
         setData([]);
-        setCategories([]);
         setRegressionResult(null);
         setCsvText("");
         setError("");
@@ -446,6 +414,41 @@ export const DataAnalyzer = () => {
         toast.error("Failed to clear data");
       }
     }
+  };
+
+  const handleExportChart = async (format: "png" | "pdf") => {
+    if (!chartContainerRef.current) {
+      toast.error("Chart not found");
+      return;
+    }
+
+    setExportFormat(format);
+    setShowExportDialog(true);
+  };
+
+  const confirmExport = async () => {
+    if (!chartContainerRef.current) {
+      toast.error("Chart not found");
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const regressionLabel = regressionResult?.type.includes("polynomial")
+      ? `polynomial-degree${regressionResult.type.split("-")[1]}`
+      : "linear";
+    const filename = `regression-${regressionLabel}-${exportTheme}-${timestamp}`;
+
+    try {
+      if (exportFormat === "png") {
+        await exportChartAsPNG(chartContainerRef.current, filename, exportTheme);
+      } else {
+        await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+
+    setShowExportDialog(false);
   };
 
   // Logout and header handled by AppLayout
@@ -464,116 +467,82 @@ export const DataAnalyzer = () => {
           <CardTitle>Add Data</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "regression" | "categorical")}>
-            <TabsList>
-              <TabsTrigger value="regression">Regression Analysis</TabsTrigger>
-              <TabsTrigger value="categorical">Categorical Plotting</TabsTrigger>
-            </TabsList>
+          <div className="flex gap-3">
+            <Input
+              type="number"
+              placeholder="X value"
+              value={xValue}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setXValue(e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              placeholder="Y value"
+              value={yValue}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setYValue(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={addPoint} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add
+            </Button>
+          </div>
 
-            <TabsContent value="regression" className="space-y-4">
-              <div className="flex gap-3">
-                <Input
-                  type="number"
-                  placeholder="X value"
-                  value={xValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setXValue(e.target.value)}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  placeholder="Y value"
-                  value={yValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setYValue(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={addPoint} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Upload className="h-4 w-4" />
+              <span className="font-medium">Import CSV</span>
+            </div>
 
-              <div className="border-t pt-4 space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Upload className="h-4 w-4" />
-                  <span className="font-medium">Import CSV</span>
-                </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                className="w-full gap-2"
+              >
+                <FileUp className="h-4 w-4" />
+                Upload CSV File
+              </Button>
+            </div>
 
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    variant="outline"
-                    className="w-full gap-2"
-                  >
-                    <FileUp className="h-4 w-4" />
-                    Upload CSV File
-                  </Button>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-border" />
-                  <span className="text-xs text-muted-foreground">or</span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Paste CSV Data</label>
+              <Textarea
+                placeholder="Paste CSV data here (X,Y format, one pair per line)"
+                value={csvText}
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setCsvText(e.target.value)}
+                className="h-20 font-mono text-xs"
+              />
+              <Button onClick={importCSV} variant="outline" className="w-full mt-2 gap-2">
+                <Upload className="h-4 w-4" />
+                Import from Text
+              </Button>
+            </div>
+          </div>
 
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Paste CSV Data</label>
-                  <Textarea
-                    placeholder="Paste CSV data here (X,Y format, one pair per line)"
-                    value={csvText}
-                    onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setCsvText(e.target.value)}
-                    className="h-20 font-mono text-xs"
-                  />
-                  <Button onClick={importCSV} variant="outline" className="w-full mt-2 gap-2">
-                    <Upload className="h-4 w-4" />
-                    Import from Text
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="categorical" className="space-y-4">
-              <div className="flex gap-3">
-                <Input
-                  type="text"
-                  placeholder="Category Name"
-                  value={catLabel}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setCatLabel(e.target.value)}
-                  className="flex-1"
-                />
-                <Input
-                  type="number"
-                  placeholder="Value"
-                  value={catValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setCatValue(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={addCategory} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-
-              {categories.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {categories.map((c, idx) => (
-                    <Card key={idx} className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">{c.label}</div>
-                        <div className="text-muted-foreground">{c.value}</div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          <Alert className="bg-primary/5 border-primary/30">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>For categorical plotting with NLP chat controls, visit the new Categorical Chat page.</span>
+              <Button size="sm" variant="outline" onClick={() => navigate("/categorical")} className="gap-2 ml-2">
+                Go to Categorical Chat
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
@@ -637,7 +606,7 @@ export const DataAnalyzer = () => {
         </div>
       )}
 
-      {tab === "regression" && data.length >= 2 && !regressionResult && (
+      {data.length >= 2 && !regressionResult && (
         <div className="space-y-4">
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader>
@@ -682,72 +651,6 @@ export const DataAnalyzer = () => {
         </div>
       )}
 
-      {tab === "categorical" && categories.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card ref={barChartRef}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Bar Chart</CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={exportingBar}>
-                      <Download className="h-4 w-4 mr-2" />
-                      {exportingBar ? '...' : 'Export'}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport('bar', 'png')}>
-                      <FileImage className="h-4 w-4 mr-2" />
-                      PNG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport('bar', 'pdf')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <UniversalChart type="bar" categories={categories} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card ref={pieChartRef}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Pie Chart</CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={exportingPie}>
-                      <Download className="h-4 w-4 mr-2" />
-                      {exportingPie ? '...' : 'Export'}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport('pie', 'png')}>
-                      <FileImage className="h-4 w-4 mr-2" />
-                      PNG
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport('pie', 'pdf')}>
-                      <FileText className="h-4 w-4 mr-2" />
-                      PDF
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                <UniversalChart type="pie" categories={categories} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {regressionResult && (
         <Button
           onClick={saveAnalysis}
@@ -760,8 +663,36 @@ export const DataAnalyzer = () => {
         </Button>
       )}
 
-      {tab === "regression" && data.length > 0 && (
-        <UniversalChart type="regression" data={data} regression={regressionResult} />
+      {data.length > 0 && regressionResult && (
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export Chart</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleExportChart("png")} className="gap-2">
+                <FileImage className="h-4 w-4" />
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportChart("pdf")} className="gap-2">
+                <FileText className="h-4 w-4" />
+                Export as PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {data.length > 0 && (
+        <UniversalChart 
+          ref={chartContainerRef}
+          type="regression" 
+          data={data} 
+          regression={regressionResult} 
+        />
       )}
 
       {data.length > 0 && (
@@ -772,6 +703,88 @@ export const DataAnalyzer = () => {
           </Button>
         </div>
       )}
+
+      <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Export Chart</AlertDialogTitle>
+            <AlertDialogDescription>
+              Choose file format and theme for your exported chart
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4">
+            {/* File Format Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">File Format</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setExportFormat("png")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                    exportFormat === "png"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <FileImage className="h-5 w-5" />
+                  <span className="text-sm font-medium">PNG</span>
+                </button>
+                <button
+                  onClick={() => setExportFormat("pdf")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                    exportFormat === "pdf"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <FileText className="h-5 w-5" />
+                  <span className="text-sm font-medium">PDF</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Theme Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Theme</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setExportTheme("light")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                    exportTheme === "light"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <Sun className="h-5 w-5" />
+                  <span className="text-sm font-medium">Light</span>
+                  <span className="text-xs text-muted-foreground">White bg</span>
+                </button>
+                <button
+                  onClick={() => setExportTheme("dark")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                    exportTheme === "dark"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <Moon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Dark</span>
+                  <span className="text-xs text-muted-foreground">Dark bg</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExport}>
+              Export as {exportFormat.toUpperCase()}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

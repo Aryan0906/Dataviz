@@ -12,6 +12,8 @@ const Login = lazy(() => import("./pages/Login"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
+const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
+const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -49,7 +51,11 @@ const App = () => (
                   <ManualPlot />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<Navigate to="regression" replace />} />
+              <Route path="regression" element={<ManualPlotRegression />} />
+              <Route path="categorical" element={<ManualPlotCategorical />} />
+            </Route>
             <Route
               path="/ai"
               element={

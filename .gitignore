@@ -58,7 +58,6 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
@@ -69,22 +68,19 @@ dist-ssr
 *~
 
 # OS
-Thumbs.db
+.DS_Store
 ._*
+Thumbs.db
 .Spotlight-V100
 .Trashes
 
 # Package managers
 package-lock.json
+pnpm-lock.yaml
 yarn.lock
 
 # Miscellaneous
+.cache/
 *.tmp
 *.temp
-.cache/
-.DS_Store
-pnpm-lock.yaml
-package-lock.json
-package-lock.json
-*.log
 *.log.*
