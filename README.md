@@ -1,120 +1,154 @@
 # Dataviz - Interactive Data Visualization & Analysis Platform
 
-A full-stack application for data analysis and visualization with user authentication, regression analysis, and interactive plotting.
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
-## 🚀 Quick Start
-
-### Automatic Setup (Windows)
-```bash
-start-dev.bat
-```
-
-### Automatic Setup (macOS/Linux)
-```bash
-bash start-dev.sh
-```
-
-### Manual Setup
-```bash
-# Terminal 1 - Backend (Django)
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-# or
-source venv/bin/activate # macOS/Linux
-pip install -r backend_django/requirements.txt
-python backend_django/manage.py migrate
-python backend_django/manage.py runserver 5000
-
-# Terminal 2 - Frontend (React)
-cd frontend && npm install && npm run dev
-```
-
-Then open **http://localhost:5173** in your browser.
-
-## 📁 Project Structure
-
-```
-Dataviz/
-├── frontend/         # React + TypeScript + Vite
-├── backend_django/   # Django + DRF (Supabase-ready)
-└── README.md         # This documentation
-```
+A full-stack web application designed for seamless data analysis and visualization. Dataviz empowers users to upload datasets, perform regression analysis, and generate interactive charts with a modern, responsive user interface.
 
 ## ✨ Features
 
-- **User Authentication** - Secure signup/login with JWT
-- **Data Input** - Manual entry or CSV upload
-- **Regression Analysis** - Automatic best-fit model selection
-- **Visualization** - Interactive charts with Recharts
-- **Predictions** - Predict Y from X and vice versa
-- **Data Persistence** - Save analyses to database
-- **Dark Mode** - Theme toggle support
-- **Responsive Design** - Mobile-friendly UI
+- **🔐 Robust Authentication** - Secure signup and login functionality powered by JWT tokens.
+- **📊 Interactive Visualization** - Dynamic charts and graphs using Recharts.
+- **📈 Advanced Regression** - Automatic calculation of best-fit models (Linear, Polynomial) with predictive capabilities.
+- **📁 Flexible Data Input** - Support for manual data entry or CSV file uploads.
+- **💾 Cloud Persistence** - Save and manage your analyses securely with Supabase Postgres.
+- **🌗 Dark/Light Mode** - Fully responsive UI with theme toggling support.
+- **📱 Responsive Design** - Optimized for desktop, tablet, and mobile devices.
 
 ## 🛠️ Technology Stack
 
 ### Frontend
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS + shadcn/ui
-- Recharts
-- React Router
+- **Framework**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **State Management**: React Query
+- **Charting**: Recharts
+- **Routing**: React Router v6
 
 ### Backend
-- Django + Django REST Framework
-- Supabase Postgres (or SQLite fallback)
-- JWT Authentication
-- NumPy for regression analysis
+- **Framework**: Django REST Framework (DRF)
+- **Language**: Python 3.10+
+- **Database**: PostgreSQL (Supabase) / SQLite (Local Dev fallback)
+- **Math Engine**: NumPy, Pandas
+- **Authentication**: Introduction of Simple JWT
 
-## 📖 Documentation
+## 📋 Prerequisites
 
-- **[backend_django/README.md](backend_django/README.md)** - Backend setup & API documentation
+Before you begin, ensure you have the following installed:
+- **Node.js** (v18 or higher)
+- **Python** (v3.10 or higher)
+- **Git**
 
-## 🔐 Authentication
+## 🚀 Quick Start
 
-Create an account or login to access the data analysis features. Your session is secured with JWT tokens.
+The fastest way to get the application running locally.
 
-## 💾 Database
+### Windows
+Double-click `start-dev.bat` or run:
+```powershell
+.\start-dev.bat
+```
 
-- **Production**: Supabase Postgres via `DATABASE_URL` environment variable
-- **Local Dev**: SQLite fallback at `backend_django/db.sqlite3`
+### macOS / Linux
+Run the shell script:
+```bash
+./start-dev.sh
+```
 
-## 🎯 Usage
+These scripts will automatically set up the Python virtual environment, install dependencies, migrate the specific database, and launch both frontend and backend servers.
 
-1. Sign up or login
-2. Add data points (manually or via CSV)
-3. Click "Analyze Data"
-4. View regression results and charts
-5. Save your analysis
+---
 
-## 🚢 Production Deploy (quick notes)
+## 🔧 Manual Setup
 
-- **Frontend build**
-	```bash
-	cd frontend
-	npm install
-	npm run build
-	# serve the dist/ folder via your host (e.g., nginx) or `npm run preview`
-	```
-- **Frontend env**: set `VITE_API_URL` in `.env` (or use `.env.example`) to your public backend URL (e.g., `https://api.example.com/api`).
-- **Backend env**: create `backend_django/.env` with `DATABASE_URL`, `DJANGO_SECRET_KEY`, `JWT_SECRET`, `FRONTEND_URL`. See [backend_django/README.md](backend_django/README.md) for full values.
-- **Backend run**
-	```bash
-	cd backend_django
-	pip install -r requirements.txt
-	python manage.py migrate
-	python manage.py collectstatic --noinput
-	python manage.py runserver 0.0.0.0:5000  # or your WSGI/ASGI host
-	```
-- **Chunking**: Vite splits bundles into `react-vendor`, `radix-ui`, and `charts` chunks; keep `build.chunkSizeWarningLimit` at 1200 KB in [frontend/vite.config.ts](frontend/vite.config.ts).
+If you prefer to run the services individually, follow these steps.
 
-## 📝 License
+### 1. Backend Setup (Django)
 
-MIT License - see LICENSE file for details
+Navigate to the project root in your terminal:
+
+```bash
+# Create and activate virtual environment
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r backend_django/requirements.txt
+
+# Apply database migrations
+python backend_django/manage.py migrate
+
+# Start the server (runs on port 5000)
+python backend_django/manage.py runserver 5000
+```
+
+### 2. Frontend Setup (React)
+
+Open a new terminal window:
+
+```bash
+cd frontend
+
+# Install Node dependencies
+npm install
+
+# Start the development server (default port 5173)
+npm run dev
+```
+
+Visit **http://localhost:5173** to use the application.
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+#### Backend (`backend_django/.env`)
+The backend is pre-configured to use SQLite for local development. For production or to use Supabase, create a `.env` file in `backend_django/` based on `.env.example`:
+
+```env
+DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres
+DJANGO_SECRET_KEY=your-secret-key
+JWT_SECRET=your-jwt-secret
+FRONTEND_URL=http://localhost:5173
+```
+
+#### Frontend (`frontend/.env`)
+Frontend variables are managed via Vite. Create a `.env` file if you need to override defaults:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+## 📚 API Documentation
+
+Key endpoints available at `http://localhost:5000/api/`:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/signup` | Register a new user |
+| POST | `/auth/login` | Login an existing user |
+| POST | `/data/analyze` | Perform regression analysis (public) |
+| POST | `/data/save` | Save analysis results (Auth required) |
+| GET | `/data/analyses` | Retrieve saved analyses (Auth required) |
+
+See [backend_django/README.md](backend_django/README.md) for full API details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome!
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-For detailed setup instructions and Supabase configuration, see [backend_django/README.md](backend_django/README.md).
+## 📝 License
 
+Distributed under the MIT License. See `LICENSE` for more information.
