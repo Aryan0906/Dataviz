@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type ChangeEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
+import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
 import regression from "regression";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -45,6 +46,7 @@ export const DataAnalyzer = () => {
   const { session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // State initialization - will be loaded from Supabase
   const [data, setData] = useState<DataPoint[]>([]);
   const [categories, setCategories] = useState<CategoryPoint[]>([]);
   const [regressionResult, setRegressionResult] = useState<RegressionResult | null>(null);
@@ -58,6 +60,64 @@ export const DataAnalyzer = () => {
   const [error, setError] = useState("");
   const [regressionType, setRegressionType] = useState<"linear" | "polynomial">("linear");
   const [polynomialDegree, setPolynomialDegree] = useState(2);
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load draft from Supabase on mount
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (!session) return;
+
+      try {
+        const { draft } = await dataAPI.getDraft();
+        if (draft) {
+          setData(draft.dataPoints || []);
+          setCategories(draft.categories || []);
+          setTab(draft.tabType || "regression");
+          setRegressionType(draft.regressionType || "linear");
+          setPolynomialDegree(draft.polynomialDegree || 2);
+          setDraftId(draft.id);
+        }
+      } catch (error) {
+        console.error("Failed to load draft:", error);
+      }
+    };
+
+    loadDraft();
+  }, [session]);
+
+  // Auto-save to Supabase with debounce (2 seconds after last change)
+  const debouncedSave = useCallback(
+    debounce(async (draftData: any) => {
+      if (!session) return;
+
+      setIsSaving(true);
+      try {
+        const result = await dataAPI.saveDraft(draftData);
+        setDraftId(result.id);
+        console.log("Draft auto-saved:", result.updated_at);
+      } catch (error) {
+        console.error("Failed to auto-save draft:", error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 2000),
+    [session]
+  );
+
+  // Trigger auto-save when data changes
+  useEffect(() => {
+    if (!session) return;
+    if (data.length === 0 && categories.length === 0) return; // Don't save empty drafts
+
+    debouncedSave({
+      dataPoints: data,
+      categories: categories,
+      tabType: tab,
+      regressionType: regressionType,
+      polynomialDegree: polynomialDegree,
+    });
+  }, [data, categories, tab, regressionType, polynomialDegree, session, debouncedSave]);
 
   const addPoint = () => {
     setError("");
@@ -96,7 +156,7 @@ export const DataAnalyzer = () => {
     toast.success("Category added");
   };
 
-  const analyzeData = () => {
+  const analyzeData = useCallback(() => {
     setError("");
     if (data.length < 2) {
       setError("Need at least 2 data points to analyze");
@@ -173,7 +233,7 @@ export const DataAnalyzer = () => {
     } catch (_err) {
       setError("Failed to analyze data");
     }
-  };
+  }, [data, regressionType, polynomialDegree]);
 
   const importCSV = () => {
     setError("");
@@ -287,8 +347,9 @@ export const DataAnalyzer = () => {
         } else {
           setRegressionType("linear");
         }
-        // Re-run local analysis for charting
-        setTimeout(() => analyzeData(), 0);
+        // Re-run local analysis for charting - debounced to prevent rapid calls
+        const debouncedAnalyze = debounce(analyzeData, 300);
+        setTimeout(() => debouncedAnalyze(), 0);
       } catch {
         // ignore
       }
@@ -311,13 +372,19 @@ export const DataAnalyzer = () => {
         ? `Polynomial Regression (Degree ${polynomialDegree})`
         : "Linear Regression";
 
-      await dataAPI.save(
-        typeLabel,
-        data,
-        regressionResult.type,
-        regressionResult.equation || `R² = ${regressionResult.r2.toFixed(4)}`,
-        regressionResult.r2
-      );
+      // Finalize the draft (converts to saved analysis and deletes draft)
+      await dataAPI.finalizeDraft({
+        title: typeLabel,
+        equation: regressionResult.equation || `R² = ${regressionResult.r2.toFixed(4)}`,
+        r2: regressionResult.r2
+      });
+
+      // Clear local state after saving
+      setData([]);
+      setCategories([]);
+      setRegressionResult(null);
+      setDraftId(null);
+
       toast.success("Analysis saved successfully");
     } catch (_err) {
       toast.error("Failed to save analysis");
@@ -326,14 +393,27 @@ export const DataAnalyzer = () => {
     }
   };
 
-  const clearData = () => {
-    if (window.confirm("Clear all data?")) {
-      setData([]);
-      setCategories([]);
-      setRegressionResult(null);
-      setCsvText("");
-      setError("");
-      toast.success("Data cleared");
+  const clearData = async () => {
+    if (window.confirm("Clear all data? This will delete your draft from the database.")) {
+      try {
+        // Delete draft from Supabase
+        if (session) {
+          await dataAPI.deleteDraft();
+        }
+
+        // Clear local state
+        setData([]);
+        setCategories([]);
+        setRegressionResult(null);
+        setCsvText("");
+        setError("");
+        setDraftId(null);
+
+        toast.success("Data cleared");
+      } catch (error) {
+        console.error("Failed to clear draft:", error);
+        toast.error("Failed to clear data");
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useState, useMemo, type ChangeEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
   const saveEdit = (index: number) => {
     const x = parseFloat(editX);
     const y = parseFloat(editY);
-    
+
     if (isNaN(x) || isNaN(y)) {
       toast.error("Please enter valid numbers");
       return;
@@ -42,7 +42,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
     const newData = [...data];
     newData[index] = { x, y };
     newData.sort((a, b) => a.x - b.x);
-    
+
     onDataChange(newData);
     setEditingIndex(null);
     setEditX("");
@@ -56,8 +56,8 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
     toast.success("Data point deleted");
   };
 
-  // Calculate statistics
-  const stats = {
+  // Calculate statistics - memoized to prevent recalculation on every render
+  const stats = useMemo(() => ({
     count: data.length,
     meanX: data.length > 0 ? data.reduce((sum, p) => sum + p.x, 0) / data.length : 0,
     meanY: data.length > 0 ? data.reduce((sum, p) => sum + p.y, 0) / data.length : 0,
@@ -65,7 +65,7 @@ export const DataTable = ({ data, onDataChange }: DataTableProps) => {
     maxX: data.length > 0 ? Math.max(...data.map(p => p.x)) : 0,
     minY: data.length > 0 ? Math.min(...data.map(p => p.y)) : 0,
     maxY: data.length > 0 ? Math.max(...data.map(p => p.y)) : 0,
-  };
+  }), [data]);
 
   if (data.length === 0) {
     return null;

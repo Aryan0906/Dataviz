@@ -54,7 +54,7 @@ const Login = () => {
         }
       } else {
         toast.success("Login successful!");
-        navigate("/dashboard");
+        navigate("/profile");
       }
     } catch (error: any) {
       toast.error(error.message || "Login failed. Please try again.");
@@ -108,14 +108,11 @@ const Login = () => {
             duration: 6000,
           });
         } else {
-          toast.success("Account created successfully! You can now log in.", {
-            duration: 4000,
+          // Session created immediately - redirect to profile
+          toast.success("Account created successfully!", {
+            duration: 3000,
           });
-          // Auto-switch to login tab after successful signup
-          setTimeout(() => {
-            const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-            loginTab?.click();
-          }, 1000);
+          navigate("/profile");
         }
       }
     } catch (error: any) {

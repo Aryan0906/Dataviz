@@ -1,7 +1,8 @@
 // API configuration and utility functions
 import { supabase } from './supabase';
+import type { Session } from '@supabase/supabase-js';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000/api';
 
 export interface AnalysisResult {
   type: string;
@@ -19,9 +20,27 @@ export interface SavedAnalysis {
   created_at: string;
 }
 
+// Session cache to avoid repeated getSession() calls
+let cachedSession: Session | null = null;
+let sessionExpiry: number = 0;
+
 // Helper to get auth headers with Supabase access token
 const getAuthHeaders = async () => {
+  const now = Date.now();
+
+  // Return cached session if still valid (cached for 1 minute)
+  if (cachedSession && now < sessionExpiry) {
+    return {
+      'Authorization': `Bearer ${cachedSession.access_token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  // Fetch new session and cache it
   const { data: { session } } = await supabase.auth.getSession();
+  cachedSession = session;
+  sessionExpiry = now + 60000; // Cache for 1 minute
+
   return {
     'Authorization': `Bearer ${session?.access_token || ''}`,
     'Content-Type': 'application/json',
@@ -82,7 +101,7 @@ export const dataAPI = {
 
   deleteAnalysis: async (id: number): Promise<{ message: string }> => {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_BASE_URL}/data/analyses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/data/analyses/${id}/delete`, {
       method: 'DELETE',
       headers
     });
@@ -90,5 +109,56 @@ export const dataAPI = {
       throw new Error('Failed to delete analysis');
     }
     return response.json();
-  }
+  },
+
+  // Draft analysis operations
+  async saveDraft(draftData: {
+    title?: string;
+    dataPoints: any[];
+    categories: any[];
+    tabType: string;
+    regressionType?: string;
+    polynomialDegree?: number;
+  }): Promise<{ id: number; message: string; updated_at: string }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/data/draft/save`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(draftData),
+    });
+    if (!res.ok) throw new Error(`Failed to save draft: ${res.statusText}`);
+    return res.json();
+  },
+
+  async getDraft(): Promise<{ draft: any | null }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/data/draft/get`, { headers });
+    if (!res.ok) throw new Error(`Failed to get draft: ${res.statusText}`);
+    return res.json();
+  },
+
+  async deleteDraft(): Promise<{ message: string }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/data/draft/delete`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (!res.ok) throw new Error(`Failed to delete draft: ${res.statusText}`);
+    return res.json();
+  },
+
+  async finalizeDraft(data: {
+    title: string;
+    equation?: string;
+    r2?: number;
+  }): Promise<{ id: number; message: string }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/data/draft/finalize`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`Failed to finalize draft: ${res.statusText}`);
+    return res.json();
+  },
 };

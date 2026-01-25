@@ -25,3 +25,22 @@ class Visualization(models.Model):
     class Meta:
         db_table = "visualizations"
 
+
+class DraftAnalysis(models.Model):
+    """Store in-progress analyses that auto-save as users work"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    title = models.CharField(max_length=255, default="Untitled Analysis")
+    data_points = models.JSONField(default=list)
+    categories = models.JSONField(default=list)
+    tab_type = models.CharField(max_length=20, default="regression")  # 'regression' or 'categorical'
+    regression_type = models.CharField(max_length=50, null=True, blank=True)
+    polynomial_degree = models.IntegerField(null=True, blank=True)
+    is_draft = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "draft_analyses"
+        ordering = ['-updated_at']
+
+

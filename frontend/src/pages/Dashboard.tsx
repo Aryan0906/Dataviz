@@ -14,6 +14,7 @@ const Dashboard = () => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
+  const [draft, setDraft] = useState<any | null>(null);
   const [query, setQuery] = useState("");
 
   const fetchHistory = async () => {
@@ -22,6 +23,10 @@ const Dashboard = () => {
     try {
       const items = await dataAPI.getAnalyses();
       setAnalyses(items);
+
+      // Also fetch draft
+      const { draft: draftData } = await dataAPI.getDraft();
+      setDraft(draftData);
     } catch {
       toast.error("Failed to load history");
     } finally {
@@ -65,6 +70,35 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Draft Analysis Section */}
+        {draft && (
+          <Card className="border-blue-500/50 bg-blue-500/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>📝 Draft Analysis</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  (In Progress)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{draft.title || "Untitled Analysis"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {draft.dataPoints?.length || 0} data points ·
+                    {draft.categories?.length || 0} categories ·
+                    Last updated: {new Date(draft.updated_at).toLocaleString()}
+                  </div>
+                </div>
+                <Link to="/manual-plot">
+                  <Button>Continue Editing</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>User History</CardTitle>
@@ -95,7 +129,10 @@ const Dashboard = () => {
                         <div>
                           <div className="text-sm text-muted-foreground">{new Date(item.created_at).toLocaleString()}</div>
                           <div className="font-medium">{item.title}</div>
-                          <div className="text-sm text-muted-foreground">{item.regression_type} · R² {item.r_squared.toFixed?.(4) ?? item.r_squared}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {item.regression_type}
+                            {item.r_squared != null && ` · R² ${item.r_squared.toFixed(4)}`}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Link to={`/manual-plot?analysis=${item.id}`}>

@@ -13,14 +13,15 @@ interface DataPlotProps {
 export const DataPlot = ({ data, regression }: DataPlotProps) => {
   const plotData = useMemo(() => {
     if (data.length === 0) return [];
-    
+
     const sortedData = [...data].sort((a, b) => a.x - b.x);
     const minX = Math.min(...sortedData.map(d => d.x));
     const maxX = Math.max(...sortedData.map(d => d.x));
-    
+
     const regressionPoints = [];
     if (regression) {
-      const step = (maxX - minX) / 100;
+      // Reduced from 100 to 50 points for better performance
+      const step = (maxX - minX) / 50;
       for (let x = minX; x <= maxX; x += step) {
         try {
           const y = regression.predict(x);
@@ -32,12 +33,20 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
         }
       }
     }
-    
+
+    // Use Map for O(1) lookups instead of O(n) find operations
     const combined: Array<{
       x: number;
       y?: number;
       regressionY?: number;
     }> = [];
+
+    const dataMap = new Map<number, { x: number; y: number }>();
+    sortedData.forEach(point => {
+      dataMap.set(point.x, point);
+    });
+
+    // Add all data points with their regression values
     sortedData.forEach(point => {
       combined.push({
         x: point.x,
@@ -45,10 +54,10 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
         regressionY: regression ? regression.predict(point.x) : undefined
       });
     });
-    
+
+    // Add regression-only points (not in original data)
     regressionPoints.forEach(point => {
-      const existingPoint = combined.find(p => Math.abs(p.x - point.x) < 0.001);
-      if (!existingPoint) {
+      if (!dataMap.has(point.x)) {
         combined.push({
           x: point.x,
           y: undefined,
@@ -56,7 +65,7 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
         });
       }
     });
-    
+
     return combined.sort((a, b) => a.x - b.x);
   }, [data, regression]);
 
@@ -70,46 +79,46 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
   return (
     <Card className="shadow-card">
       <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Chart
-            </CardTitle>
-            <div className="flex flex-col gap-2 items-end">
-              <div className="flex gap-2">
-                <Badge variant="outline">{data.length} points</Badge>
-                {regression && (
-                  <Badge variant="secondary">
-                    R² = {regression.r2.toFixed(3)}
-                  </Badge>
-                )}
-              </div>
-              {regression?.equation && (
-                <div className="text-xs text-muted-foreground max-w-md text-right">
-                  {regression.equation}
-                </div>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Chart
+          </CardTitle>
+          <div className="flex flex-col gap-2 items-end">
+            <div className="flex gap-2">
+              <Badge variant="outline">{data.length} points</Badge>
+              {regression && (
+                <Badge variant="secondary">
+                  R² = {regression.r2.toFixed(3)}
+                </Badge>
               )}
             </div>
+            {regression?.equation && (
+              <div className="text-xs text-muted-foreground max-w-md text-right">
+                {regression.equation}
+              </div>
+            )}
           </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={plotData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
-              <XAxis 
-                dataKey="x" 
+              <XAxis
+                dataKey="x"
                 type="number"
                 scale="linear"
                 domain={['dataMin', 'dataMax']}
                 tick={{ fontSize: 12 }}
               />
-              <YAxis 
+              <YAxis
                 type="number"
                 domain={['dataMin', 'dataMax']}
                 tick={{ fontSize: 12 }}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={formatTooltip}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
@@ -117,7 +126,7 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
                   borderRadius: '8px'
                 }}
               />
-              
+
               <Line
                 type="monotone"
                 dataKey="y"
@@ -127,7 +136,7 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
                 name="Data"
                 connectNulls={false}
               />
-              
+
               {regression && (
                 <Line
                   type="monotone"
