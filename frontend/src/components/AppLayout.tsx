@@ -9,16 +9,15 @@ interface AppLayoutProps {
 }
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `px-3 py-2 rounded-md text-sm font-medium ${
-    isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+  `px-3 py-2 rounded-md text-sm font-medium ${isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
   }`;
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
+    signOut();
     navigate("/");
   };
 
@@ -40,7 +39,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           <div className="flex items-center gap-3">
             {user && (
               <div className="text-sm text-muted-foreground hidden sm:block">
-                <span className="font-medium text-foreground">{user.name}</span>
+                <span className="font-medium text-foreground">
+                  {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                </span>
                 <span className="mx-2">·</span>
                 <span>{user.email}</span>
               </div>

@@ -77,3 +77,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 STATIC_URL = "static/"
 
+# Media files configuration for CSV uploads
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+

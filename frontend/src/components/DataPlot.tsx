@@ -1,9 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Download, FileImage, FileText } from "lucide-react";
 import type { DataPoint, RegressionResult } from "./DataAnalyzer";
+import { exportChartAsPNG, exportChartAsPDF, generateFilename } from "@/lib/chartExport";
 
 interface DataPlotProps {
   data: DataPoint[];
@@ -11,6 +19,29 @@ interface DataPlotProps {
 }
 
 export const DataPlot = ({ data, regression }: DataPlotProps) => {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportPNG = async () => {
+    if (!chartRef.current) return;
+    setExporting(true);
+    try {
+      await exportChartAsPNG(chartRef.current, generateFilename('regression-chart'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!chartRef.current) return;
+    setExporting(true);
+    try {
+      await exportChartAsPDF(chartRef.current, generateFilename('regression-chart'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const plotData = useMemo(() => {
     if (data.length === 0) return [];
 
@@ -77,27 +108,47 @@ export const DataPlot = ({ data, regression }: DataPlotProps) => {
   };
 
   return (
-    <Card className="shadow-card">
+    <Card className="shadow-card" ref={chartRef}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             Chart
           </CardTitle>
-          <div className="flex flex-col gap-2 items-end">
-            <div className="flex gap-2">
-              <Badge variant="outline">{data.length} points</Badge>
-              {regression && (
-                <Badge variant="secondary">
-                  R² = {regression.r2.toFixed(3)}
-                </Badge>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2 items-end">
+              <div className="flex gap-2">
+                <Badge variant="outline">{data.length} points</Badge>
+                {regression && (
+                  <Badge variant="secondary">
+                    R² = {regression.r2.toFixed(3)}
+                  </Badge>
+                )}
+              </div>
+              {regression?.equation && (
+                <div className="text-xs text-muted-foreground max-w-md text-right">
+                  {regression.equation}
+                </div>
               )}
             </div>
-            {regression?.equation && (
-              <div className="text-xs text-muted-foreground max-w-md text-right">
-                {regression.equation}
-              </div>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={exporting || data.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {exporting ? 'Exporting...' : 'Export'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPNG}>
+                  <FileImage className="h-4 w-4 mr-2" />
+                  Download as PNG
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Download as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>

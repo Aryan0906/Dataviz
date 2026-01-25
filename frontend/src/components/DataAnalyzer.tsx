@@ -17,6 +17,14 @@ import Papa from "papaparse";
 import regression from "regression";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UniversalChart } from "./UniversalChart";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Download, FileImage, FileText } from "lucide-react";
+import { exportChartAsPNG, exportChartAsPDF, generateFilename } from "@/lib/chartExport";
 
 export interface DataPoint {
   x: number;
@@ -45,6 +53,29 @@ export const DataAnalyzer = () => {
   const [searchParams] = useSearchParams();
   const { session } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const barChartRef = useRef<HTMLDivElement>(null);
+  const pieChartRef = useRef<HTMLDivElement>(null);
+  const [exportingBar, setExportingBar] = useState(false);
+  const [exportingPie, setExportingPie] = useState(false);
+
+  const handleExport = async (type: 'bar' | 'pie', format: 'png' | 'pdf') => {
+    const ref = type === 'bar' ? barChartRef : pieChartRef;
+    const setExporting = type === 'bar' ? setExportingBar : setExportingPie;
+    const filename = generateFilename(`${type}-chart`);
+
+    if (!ref.current) return;
+
+    setExporting(true);
+    try {
+      if (format === 'png') {
+        await exportChartAsPNG(ref.current, filename);
+      } else {
+        await exportChartAsPDF(ref.current, filename);
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // State initialization - will be loaded from Supabase
   const [data, setData] = useState<DataPoint[]>([]);
@@ -653,9 +684,29 @@ export const DataAnalyzer = () => {
 
       {tab === "categorical" && categories.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
+          <Card ref={barChartRef}>
             <CardHeader>
-              <CardTitle>Bar Chart</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Bar Chart</CardTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={exportingBar}>
+                      <Download className="h-4 w-4 mr-2" />
+                      {exportingBar ? '...' : 'Export'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleExport('bar', 'png')}>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('bar', 'pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">
@@ -664,9 +715,29 @@ export const DataAnalyzer = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card ref={pieChartRef}>
             <CardHeader>
-              <CardTitle>Pie Chart</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pie Chart</CardTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={exportingPie}>
+                      <Download className="h-4 w-4 mr-2" />
+                      {exportingPie ? '...' : 'Export'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleExport('pie', 'png')}>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      PNG
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pie', 'pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-80">

@@ -9,6 +9,7 @@ import { Loader } from "lucide-react";
 
 // Lazy load route components for code splitting
 const Login = lazy(() => import("./pages/Login"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
@@ -30,7 +31,9 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Login />} />
             <Route
               path="/dashboard"
               element={

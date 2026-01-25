@@ -161,4 +161,99 @@ export const dataAPI = {
     if (!res.ok) throw new Error(`Failed to finalize draft: ${res.statusText}`);
     return res.json();
   },
+
+  // AI-powered analysis endpoints
+  async uploadCSV(file: File): Promise<{
+    message: string;
+    visualization_id: number;
+    metadata: any;
+    cleaning_analysis: {
+      issues: string[];
+      suggested_actions: string[];
+      summary: string;
+    };
+  }> {
+    const headers = await getAuthHeaders();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Remove Content-Type header to let browser set multipart boundary
+    const headersWithoutContentType: Record<string, string> = { ...headers };
+    delete (headersWithoutContentType as any)['Content-Type'];
+
+    const res = await fetch(`${API_BASE_URL}/ai/upload-csv`, {
+      method: 'POST',
+      headers: headersWithoutContentType,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      if (error.code === 'ERR_AI_TIMEOUT') {
+        throw new AITimeoutError(error.error);
+      }
+      throw new Error(error.error || 'Upload failed');
+    }
+
+    return res.json();
+  },
+
+  async queryAI(visualizationId: number, query: string): Promise<{
+    message: string;
+    chart_config: {
+      chartType: 'bar' | 'line' | 'scatter' | 'pie';
+      xAxisKey: string;
+      dataKeys: string[];
+      title: string;
+      summary: string;
+    };
+    chart_data: any[];
+  }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/ai/query`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        visualization_id: visualizationId,
+        query,
+      }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      if (error.code === 'ERR_AI_TIMEOUT') {
+        throw new AITimeoutError(error.error);
+      }
+      throw new Error(error.error || 'Query failed');
+    }
+
+    return res.json();
+  },
+
+  async getLatestVisualization(): Promise<{ visualization: any | null }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/ai/latest`, { headers });
+    if (!res.ok) throw new Error('Failed to fetch latest visualization');
+    return res.json();
+  },
+
+  async saveVisualizationToHistory(visualizationId: number, title?: string): Promise<{ id: number; message: string }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${API_BASE_URL}/ai/save`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ visualization_id: visualizationId, title }),
+    });
+    if (!res.ok) throw new Error('Failed to save visualization to history');
+    return res.json();
+  },
 };
+
+// Custom error class for AI timeout errors
+export class AITimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AITimeoutError';
+  }
+}
+

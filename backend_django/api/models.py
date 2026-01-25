@@ -21,6 +21,23 @@ class Visualization(models.Model):
     chart_type = models.CharField(max_length=50)  # 'bar', 'pie', 'line', 'scatter'
     data = models.JSONField()  # Stores {"labels": ["A", "B"], "values": [10, 20]}
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # AI-powered analysis fields
+    ai_summary = models.TextField(blank=True, null=True)  # AI-generated data quality insights
+    chart_config = models.JSONField(blank=True, null=True)  # AI-generated chart configuration
+    csv_file_path = models.CharField(max_length=500, blank=True, null=True)  # Path to uploaded CSV
+    data_schema = models.JSONField(blank=True, null=True)  # Column names, types, sample stats
+    processing_status = models.CharField(
+        max_length=20, 
+        default='pending',
+        choices=[
+            ('pending', 'Pending'),
+            ('processing', 'Processing'),
+            ('completed', 'Completed'),
+            ('failed', 'Failed'),
+        ]
+    )
+    error_message = models.TextField(blank=True, null=True)  # Error details if processing fails
 
     class Meta:
         db_table = "visualizations"

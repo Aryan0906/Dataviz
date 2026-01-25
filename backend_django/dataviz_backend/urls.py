@@ -18,5 +18,10 @@ urlpatterns = [
     path("api/data/draft/get", api.get_draft),
     path("api/data/draft/delete", api.delete_draft),
     path("api/data/draft/finalize", api.finalize_draft),
+    # AI analysis endpoints
+    path("api/ai/upload-csv", api.upload_csv),
+    path("api/ai/query", api.query_ai),
+    path("api/ai/latest", api.get_latest_visualization),
+    path("api/ai/save", api.save_visualization_to_history),
 ]
 

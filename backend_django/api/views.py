@@ -1,5 +1,6 @@
 import os, json, jwt
 import numpy as np
+import pandas as pd
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.views.decorators.csrf import csrf_exempt
@@ -8,7 +9,16 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from .models import AnalysisResult, DraftAnalysis
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from .models import AnalysisResult, DraftAnalysis, Visualization
+from .utils.ai_helpers import (
+    generate_metadata_summary,
+    suggest_cleaning_actions,
+    generate_chart_config,
+    AITimeoutError,
+    AIValidationError
+)
 
 JWT_SECRET = os.getenv("JWT_SECRET", "secret")
 SUPABASE_JWT_SECRET = settings.SUPABASE_JWT_SECRET
@@ -379,3 +389,301 @@ def finalize_draft(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ============ AI ANALYSIS ENDPOINTS ============
+
+@csrf_exempt
+@transaction.atomic
+def upload_csv(request):
+    """
+    Upload and analyze a CSV file with AI-powered data quality insights.
+    
+    Uses atomic transactions to ensure file and DB operations are rolled back together on failure.
+    Implements token optimization by sending only metadata to OpenAI, not the full CSV.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    user_id, err = _require_auth(request)
+    if err:
+        return err
+    
+    # Validate file upload
+    if 'file' not in request.FILES:
+        return JsonResponse({'error': 'No file provided', 'code': 'ERR_NO_FILE'}, status=400)
+    
+    uploaded_file = request.FILES['file']
+    
+    # Validate file extension
+    if not uploaded_file.name.endswith('.csv'):
+        return JsonResponse({
+            'error': 'Invalid file format. Only CSV files are allowed.',
+            'code': 'ERR_INVALID_FORMAT'
+        }, status=400)
+    
+    # Validate file size (10MB limit)
+    max_size = 10 * 1024 * 1024  # 10MB
+    if uploaded_file.size > max_size:
+        return JsonResponse({
+            'error': f'File too large. Maximum size is {max_size / (1024 * 1024)}MB.',
+            'code': 'ERR_FILE_TOO_LARGE'
+        }, status=400)
+    
+    file_path = None
+    
+    try:
+        # Create media directory if it doesn't exist
+        media_dir = os.path.join(settings.BASE_DIR, 'media', 'csv_uploads')
+        os.makedirs(media_dir, exist_ok=True)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{user_id}_{timestamp}_{uploaded_file.name}"
+        file_path = os.path.join(media_dir, filename)
+        
+        # Save file temporarily
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        
+        # Load CSV into pandas
+        try:
+            df = pd.read_csv(file_path)
+        except Exception as e:
+            raise ValidationError(f'Failed to parse CSV: {str(e)}')
+        
+        # Validate CSV is not empty
+        if df.empty:
+            raise ValidationError('CSV file is empty')
+        
+        # Generate metadata summary (token optimization)
+        metadata = generate_metadata_summary(df)
+        
+        # Get AI cleaning suggestions
+        try:
+            cleaning_analysis = suggest_cleaning_actions(metadata)
+            ai_summary = cleaning_analysis.get('summary', 'No issues detected')
+        except AITimeoutError as e:
+            # Return specific error code so frontend can show retry button
+            return JsonResponse({
+                'error': str(e),
+                'code': 'ERR_AI_TIMEOUT'
+            }, status=504)
+        except AIValidationError as e:
+            return JsonResponse({
+                'error': f'AI validation failed: {str(e)}',
+                'code': 'ERR_AI_VALIDATION'
+            }, status=500)
+        
+        # Create visualization record in database
+        visualization = Visualization.objects.create(
+            user_id=user_id,
+            title=uploaded_file.name.replace('.csv', ''),
+            chart_type='pending',  # Will be set when user queries
+            data={},  # Will be populated when chart is generated
+            csv_file_path=file_path,
+            data_schema=metadata,
+            ai_summary=ai_summary,
+            processing_status='completed'
+        )
+        
+        return JsonResponse({
+            'message': 'CSV uploaded and analyzed successfully',
+            'visualization_id': visualization.id,
+            'metadata': metadata,
+            'cleaning_analysis': cleaning_analysis
+        }, status=201)
+    
+    except ValidationError as e:
+        # Rollback: delete file if DB operation fails
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+        return JsonResponse({
+            'error': str(e),
+            'code': 'ERR_INVALID_DATA'
+        }, status=400)
+    
+    except Exception as e:
+        # Rollback: delete file on any error
+        if file_path and os.path.exists(file_path):
+            os.remove(file_path)
+        return JsonResponse({
+            'error': f'Upload failed: {str(e)}',
+            'code': 'ERR_UPLOAD_FAILED'
+        }, status=500)
+
+
+@csrf_exempt
+def query_ai(request):
+    """
+    Generate a chart configuration from a natural language query.
+    
+    Loads the CSV data, sends schema to AI, and returns a Recharts-compatible config.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    user_id, err = _require_auth(request)
+    if err:
+        return err
+    
+    body = json.loads(request.body.decode() or "{}")
+    visualization_id = body.get('visualization_id')
+    query = body.get('query')
+    
+    if not visualization_id or not query:
+        return JsonResponse({
+            'error': 'visualization_id and query are required',
+            'code': 'ERR_MISSING_PARAMS'
+        }, status=400)
+    
+    try:
+        # Get visualization record
+        visualization = Visualization.objects.get(id=visualization_id, user_id=user_id)
+        
+        if not visualization.csv_file_path or not os.path.exists(visualization.csv_file_path):
+            return JsonResponse({
+                'error': 'CSV file not found',
+                'code': 'ERR_FILE_NOT_FOUND'
+            }, status=404)
+        
+        # Load CSV data
+        df = pd.read_csv(visualization.csv_file_path)
+        
+        # Generate chart config using AI
+        try:
+            chart_config = generate_chart_config(query, visualization.data_schema)
+        except AITimeoutError as e:
+            return JsonResponse({
+                'error': str(e),
+                'code': 'ERR_AI_TIMEOUT'
+            }, status=504)
+        except AIValidationError as e:
+            return JsonResponse({
+                'error': f'AI validation failed: {str(e)}',
+                'code': 'ERR_AI_VALIDATION'
+            }, status=500)
+        
+        # Extract data for the chart based on AI config
+        x_key = chart_config['xAxisKey']
+        data_keys = chart_config['dataKeys']
+        
+        # Validate columns exist
+        required_cols = [x_key] + data_keys
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return JsonResponse({
+                'error': f'Columns not found in CSV: {missing_cols}',
+                'code': 'ERR_INVALID_COLUMNS'
+            }, status=400)
+        
+        # Prepare chart data
+        chart_data = df[required_cols].to_dict(orient='records')
+        
+        # Update visualization record
+        visualization.chart_type = chart_config['chartType']
+        visualization.chart_config = chart_config
+        visualization.data = chart_data
+        visualization.title = chart_config['title']
+        visualization.save()
+        
+        return JsonResponse({
+            'message': 'Chart generated successfully',
+            'chart_config': chart_config,
+            'chart_data': chart_data
+        })
+    
+    except Visualization.DoesNotExist:
+        return JsonResponse({
+            'error': 'Visualization not found',
+            'code': 'ERR_NOT_FOUND'
+        }, status=404)
+    
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Query failed: {str(e)}',
+            'code': 'ERR_QUERY_FAILED'
+        }, status=500)
+
+
+@csrf_exempt
+def get_latest_visualization(request):
+    """Get user's most recent visualization for auto-resume"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+    
+    user_id, err = _require_auth(request)
+    if err:
+        return err
+    
+    try:
+        # Get latest visualization created by user
+        vis = Visualization.objects.filter(
+            user_id=user_id
+        ).order_by('-created_at').first()
+        
+        if not vis:
+            return JsonResponse({'visualization': None})
+            
+        return JsonResponse({
+            'visualization': {
+                'id': vis.id,
+                'title': vis.title,
+                'chart_type': vis.chart_type,
+                'data': vis.data,
+                'chart_config': vis.chart_config,
+                'data_schema': vis.data_schema,
+                'ai_summary': vis.ai_summary,
+                'cleaning_analysis': {
+                    'summary': vis.ai_summary,
+                    # We don't store issues list separately in DB currently, 
+                    # but we can reconstruct a basic structure if needed
+                    'issues': [], 
+                    'suggested_actions': []
+                },
+                'created_at': vis.created_at.isoformat()
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def save_visualization_to_history(request):
+    """Convert a temporary visualization to a permanent saved analysis"""
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    user_id, err = _require_auth(request)
+    if err:
+        return err
+    
+    body = json.loads(request.body.decode() or "{}")
+    vis_id = body.get('visualization_id')
+    title = body.get('title')
+    
+    if not vis_id:
+        return JsonResponse({'error': 'visualization_id is required'}, status=400)
+    
+    try:
+        vis = Visualization.objects.get(id=vis_id, user_id=user_id)
+        
+        # Create persistent analysis record
+        analysis = AnalysisResult.objects.create(
+            user_id=user_id,
+            title=title or vis.title,
+            data_points=vis.data,  # Store the chart data
+            regression_type=vis.chart_type,  # Use regression_type field for chart type
+            equation=vis.ai_summary,  # Store AI summary in equation field
+            r_squared=None  # Not applicable for AI charts usually
+        )
+        
+        return JsonResponse({
+            'message': 'Analysis saved to history successfully',
+            'id': analysis.id
+        })
+        
+    except Visualization.DoesNotExist:
+        return JsonResponse({'error': 'Visualization not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
