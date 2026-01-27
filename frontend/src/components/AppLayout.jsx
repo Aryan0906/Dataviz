@@ -2,9 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { LogOut, Edit2, Check, X } from "lucide-react";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { LogOut } from "lucide-react";
 
 const navLinkClass = ({ isActive }) =>
     `px-3 py-2 rounded-md text-sm font-medium ${isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
@@ -13,19 +11,6 @@ const navLinkClass = ({ isActive }) =>
 export const AppLayout = ({ children }) => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(false);
-    const [displayName, setDisplayName] = useState(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '');
-
-    const handleSave = async () => {
-        // Save display name to profile
-        setIsEditing(false);
-        // You can add an API call here to update the profile
-    };
-
-    const handleCancel = () => {
-        setDisplayName(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '');
-        setIsEditing(false);
-    };
 
     const handleLogout = () => {
         signOut();
@@ -49,48 +34,10 @@ export const AppLayout = ({ children }) => {
                     </div>
                     <div className="flex items-center gap-3">
                         {user && (
-                            <div className="text-sm text-muted-foreground hidden sm:flex items-center gap-2">
-                                {isEditing ? (
-                                    <>
-                                        <Input
-                                            type="text"
-                                            value={displayName}
-                                            onChange={(e) => setDisplayName(e.target.value)}
-                                            className="h-8 w-24"
-                                            placeholder="Display name"
-                                        />
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleSave}
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <Check className="h-4 w-4 text-green-600" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={handleCancel}
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <X className="h-4 w-4 text-red-600" />
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="font-medium text-foreground">
-                                            {displayName}
-                                        </span>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setIsEditing(true)}
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <Edit2 className="h-4 w-4" />
-                                        </Button>
-                                    </>
-                                )}
+                            <div className="text-sm text-muted-foreground hidden sm:block">
+                                <span className="font-medium text-foreground">
+                                    {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User'}
+                                </span>
                             </div>
                         )}
                         <ThemeToggle />

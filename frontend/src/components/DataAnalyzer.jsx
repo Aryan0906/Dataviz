@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, Plus, Zap, Save, AlertCircle, FileUp, ArrowRight, Moon, Sun } from "lucide-react";
+import { Upload, Plus, Zap, Save, AlertCircle, FileUp, ArrowRight, Moon, Sun, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "./DataTable";
@@ -17,12 +17,6 @@ import Papa from "papaparse";
 import regression from "regression";
 
 import { UniversalChart } from "./UniversalChart";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Download, FileImage, FileText } from "lucide-react";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import {
@@ -86,8 +80,7 @@ export const DataAnalyzer = () => {
             if (!session) return;
 
             try {
-                const result = await dataAPI.saveDraft(draftData);
-                console.log("Draft auto-saved:", result.updated_at);
+                await dataAPI.saveDraft(draftData);
             } catch (error) {
                 console.error("Failed to auto-save draft:", error);
             }
@@ -385,13 +378,20 @@ export const DataAnalyzer = () => {
         }
     };
 
-    const handleExportChart = async (format) => {
+    const clearAll = () => {
+        setData([]);
+        setRegressionResult(null);
+        setCsvText("");
+        setError("");
+        toast.success("Cleared the plot");
+    };
+
+    const handleExportChart = async () => {
         if (!chartContainerRef.current) {
             toast.error("Chart not found");
             return;
         }
 
-        setExportFormat(format);
         setShowExportDialog(true);
     };
 
@@ -634,24 +634,18 @@ export const DataAnalyzer = () => {
 
             {data.length > 0 && regressionResult && (
                 <div className="flex gap-2">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button size="sm" variant="outline" className="gap-2">
-                                <Download className="h-4 w-4" />
-                                <span className="hidden sm:inline">Export Chart</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => handleExportChart("png")} className="gap-2">
-                                <FileImage className="h-4 w-4" />
-                                Export as PNG
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleExportChart("pdf")} className="gap-2">
-                                <FileText className="h-4 w-4" />
-                                Export as PDF
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                        onClick={handleExportChart}
+                        size="sm"
+                        className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                    >
+                        <Download className="h-4 w-4" />
+                        Export
+                    </Button>
+                    <Button onClick={clearAll} variant="outline" size="sm" className="gap-2">
+                        <RefreshCw className="h-4 w-4" />
+                        Clear All
+                    </Button>
                 </div>
             )}
 
@@ -667,9 +661,6 @@ export const DataAnalyzer = () => {
             {data.length > 0 && (
                 <div className="space-y-3">
                     <DataTable data={data} onDataChange={setData} />
-                    <Button onClick={clearData} variant="outline" className="w-full">
-                        Clear All Data
-                    </Button>
                 </div>
             )}
 

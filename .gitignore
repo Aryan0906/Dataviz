@@ -1,4 +1,6 @@
+# =============================================================================
 # Python & Django
+# =============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,32 +9,81 @@ __pycache__/
 env/
 venv/
 ENV/
+env.bak/
+venv.bak/
 build/
 develop-eggs/
 downloads/
 eggs/
 .eggs/
+lib/
 lib64/
 parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
-.pytest_cache/
-.coverage
-*.db
-*.sqlite3
+pip-log.txt
+pip-delete-this-directory.txt
+*.pyc
+*.pyo
+*.pyd
+
+# Django specific
 db.sqlite3
+db.sqlite3-journal
+*.db
+*.sqlite
+*.sqlite3
 local_settings.py
 /media/
 /staticfiles/
-*.pyc
+/static/
 backend_django/**/__pycache__/
+backend_django/media/csv_uploads/
+backend_django/staticfiles/
 
+# =============================================================================
+# Node.js & React/Vite
+# =============================================================================
+node_modules/
+dist/
+dist-ssr/
+build/
+*.local
+*.tsbuildinfo
+.vite/
+.next/
+out/
+.nuxt
+.cache
+
+# Frontend build outputs
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# =============================================================================
+# Environment Variables & Secrets
+# =============================================================================
+.env
+.env.*
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+*.env
+.envrc
+
+# =============================================================================
 # Logs
+# =============================================================================
 logs/
 *.log
 npm-debug.log*
@@ -40,29 +91,41 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.log.*
 
-# Node/React
-node_modules/
-dist/
-dist-ssr/
-*.local
-*.tsbuildinfo
-.vite/
+# =============================================================================
+# Testing & Coverage
+# =============================================================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage/
+.nyc_output/
+*.cover
+.hypothesis/
+.tox/
+nosetests.xml
+coverage.xml
+*.coveragerc
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.production
-
-# Editor directories and files
+# =============================================================================
+# Editor & IDE
+# =============================================================================
+# VSCode
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# IntelliJ IDEA
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Other editors
 *.suo
 *.ntvs*
 *.njsproj
@@ -71,55 +134,101 @@ dist-ssr/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# =============================================================================
+# Operating System Files
+# =============================================================================
+# macOS
 .DS_Store
+.DS_Store?
 ._*
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-.Spotlight-V100
-.Trashes
 .AppleDouble
 .LSOverride
+.Spotlight-V100
+.Trashes
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# Package managers
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Package Managers & Dependencies
+# =============================================================================
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+poetry.lock
+Pipfile.lock
 
-# Build outputs
-frontend/dist/
-frontend/build/
-backend_django/staticfiles/
-backend_django/media/csv_uploads/
-dist/
-
-# Miscellaneous
-.cache/
+# =============================================================================
+# Temporary & Backup Files
+# =============================================================================
 *.tmp
 *.temp
-*.log.*
 *.bak
+*.backup
+*.old
 *.orig
-coverage/
-.nyc_output/
+*.rej
+*.swp
+*.swo
+*~
+~*
 
-# IDE & Debug
-.pytest_cache/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-
+# =============================================================================
 # Docker
-*.dockerignore
+# =============================================================================
 docker-compose.override.yml
+.dockerignore
 
-# Certificates & Keys
+# =============================================================================
+# Security & Certificates
+# =============================================================================
 *.pem
 *.key
 *.cert
 *.crt
 *.p12
 *.pfx
+*.cer
+*.der
+
+# =============================================================================
+# Miscellaneous
+# =============================================================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pylint.d/
+.ipynb_checkpoints
+*.sage.py
+.spyderproject
+.spyproject
+.ropeproject
+celerybeat-schedule
+celerybeat.pid
+*.mo
+*.pot

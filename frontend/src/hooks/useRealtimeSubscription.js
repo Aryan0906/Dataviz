@@ -38,20 +38,16 @@ export function useRealtimeSubscription(
                     table: tableName,
                 },
                 (payload) => {
-                    console.log(`[Realtime] ${event} event on ${tableName}:`, payload);
                     callback(payload);
                 }
             )
-            .subscribe((status) => {
-                console.log(`[Realtime] Subscription status for ${tableName}:`, status);
-            });
+            .subscribe();
 
         channelRef.current = channel;
 
         // Cleanup: unsubscribe when component unmounts
         return () => {
             if (channelRef.current) {
-                console.log(`[Realtime] Unsubscribing from ${tableName}`);
                 supabase.removeChannel(channelRef.current);
                 channelRef.current = null;
             }
@@ -92,7 +88,6 @@ export function useVisualizationSubscription(
                     table: 'visualizations',
                 },
                 (payload) => {
-                    console.log('[Realtime] New visualization:', payload.new);
                     onInsert?.(payload.new);
                 }
             )
@@ -104,7 +99,6 @@ export function useVisualizationSubscription(
                     table: 'visualizations',
                 },
                 (payload) => {
-                    console.log('[Realtime] Updated visualization:', payload.new);
                     onUpdate?.(payload.new);
                 }
             )

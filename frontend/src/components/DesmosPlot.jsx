@@ -327,18 +327,6 @@ const DesmosPlot = () => {
         setShowExportDialog(false);
     };
 
-    const retryLoad = () => {
-        window.location.reload();
-    };
-
-    const insertText = (text) => {
-        // Removed - no longer needed
-    };
-
-    const addExpression = () => {
-        // Removed - no longer needed
-    };
-
     const addPreset = (latex) => {
         if (!calculatorRef.current) {
             toast.error("Calculator not initialized");
@@ -360,18 +348,6 @@ const DesmosPlot = () => {
         }
     };
 
-    const removeExpression = (id) => {
-        if (calculatorRef.current) {
-            try {
-                calculatorRef.current.removeExpression({ id });
-                setExpressions(expressions.filter((expr) => expr.id !== id));
-                toast.success("Expression removed");
-            } catch (error) {
-                console.error("Error removing expression:", error);
-            }
-        }
-    };
-
     const clearAll = () => {
         if (calculatorRef.current) {
             try {
@@ -384,10 +360,6 @@ const DesmosPlot = () => {
                 console.error("Error clearing expressions:", error);
             }
         }
-    };
-
-    const handleKeyPress = (e) => {
-        // Removed - no longer needed
     };
 
     return (
