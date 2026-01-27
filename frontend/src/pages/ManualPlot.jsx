@@ -8,8 +8,11 @@ const ManualPlot = () => {
     return (
         <AppLayout>
             <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <NavLink to="/manual-plot/regression" className={linkClass} end>
+                <div className="flex items-center gap-2 flex-wrap">
+                    <NavLink to="/manual-plot/curve" className={linkClass} end>
+                        Curve Plot
+                    </NavLink>
+                    <NavLink to="/manual-plot/regression" className={linkClass}>
                         Regression Model
                     </NavLink>
                     <NavLink to="/manual-plot/categorical" className={linkClass}>

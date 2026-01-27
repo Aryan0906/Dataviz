@@ -12,6 +12,7 @@ const Login = lazy(() => import("./pages/Login"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
+const ManualPlotCurve = lazy(() => import("./pages/ManualPlotCurve"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
 const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
@@ -53,7 +54,8 @@ const App = () => (
                                 </ProtectedRoute>
                             }
                         >
-                            <Route index element={<Navigate to="regression" replace />} />
+                            <Route index element={<Navigate to="curve" replace />} />
+                            <Route path="curve" element={<ManualPlotCurve />} />
                             <Route path="regression" element={<ManualPlotRegression />} />
                             <Route path="categorical" element={<ManualPlotCategorical />} />
                         </Route>
