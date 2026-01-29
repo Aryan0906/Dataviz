@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Dark background -->
+  <rect width="100" height="100" fill="#1a1a1a" rx="15"/>
+  
+  <!-- DV with arrow -->
+  <g transform="translate(50, 50)">
+    <!-- D letter -->
+    <path d="M -30,-15 L -30,15 L -20,15 C -10,15 -5,10 -5,0 C -5,-10 -10,-15 -20,-15 Z M -26,-11 L -20,-11 C -12,-11 -9,-8 -9,0 C -9,8 -12,11 -20,11 L -26,11 Z" 
+          fill="#E8E4D9" stroke="#E8E4D9" stroke-width="0.5"/>
+    
+    <!-- Upward arrow through D -->
+    <path d="M -18,-8 L -2,8 M -6,4 L -2,8 L -6,12" 
+          fill="none" stroke="#E8E4D9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- V letter -->
+    <path d="M 5,-15 L 15,15 L 20,15 L 30,-15 L 25,-15 L 17.5,10 L 10,-15 Z" 
+          fill="#E8E4D9" stroke="#E8E4D9" stroke-width="0.5"/>
+  </g>
+</svg>
