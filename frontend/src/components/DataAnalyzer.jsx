@@ -120,45 +120,55 @@ export const DataAnalyzer = () => {
         toast.success("Data point added");
     };
 
-    const analyzeData = useCallback(() => {
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            addPoint();
+        }
+    };
+
+    const analyzeData = useCallback(async () => {
         setError("");
         if (data.length < 2) {
             setError("Need at least 2 data points to analyze");
             return;
         }
 
+        setLoading(true);
+        
+        // Auto-scroll to chart after analysis
+        setTimeout(() => {
+            if (chartContainerRef.current) {
+                chartContainerRef.current.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            }
+        }, 100);
+
         try {
-            const dataPoints = data.map(d => [d.x, d.y]);
-            let result;
-            let type = "linear";
-            let equation = "";
-
-            if (regressionType === "polynomial") {
-                result = regression.polynomial(dataPoints, { order: polynomialDegree });
-
-                // Generate equation string
-                const coefficients = result.equation;
-                const terms = [];
-                for (let i = coefficients.length - 1; i >= 0; i--) {
-                    const coef = coefficients[i];
-                    if (i === 0) {
-                        terms.push(`${coef.toFixed(4)}`);
-                    } else if (i === 1) {
-                        terms.push(`${coef.toFixed(4)}x`);
-                    } else {
-                        terms.push(`${coef.toFixed(4)}x^${i}`);
-                    }
-                }
-                equation = terms.join(" + ").replace(new RegExp("\\+\\s-", "g"), "- ");
-                type = `polynomial-${polynomialDegree}`;
-            } else {
-                result = regression.linear(dataPoints);
-                const slope = result.equation[1].toFixed(4);
-                const intercept = result.equation[0].toFixed(4);
-                equation = `y = ${slope}x + ${intercept}`;
+            console.log('Sending data to backend:', data);
+            
+            // Call backend API for comprehensive regression analysis
+            const result = await dataAPI.analyze(data);
+            
+            console.log('Received result from backend:', result);
+            
+            if (!result) {
+                setError("Failed to analyze data");
+                return;
             }
 
-            // Compute descriptive stats and error metrics
+            // Update state to track selected model type
+            const modelType = result.model_type;
+            if (modelType.startsWith('polynomial-')) {
+                const degree = parseInt(modelType.split('-')[1]);
+                setRegressionType('polynomial');
+                setPolynomialDegree(degree);
+            } else {
+                setRegressionType(modelType);
+            }
+
+            // Compute descriptive stats
             const n = data.length;
             const ys = data.map(d => d.y);
             const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
@@ -166,38 +176,53 @@ export const DataAnalyzer = () => {
                 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1)
                 : 0;
             const stdDevY = Math.sqrt(varianceY);
-            const residuals = data.map(d => {
-                try {
-                    return d.y - result.predict(d.x)[1];
-                } catch {
-                    return 0;
-                }
-            });
-            const mse = residuals.reduce((acc, r) => acc + r * r, 0) / n;
-            const rmse = Math.sqrt(mse);
-            const mae = residuals.reduce((acc, r) => acc + Math.abs(r), 0) / n;
-            const p = regressionType === "polynomial" ? polynomialDegree : 1;
-            const adjustedR2 = n > (p + 1)
-                ? 1 - (1 - result.r2) * ((n - 1) / (n - p - 1))
-                : undefined;
 
             setRegressionResult({
                 r2: result.r2,
-                predict: (x) => result.predict(x)[1],
-                type: type,
-                equation: equation,
+                predict: (x) => {
+                    // Linear interpolation from predictions
+                    const predictions = result.predictions || [];
+                    if (predictions.length === 0) return null;
+                    
+                    // Find closest prediction or interpolate
+                    const sorted = predictions.sort((a, b) => a[0] - b[0]);
+                    
+                    // Exact match
+                    const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
+                    if (exact) return exact[1];
+                    
+                    // Interpolate
+                    for (let i = 0; i < sorted.length - 1; i++) {
+                        if (x >= sorted[i][0] && x <= sorted[i + 1][0]) {
+                            const t = (x - sorted[i][0]) / (sorted[i + 1][0] - sorted[i][0]);
+                            return sorted[i][1] + t * (sorted[i + 1][1] - sorted[i][1]);
+                        }
+                    }
+                    
+                    // Extrapolate
+                    if (x < sorted[0][0]) return sorted[0][1];
+                    return sorted[sorted.length - 1][1];
+                },
+                type: modelType,
+                equation: result.equation || '',
                 meanY,
                 varianceY,
                 stdDevY,
-                rmse,
-                mae,
-                adjustedR2,
+                rmse: result.rmse,
+                mae: result.mae,
+                adjustedR2: result.adjusted_r2,
+                modelName: result.model_name
             });
-            toast.success("Analysis complete!");
-        } catch (_err) {
-            setError("Failed to analyze data");
+            
+            toast.success(`Analysis complete! Best model: ${result.model_name}`);
+        } catch (error) {
+            console.error("Analysis error:", error);
+            setError(`Failed to analyze data: ${error.message || error}`);
+            toast.error(`Failed to analyze data: ${error.message || error}`);
+        } finally {
+            setLoading(false);
         }
-    }, [data, regressionType, polynomialDegree]);
+    }, [data]);
 
     const importCSV = () => {
         setError("");
@@ -442,6 +467,7 @@ export const DataAnalyzer = () => {
                             placeholder="X value"
                             value={xValue}
                             onChange={(e) => setXValue(e.target.value)}
+                            onKeyPress={handleKeyPress}
                             className="flex-1"
                         />
                         <Input
@@ -449,6 +475,7 @@ export const DataAnalyzer = () => {
                             placeholder="Y value"
                             value={yValue}
                             onChange={(e) => setYValue(e.target.value)}
+                            onKeyPress={handleKeyPress}
                             className="flex-1"
                         />
                         <Button onClick={addPoint} className="gap-2">
@@ -501,17 +528,6 @@ export const DataAnalyzer = () => {
                             </Button>
                         </div>
                     </div>
-
-                    <Alert className="bg-primary/5 border-primary/30">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription className="flex items-center justify-between">
-                            <span>For categorical plotting with NLP chat controls, visit the new Categorical Chat page.</span>
-                            <Button size="sm" variant="outline" onClick={() => navigate("/categorical")} className="gap-2 ml-2">
-                                Go to Categorical Chat
-                                <ArrowRight className="h-4 w-4" />
-                            </Button>
-                        </AlertDescription>
-                    </Alert>
                 </CardContent>
             </Card>
 
@@ -528,7 +544,7 @@ export const DataAnalyzer = () => {
                     {regressionResult && (
                         <Card className="md:col-span-2">
                             <CardHeader>
-                                <CardTitle>Analysis Summary</CardTitle>
+                                <CardTitle>Analysis Summary {regressionResult.modelName && `(${regressionResult.modelName})`}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -576,48 +592,10 @@ export const DataAnalyzer = () => {
             )}
 
             {data.length >= 2 && !regressionResult && (
-                <div className="space-y-4">
-                    <Card className="border-primary/20 bg-primary/5">
-                        <CardHeader>
-                            <CardTitle className="text-base">Regression Settings</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-sm font-medium mb-2 block">Regression Type</label>
-                                    <select
-                                        value={regressionType}
-                                        onChange={(e) => setRegressionType(e.target.value)}
-                                        className="w-full px-3 py-2 border rounded-lg bg-background"
-                                    >
-                                        <option value="linear">Linear (y = mx + b)</option>
-                                        <option value="polynomial">Polynomial</option>
-                                    </select>
-                                </div>
-                                {regressionType === "polynomial" && (
-                                    <div>
-                                        <label className="text-sm font-medium mb-2 block">Polynomial Degree</label>
-                                        <select
-                                            value={polynomialDegree}
-                                            onChange={(e) => setPolynomialDegree(parseInt(e.target.value))}
-                                            className="w-full px-3 py-2 border rounded-lg bg-background"
-                                        >
-                                            <option value={2}>Quadratic (Degree 2)</option>
-                                            <option value={3}>Cubic (Degree 3)</option>
-                                            <option value={4}>Quartic (Degree 4)</option>
-                                            <option value={5}>Quintic (Degree 5)</option>
-                                            <option value={6}>Degree 6</option>
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Button onClick={analyzeData} size="lg" className="w-full gap-2">
-                        <Zap className="h-4 w-4" />
-                        Analyze Data
-                    </Button>
-                </div>
+                <Button onClick={analyzeData} size="lg" className="w-full gap-2">
+                    <Zap className="h-4 w-4" />
+                    Analyze Data
+                </Button>
             )}
 
             {regressionResult && (
@@ -630,6 +608,15 @@ export const DataAnalyzer = () => {
                     <Save className="h-4 w-4" />
                     {loading ? "Saving..." : "Save Analysis"}
                 </Button>
+            )}
+
+            {data.length > 0 && (
+                <UniversalChart
+                    ref={chartContainerRef}
+                    type="regression"
+                    data={data}
+                    regression={regressionResult}
+                />
             )}
 
             {data.length > 0 && regressionResult && (
@@ -647,15 +634,6 @@ export const DataAnalyzer = () => {
                         Clear All
                     </Button>
                 </div>
-            )}
-
-            {data.length > 0 && (
-                <UniversalChart
-                    ref={chartContainerRef}
-                    type="regression"
-                    data={data}
-                    regression={regressionResult}
-                />
             )}
 
             {data.length > 0 && (

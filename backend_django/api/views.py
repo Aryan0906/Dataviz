@@ -19,6 +19,7 @@ from .utils.ai_helpers import (
     AITimeoutError,
     AIValidationError
 )
+from .utils.regression_models import find_best_regression
 
 JWT_SECRET = os.getenv("JWT_SECRET", "secret")
 SUPABASE_JWT_SECRET = settings.SUPABASE_JWT_SECRET
@@ -211,28 +212,78 @@ def get_analysis(request, pk: int):
 
 
 @csrf_exempt
+@csrf_exempt
 def analyze(request):
+    """
+    Comprehensive regression analysis using multiple models.
+    Automatically selects the best model from:
+    - Linear, Polynomial (2-6 degrees)
+    - Logarithmic, Exponential, Power
+    - Ridge, Lasso, Elastic Net
+    - SVR, Decision Tree, Random Forest
+    - Quantile Regression
+    """
+    print("=== Analyze endpoint called ===")
+    print(f"Method: {request.method}")
+    print(f"Headers: {request.headers}")
+    
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    body = json.loads(request.body.decode() or "{}")
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        print(f"Request body: {body}")
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+        return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
+    
     data_points = body.get("dataPoints") or []
+    print(f"Data points: {data_points}")
+    
     if len(data_points) < 2:
         return JsonResponse({"error": "At least 2 data points are required"}, status=400)
-    X = np.array([float(p["x"]) for p in data_points])
-    Y = np.array([float(p["y"]) for p in data_points])
-    xmean, ymean = X.mean(), Y.mean()
-    m = ((X - xmean) * (Y - ymean)).sum() / ((X - xmean) ** 2).sum()
-    b = ymean - m * xmean
-    y_pred = m * X + b
-    ss_res = ((Y - y_pred) ** 2).sum()
-    ss_tot = ((Y - ymean) ** 2).sum()
-    r2 = float(1 - ss_res / ss_tot) if ss_tot > 0 else 0.0
-    return JsonResponse({
-        "type": "linear",
-        "equation": f"y = {m:.6f}x + {b:.6f}",
-        "r2": r2,
-        "predictions": [[float(x), float(y)] for x, y in zip(X.tolist(), y_pred.tolist())],
-    })
+    
+    try:
+        # Use comprehensive regression model selector
+        print("Calling find_best_regression...")
+        result = find_best_regression(data_points)
+        print(f"Result: {result}")
+        
+        if not result:
+            return JsonResponse({"error": "Could not fit any regression model"}, status=400)
+        
+        # Generate predictions for plotting
+        X = np.array([float(p["x"]) for p in data_points])
+        predictions = []
+        
+        for x_val in X:
+            try:
+                y_pred = result['predict'](float(x_val))
+                if y_pred is not None and np.isfinite(y_pred):
+                    predictions.append([float(x_val), float(y_pred)])
+            except:
+                # Skip invalid predictions
+                pass
+        
+        response_data = {
+            "model_name": result['model_name'],
+            "model_type": result['model_type'],
+            "equation": result['equation'],
+            "r2": result['r2'],
+            "adjusted_r2": result['adjusted_r2'],
+            "rmse": result['rmse'],
+            "mae": result['mae'],
+            "predictions": predictions,
+            "all_models_tested": result['all_models'][:5]  # Top 5 models
+        }
+        print(f"Returning response: {response_data}")
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in analyze: {e}")
+        traceback.print_exc()
+        return JsonResponse({"error": f"Analysis failed: {str(e)}"}, status=500)
 
 
 @csrf_exempt

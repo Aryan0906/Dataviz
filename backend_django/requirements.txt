@@ -10,3 +10,5 @@ pandas
 matplotlib
 seaborn
 openai
+scikit-learn
+scipy

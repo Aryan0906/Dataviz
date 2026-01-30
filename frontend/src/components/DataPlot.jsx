@@ -1,40 +1,10 @@
-import { useMemo, useRef, useState, forwardRef } from "react";
+import { useMemo, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp, Download, FileImage, FileText } from "lucide-react";
-import { exportChartAsPNG, exportChartAsPDF, generateFilename } from "@/lib/chartExport";
+import { TrendingUp } from "lucide-react";
 
-export const DataPlot = forwardRef(({ data, regression }, externalRef) => {
-    const chartRef = useRef(null);
-    const [exporting, setExporting] = useState(false);
-
-    const handleExportPNG = async () => {
-        if (!chartRef.current) return;
-        setExporting(true);
-        try {
-            await exportChartAsPNG(chartRef.current, generateFilename('regression-chart'));
-        } finally {
-            setExporting(false);
-        }
-    };
-
-    const handleExportPDF = async () => {
-        if (!chartRef.current) return;
-        setExporting(true);
-        try {
-            await exportChartAsPDF(chartRef.current, generateFilename('regression-chart'));
-        } finally {
-            setExporting(false);
-        }
-    };
+export const DataPlot = forwardRef(({ data, regression }, ref) => {
 
     const plotData = useMemo(() => {
         if (data.length === 0) return [];
@@ -99,7 +69,7 @@ export const DataPlot = forwardRef(({ data, regression }, externalRef) => {
     };
 
     return (
-        <Card className="shadow-card" ref={chartRef}>
+        <Card className="shadow-card" ref={ref}>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
@@ -122,24 +92,6 @@ export const DataPlot = forwardRef(({ data, regression }, externalRef) => {
                                 </div>
                             )}
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" disabled={exporting || data.length === 0}>
-                                    <Download className="h-4 w-4 mr-2" />
-                                    {exporting ? 'Exporting...' : 'Export'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={handleExportPNG}>
-                                    <FileImage className="h-4 w-4 mr-2" />
-                                    Download as PNG
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={handleExportPDF}>
-                                    <FileText className="h-4 w-4 mr-2" />
-                                    Download as PDF
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                     </div>
                 </div>
             </CardHeader>

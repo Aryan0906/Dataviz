@@ -44,8 +44,18 @@ local_settings.py
 /staticfiles/
 /static/
 backend_django/**/__pycache__/
+backend_django/media/
 backend_django/media/csv_uploads/
 backend_django/staticfiles/
+
+# Python Machine Learning / Data Science
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+.ipynb_checkpoints/
+jupyter_notebook_config.py
 
 # =============================================================================
 # Node.js & React/Vite
@@ -66,6 +76,7 @@ out/
 frontend/dist/
 frontend/build/
 frontend/.vite/
+frontend/node_modules/
 
 # =============================================================================
 # Environment Variables & Secrets
@@ -232,3 +243,28 @@ celerybeat-schedule
 celerybeat.pid
 *.mo
 *.pot
+
+# =============================================================================
+# Project Specific
+# =============================================================================
+# Documentation exports (optional - remove if you want to track these)
+*.md.backup
+IMPLEMENTATION_SUMMARY.md
+REGRESSION_MODELS.md
+
+# Test data files
+sample_categorical_data.csv
+test_regression.py
+
+# Generated lint outputs
+lint-output.txt
+
+# Installation scripts (optional - remove if you want to track these)
+install-dependencies.bat
+
+# Uploaded CSV files
+backend_django/media/csv_uploads/*.csv
+
+# Virtual environment (if not using venv/)
+env/
+.venv/

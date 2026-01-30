@@ -20,7 +20,7 @@ venv\Scripts\python.exe -m pip install -r backend_django\requirements.txt >nul 2
 
 REM Start Django backend in a new window
 echo Starting Django backend server...
-start cmd /k "venv\Scripts\python.exe backend_django\manage.py runserver 5000"
+start cmd /k "venv\Scripts\python.exe backend_django\manage.py runserver 8000"
 timeout /t 3 /nobreak
 
 REM Start frontend in a new window
@@ -33,7 +33,7 @@ echo.
 echo =========================================
 echo Development servers are starting:
 echo Frontend:  http://localhost:5173
-echo Backend:   http://localhost:5000
+echo Backend:   http://localhost:8000
 echo =========================================
 echo.
 echo Check the new terminal windows for server logs.
