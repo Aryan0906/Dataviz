@@ -257,6 +257,7 @@ DASHBOARD_UPDATES.md
 SESSION_FIXES.md
 SESSION_PERSISTENCE.md
 TESTING_GUIDE.md
+ENHANCED_LIBRARIES_GUIDE.md
 
 # Generated lint outputs
 lint-output.txt
@@ -285,3 +286,22 @@ IMPLEMENTATION_SUMMARY.md
 MIGRATION.md
 PRODUCTION_CHECKLIST.md
 REGRESSION_MODELS.md
+
+# spaCy language models (download separately)
+backend_django/en_core_web_sm/
+backend_django/en_core_web_md/
+backend_django/en_core_web_lg/
+*.spacy
+
+# Celery & Redis
+celerybeat-schedule*
+celerybeat.pid
+dump.rdb
+redis-*.log
+
+# Polars cache
+.polars_cache/
+
+# LangChain cache
+.langchain/
+.langsmith/

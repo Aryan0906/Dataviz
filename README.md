@@ -32,11 +32,13 @@
 
 ### 📊 Data Visualization
 - Interactive charts (Bar, Pie, Scatter, Heatmap, Histogram)
-- Real-time data plotting with Highcharts
+- Real-time data plotting with Highcharts & Plotly
 - Categorical data analysis with NLP-inspired chat interface
 - Drag & drop CSV upload
 - Desmos integration for curve plotting
-- Export charts (PNG/PDF) with theme selection
+- Export charts (PNG/PDF/SVG) with theme selection
+- Advanced 3D plots with zoom/pan (Plotly)
+- Professional dashboard widgets (Tremor)
 
 </td>
 <td width="50%">
@@ -47,13 +49,21 @@
 - Statistical metrics (R², RMSE, MAE)
 - Predictive modeling
 - Model comparison and ranking
+- **🆕 Fuzzy column matching** - handles typos automatically
+- **🆕 Local NLP** - entity extraction (dates, money, orgs)
+- **🆕 Smart queries** - natural language to Pandas/SQL
+- **🆕 Data validation** - schema validation with Pandera
+- **🆕 Background tasks** - async processing with Celery
 
 ### 💾 Data Management
 - Manual data entry
 - CSV file upload & paste
 - Draft auto-save functionality
+- **🆕 Session persistence** - auto-save every 2 seconds
 - Cloud storage with Supabase
-- Export charts (PNG/PDF, Light/Dark)
+- Export charts (PNG/PDF/SVG, Light/Dark)
+- **🆕 10-50x faster processing** with Polars
+- **🆕 CSV validation** with detailed error messages
 
 </td>
 </tr>
@@ -64,11 +74,17 @@
 | Feature | Description | Status |
 |---------|-------------|--------|
 | **Multi-Model Analysis** | Automatically tests 12+ regression models | ✅ Active |
-| **Real-time Charting** | Dynamic visualization with Recharts & Highcharts | ✅ Active |
+| **Real-time Charting** | Dynamic visualization with Plotly & Highcharts | ✅ Active |
+| **Session Persistence** | Auto-save & restore across page refreshes | ✅ Active |
+| **NLP Intelligence** | Fuzzy matching + entity extraction (spaCy) | ✅ Active |
+| **Smart Queries** | Natural language to Pandas/SQL (LangChain) | ✅ Active |
+| **Data Validation** | Schema validation with Pandera | ✅ Active |
+| **Background Tasks** | Non-blocking UI with Celery | ✅ Active |
+| **Fast Processing** | 10-50x speedup with Polars | ✅ Active |
 | **Dark/Light Theme** | Complete UI theme switching | ✅ Active |
 | **Responsive Design** | Mobile, tablet, desktop optimized | ✅ Active |
 | **Cloud Persistence** | PostgreSQL via Supabase | ✅ Active |
-| **Export Capabilities** | PNG/PDF with theme selection | ✅ Active |
+| **Export Capabilities** | PNG/PDF/SVG with theme selection | ✅ Active |
 | **AI Integration** | OpenAI for chart suggestions (optional) | ⚠️ Optional |
 
 ---
@@ -110,13 +126,21 @@
 |------------|---------|---------|
 | **Django** | Web Framework | 5.x |
 | **Django REST** | API Framework | 3.x |
-| **Python** | Language | 3.10+ |
+| **Django Ninja 🆕** | Async API Framework | 1.x |
+| **Python** | Language | 3.11+ |
 | **PostgreSQL** | Database (Prod) | 15.x |
 | **SQLite** | Database (Dev) | 3.x |
-| **NumPy** | Numerical Computing | 1.26+ |
-| **Pandas** | Data Analysis | 2.x |
-| **scikit-learn** | Machine Learning | 1.7+ |
-| **scipy** | Scientific Computing | 1.16+ |
+| **NumPy** | Numerical Computing | 2.x |
+| **Pandas** | Data Analysis | 3.x |
+| **Polars 🆕** | Fast Data Processing | 1.x |
+| **scikit-learn** | Machine Learning | 1.8+ |
+| **scipy** | Scientific Computing | 1.17+ |
+| **spaCy 🆕** | Local NLP | 3.8+ |
+| **TheFuzz 🆕** | Fuzzy Matching | 0.22+ |
+| **LangChain 🆕** | LLM Framework | 1.x |
+| **Pandera 🆕** | Data Validation | 0.29+ |
+| **Celery 🆕** | Task Queue | 5.x |
+| **Redis 🆕** | Message Broker | 7.x |
 | **PyJWT** | Authentication | 2.x |
 | **OpenAI** | AI Integration | 1.x |
 

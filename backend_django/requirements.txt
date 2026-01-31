@@ -12,3 +12,41 @@ seaborn
 openai
 scikit-learn
 scipy
+
+# =============================================================================
+# NLP & Chat Intelligence
+# =============================================================================
+# Fuzzy string matching for typo-tolerant column name matching
+thefuzz[speedup]>=0.22.1
+python-Levenshtein>=0.25.0
+
+# Local NLP for entity extraction and text analysis
+spacy>=3.7.0
+# Download model: python -m spacy download en_core_web_sm
+
+# LangChain for structured LLM interactions
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.20
+
+# =============================================================================
+# Data Processing & Validation
+# =============================================================================
+# Schema validation for Pandas dataframes
+pandera>=0.18.0
+
+# High-performance data processing (alternative to Pandas)
+polars>=0.20.0
+
+# =============================================================================
+# Background Tasks & Caching
+# =============================================================================
+# Async task queue for long-running operations
+celery>=5.3.0
+redis>=5.0.0
+
+# =============================================================================
+# API Performance
+# =============================================================================
+# Modern async Django API framework
+django-ninja>=1.1.0
