@@ -5,19 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, Plus, Zap, Save, AlertCircle, FileUp, ArrowRight, Moon, Sun, RefreshCw } from "lucide-react";
+import { 
+    Upload, 
+    Plus, 
+    Zap, 
+    Save, 
+    AlertCircle, 
+    FileUp, 
+    ArrowRight, 
+    Moon, 
+    Sun, 
+    RefreshCw,
+    Download, 
+    FileImage, 
+    FileText 
+} from "lucide-react";
 import { toast } from "sonner";
-
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
 import regression from "regression";
-
 import { UniversalChart } from "./UniversalChart";
-import { Download, FileImage, FileText } from "lucide-react";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import {
     AlertDialog,

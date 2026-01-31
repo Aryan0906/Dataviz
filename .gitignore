@@ -247,23 +247,20 @@ celerybeat.pid
 # =============================================================================
 # Project Specific
 # =============================================================================
-# Documentation exports (optional - remove if you want to track these)
-*.md.backup
-IMPLEMENTATION_SUMMARY.md
-REGRESSION_MODELS.md
+# CSV uploads
+backend_django/media/csv_uploads/*.csv
+!backend_django/media/csv_uploads/.gitkeep
 
-# Test data files
-sample_categorical_data.csv
-test_regression.py
+# Documentation exports (keep main docs, ignore backups)
+*.md.backup
 
 # Generated lint outputs
 lint-output.txt
+frontend/lint-output.txt
 
-# Installation scripts (optional - remove if you want to track these)
-install-dependencies.bat
-
-# Uploaded CSV files
-backend_django/media/csv_uploads/*.csv
+# Test files (optional - uncomment to exclude)
+# sample_categorical_data.csv
+# test_regression.py
 
 # Virtual environment (if not using venv/)
 env/

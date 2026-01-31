@@ -31,11 +31,12 @@
 - Session management with Supabase
 
 ### 📊 Data Visualization
-- Interactive charts (Line, Bar, Pie, Scatter)
-- Real-time data plotting
-- Heatmap visualization
-- Categorical data analysis with NLP chat
+- Interactive charts (Bar, Pie, Scatter, Heatmap, Histogram)
+- Real-time data plotting with Highcharts
+- Categorical data analysis with NLP-inspired chat interface
+- Drag & drop CSV upload
 - Desmos integration for curve plotting
+- Export charts (PNG/PDF) with theme selection
 
 </td>
 <td width="50%">
@@ -86,18 +87,20 @@
 | **Vite** | Build Tool | 5.x |
 | **Tailwind CSS** | Styling | 3.x |
 | **shadcn/ui** | Component Library | Latest |
-| **Recharts** | Data Visualization | 2.x |
 | **Highcharts** | Advanced Charts | 11.x |
 | **React Router** | Navigation | 6.x |
 | **React Query** | State Management | 5.x |
 | **Desmos** | Mathematical Graphing | API v1.8 |
+| **Papa Parse** | CSV Parsing | 5.x |
 
 **🎯 Key Features:**
 - Hot Module Replacement (HMR)
 - Code splitting & lazy loading
 - Responsive grid layouts
-- Theme provider system
+- Dark/Light theme with automatic switching
 - Custom hooks & utilities
+- CSV drag & drop upload
+- Dynamic chart theming
 
 </td>
 <td width="50%" valign="top">
@@ -207,10 +210,11 @@ graph LR
 ✅ Backend dependencies installed (Django 5.x, scikit-learn 1.7+, scipy 1.16+)  
 ✅ Database migrated  
 ✅ Django server running on `http://localhost:8000`  
-✅ Frontend dependencies installed  
+✅ Frontend dependencies installed (React 18, Highcharts 11, Papa Parse)  
 ✅ Vite dev server running on `http://localhost:5173`  
 ✅ Browser opens automatically  
 ✅ 12 regression models ready for automatic selection  
+✅ NLP-inspired categorical chat interface with Highcharts  
 
 **⚡ First-time setup:** ~3-5 minutes | **Subsequent starts:** ~10 seconds  
 
@@ -614,9 +618,61 @@ http://localhost:8000/api
 | **Dashboard** | `/dashboard` | User's saved analyses | ✅ |
 | **Regression Model** | `/manual-plot` | Advanced regression analysis | ❌ |
 | **Curve Plotter** | `/curve-plot` | Desmos mathematical graphing | ❌ |
-| **Categorical Chat** | `/categorical` | NLP-based categorical data viz | ❌ |
+| **Categorical Chat** | `/categorical` | NLP-inspired categorical data visualization with 4-panel layout | ❌ |
 | **Profile** | `/profile` | User profile settings | ✅ |
 | **AI Features** | `/ai` | AI-powered chart suggestions | ❌ |
+
+### 🌟 Featured: Categorical Chat Interface
+
+The **Categorical Chat** page provides an intelligent, interactive way to visualize categorical data:
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**📊 Visualizer Panel**
+- 5 chart types: Bar, Pie, Histogram, Scatter, Heatmap
+- Powered by Highcharts for high-quality rendering
+- Dynamic theming (auto-switches with dark/light mode)
+- Export to PNG/PDF with theme selection
+- Click-to-drill-down interactivity
+- Drag & drop CSV upload
+
+**🤖 Intelligence Hub**
+- Chat-first input interface
+- NLP-inspired command parsing
+- Suggestion chips for common actions
+- Active column tracking with type detection
+- Real-time data processing
+
+</td>
+<td width="50%" valign="top">
+
+**📈 Categorical Insights**
+- Narrative AI summary of data patterns
+- Cardinality and distribution metrics
+- Top/bottom performer identification
+- Statistical analysis
+- Dynamic value indicators
+
+**🗂️ Smart Data Grid**
+- Paginated table view (10 items/page)
+- Search and filter capabilities
+- Drill-down from chart interactions
+- Column type indicators (📊 categorical, 🔢 numerical)
+- Real-time data updates
+
+</td>
+</tr>
+</table>
+
+**Supported Commands:**
+- `add [item] [value]` - Add data points
+- `set chart to [type]` - Change visualization
+- `top 5` / `bottom 5` - Show extremes
+- `sort ascending` / `sort descending`
+- `remove [item]` - Delete data points
+- `clear data` - Reset all data
 
 ---
 
@@ -824,18 +880,23 @@ Dataviz/
 │   │   │   ├── DataAnalyzer.jsx
 │   │   │   ├── DataPlot.jsx
 │   │   │   ├── DesmosPlot.jsx
-│   │   │   └── UniversalChart.jsx
+│   │   │   ├── UniversalChart.jsx
+│   │   │   ├── theme-provider.jsx
+│   │   │   └── theme-toggle.jsx
 │   │   ├── 📁 pages/            # Page components
 │   │   │   ├── Dashboard.jsx
+│   │   │   ├── LandingPage.jsx
 │   │   │   ├── ManualPlotRegression.jsx
 │   │   │   ├── ManualPlotCurve.jsx
-│   │   │   └── CategoricalChat.jsx
+│   │   │   └── CategoricalChat.jsx  # NLP categorical viz
 │   │   ├── 📁 context/          # React context
+│   │   │   └── AuthContext.jsx
 │   │   ├── 📁 hooks/            # Custom hooks
 │   │   ├── 📁 lib/              # Utilities
 │   │   │   ├── api.js           # API client
 │   │   │   ├── chartExport.js   # Export utilities
-│   │   │   └── supabase.js      # Supabase client
+│   │   │   ├── supabase.js      # Supabase client
+│   │   │   └── utils.js         # Helper functions
 │   │   ├── App.jsx              # Main component
 │   │   └── main.jsx             # Entry point
 │   ├── package.json             # Node dependencies

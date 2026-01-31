@@ -16,6 +16,7 @@ const ManualPlotCurve = lazy(() => import("./pages/ManualPlotCurve"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
 const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
+const CategoricalChatNLP = lazy(() => import("./pages/CategoricalChatNLP"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const Profile = lazy(() => import("./pages/Profile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -64,6 +65,14 @@ const App = () => (
                             element={
                                 <ProtectedRoute>
                                     <CategoricalChat />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/categorical-nlp"
+                            element={
+                                <ProtectedRoute>
+                                    <CategoricalChatNLP />
                                 </ProtectedRoute>
                             }
                         />
