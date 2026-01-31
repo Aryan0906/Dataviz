@@ -1,452 +1,150 @@
-# 📊 Dataviz - Interactive Data Visualization & Analysis Platform
+# Dataviz - Interactive Data Visualization Platform
 
-<div align="center">
+A full-stack data visualization and analysis platform built with React, Django, and machine learning capabilities. Provides automated regression modeling, interactive charting, smart data cleaning, and code generation features.
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
+## Features
 
-**A powerful full-stack platform for seamless data analysis, visualization, and advanced regression modeling**
+### Core Capabilities
+- **Authentication System**: JWT-based secure user authentication with Supabase integration
+- **Data Visualization**: Interactive charts (Bar, Pie, Scatter, Heatmap, Histogram) with Plotly and Highcharts
+- **Advanced Analytics**: Automatic selection from 12 regression models (Linear to Random Forest)
+- **Categorical Analysis**: NLP-powered chat interface for categorical data exploration
+- **Mathematical Graphing**: Desmos integration for curve plotting
+- **Export Options**: PNG, PDF, SVG with light/dark theme selection, and Python code generation
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Tech Stack](#-technology-stack) • [API Docs](#-api-documentation) • [Models](#-regression-models)
+### Smart Analytics
+- **Data Health Checks**: Automatic detection of missing values, duplicates, and type mismatches
+- **Data Cleaning**: Six methods including mean/median imputation, forward fill, and drop
+- **Correlation Analysis**: Interactive heatmap with click-to-select variables
+- **Residual Analysis**: Scientific model validation with statistical interpretation
+- **Code Export**: Generate Python scripts for regression, EDA, and data cleaning
+- **Session Persistence**: Auto-save functionality with 2-second intervals
 
-</div>
+### Technical Features
+- **Fast Processing**: 10-50x performance improvement with Polars
+- **NLP Intelligence**: Fuzzy matching and entity extraction using spaCy
+- **Smart Queries**: Natural language to Pandas/SQL conversion via LangChain
+- **Data Validation**: Schema validation with Pandera
+- **Background Tasks**: Async processing with Celery and Redis
+- **Responsive Design**: Mobile, tablet, and desktop optimized UI
+- **Theme Support**: Complete dark/light mode switching
 
----
+## Technology Stack
 
-## ✨ Features
+### Frontend
+- **Framework**: React 18.x with TypeScript
+- **Build Tool**: Vite 5.x
+- **Styling**: Tailwind CSS 3.x with shadcn/ui components
+- **Charts**: Plotly.js 2.x, Highcharts 11.x, Recharts
+- **State Management**: React Query 5.x
+- **Routing**: React Router 6.x
+- **Additional**: Papa Parse (CSV), Desmos API, React Syntax Highlighter
 
-<table>
-<tr>
-<td width="50%">
+### Backend
+- **Framework**: Django 5.x with Django REST Framework 3.x
+- **Language**: Python 3.11+
+- **Database**: PostgreSQL 15.x (Production), SQLite 3.x (Development)
+- **ML Libraries**: scikit-learn 1.8+, scipy 1.17+, NumPy 2.x, Pandas 3.x, Polars 1.x
+- **NLP**: spaCy 3.8+, TheFuzz 0.22+, LangChain 1.x
+- **Task Queue**: Celery 5.x with Redis 7.x
+- **Validation**: Pandera 0.29+
+- **Authentication**: PyJWT 2.x with Supabase
 
-### 🔐 Authentication & Security
-- Secure JWT-based authentication
-- User registration and login
-- Protected routes and API endpoints
-- Session management with Supabase
+## Prerequisites
 
-### 📊 Data Visualization
-- Interactive charts (Bar, Pie, Scatter, Heatmap, Histogram)
-- Real-time data plotting with Highcharts & Plotly
-- Categorical data analysis with NLP-inspired chat interface
-- Drag & drop CSV upload
-- Desmos integration for curve plotting
-- Export charts (PNG/PDF/SVG) with theme selection
-- Advanced 3D plots with zoom/pan (Plotly)
-- Professional dashboard widgets (Tremor)
-- **🆕 Residual plots** - scientific model validation
-- **🆕 Correlation heatmap** - click-to-select variables
+| Requirement | Minimum Version | Check Command |
+|-------------|----------------|---------------|
+| Node.js | 18.0.0 | `node --version` |
+| Python | 3.10.0 | `python --version` |
+| npm | 9.0.0 | `npm --version` |
+| Git | 2.30.0 | `git --version` |
+| pip | 23.0.0 | `pip --version` |
 
-</td>
-<td width="50%">
+### Optional
+- PostgreSQL 15+ (for production deployment)
+- Docker (for containerized deployment)
 
-### 📈 Advanced Analytics
-- **12 Regression Models** auto-selection
-- Linear to Machine Learning models
-- Statistical metrics (R², RMSE, MAE)
-- Predictive modeling
-- Model comparison and ranking
-- **🆕 Fuzzy column matching** - handles typos automatically
-- **🆕 Local NLP** - entity extraction (dates, money, orgs)
-- **🆕 Smart queries** - natural language to Pandas/SQL
-- **🆕 Data validation** - schema validation with Pandera
-- **🆕 Background tasks** - async processing with Celery
+## Quick Start
 
-### 💾 Data Management
-- Manual data entry
-- CSV file upload & paste
-- Draft auto-save functionality
-- **🆕 Session persistence** - auto-save every 2 seconds
-- Cloud storage with Supabase
-- Export charts (PNG/PDF/SVG, Light/Dark)
-- **🆕 10-50x faster processing** with Polars
-- **🆕 CSV validation** with detailed error messages
-- **🆕 Smart data cleaning** - auto-detect & fix issues
-- **🆕 Code export** - generate Python scripts
-
-### 🧹 Smart Data Cleaning (New!)
-- Automatic health checks on CSV upload
-- Detects missing values per column
-- Identifies duplicate rows
-- Flags data type mismatches
-- 6 cleaning methods (drop, mean, median, mode, forward fill, zero)
-- Before/after comparison summaries
-- Glass-morphism modal UI
-
-</td>
-</tr>
-</table>
-
-### 🎯 Key Highlights
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Multi-Model Analysis** | Automatically tests 12+ regression models | ✅ Active |
-| **Real-time Charting** | Dynamic visualization with Plotly & Highcharts | ✅ Active |
-| **Session Persistence** | Auto-save & restore across page refreshes | ✅ Active |
-| **Smart Data Cleaning** | Auto-detect nulls, duplicates, type issues | ✅ Active |
-| **Code Export** | Generate Python scripts (regression, EDA, cleaning) | ✅ Active |
-| **Residual Analysis** | Scientific validation with interpretation | ✅ Active |
-| **Correlation Heatmap** | Interactive matrix with click-to-select | ✅ Active |
-| **NLP Intelligence** | Fuzzy matching + entity extraction (spaCy) | ✅ Active |
-| **Smart Queries** | Natural language to Pandas/SQL (LangChain) | ✅ Active |
-| **Data Validation** | Schema validation with Pandera | ✅ Active |
-| **Background Tasks** | Non-blocking UI with Celery | ✅ Active |
-| **Fast Processing** | 10-50x speedup with Polars | ✅ Active |
-| **Dark/Light Theme** | Complete UI theme switching | ✅ Active |
-| **Responsive Design** | Mobile, tablet, desktop optimized | ✅ Active |
-| **Cloud Persistence** | PostgreSQL via Supabase | ✅ Active |
-| **Export Capabilities** | PNG/PDF/SVG with theme selection | ✅ Active |
-| **AI Integration** | OpenAI for chart suggestions (optional) | ⚠️ Optional |
-
----
-
-## 🛠️ Technology Stack
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 🎨 Frontend
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **React** | UI Framework | 18.x |
-| **TypeScript** | Type Safety | 5.x |
-| **Vite** | Build Tool | 5.x |
-| **Tailwind CSS** | Styling | 3.x |
-| **shadcn/ui** | Component Library | Latest |
-| **Highcharts** | Advanced Charts | 11.x |
-| **Plotly.js 🆕** | Interactive 3D Charts | 2.x |
-| **React Syntax Highlighter 🆕** | Code Display | 15.x |
-| **Sonner 🆕** | Toast Notifications | 1.x |
-| **React Router** | Navigation | 6.x |
-| **React Query** | State Management | 5.x |
-| **Desmos** | Mathematical Graphing | API v1.8 |
-| **Papa Parse** | CSV Parsing | 5.x |
-
-**🎯 Key Features:**
-- Hot Module Replacement (HMR)
-- Code splitting & lazy loading
-- Responsive grid layouts
-- Dark/Light theme with automatic switching
-- Custom hooks & utilities
-- CSV drag & drop upload
-- Dynamic chart theming
-
-</td>
-<td width="50%" valign="top">
-
-### ⚙️ Backend
-| Technology | Purpose | Version |
-|------------|---------|---------|
-| **Django** | Web Framework | 5.x |
-| **Django REST** | API Framework | 3.x |
-| **Django Ninja 🆕** | Async API Framework | 1.x |
-| **Python** | Language | 3.11+ |
-| **PostgreSQL** | Database (Prod) | 15.x |
-| **SQLite** | Database (Dev) | 3.x |
-| **NumPy** | Numerical Computing | 2.x |
-| **Pandas** | Data Analysis | 3.x |
-| **Polars 🆕** | Fast Data Processing | 1.x |
-| **scikit-learn** | Machine Learning | 1.8+ |
-| **scipy** | Scientific Computing | 1.17+ |
-| **spaCy 🆕** | Local NLP | 3.8+ |
-| **TheFuzz 🆕** | Fuzzy Matching | 0.22+ |
-| **LangChain 🆕** | LLM Framework | 1.x |
-| **Pandera 🆕** | Data Validation | 0.29+ |
-| **Celery 🆕** | Task Queue | 5.x |
-| **Redis 🆕** | Message Broker | 7.x |
-| **PyJWT** | Authentication | 2.x |
-| **OpenAI** | AI Integration | 1.x |
-
-**🎯 Key Features:**
-- RESTful API architecture
-- JWT authentication
-- CORS handling
-- Database migrations
-- Comprehensive regression models
-
-</td>
-</tr>
-</table>
-
-### 🗄️ Database & Infrastructure
-
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Primary DB** | Supabase PostgreSQL | Production database with real-time capabilities |
-| **Dev DB** | SQLite | Local development fallback |
-| **Storage** | Supabase Storage | File uploads and media storage |
-| **Auth** | Supabase Auth | User authentication and session management |
-| **Deployment** | Docker-ready | Containerized deployment support |
-
----
-
-## � Smart Analytics Features (New!)
-
-### 🧹 Intelligent Data Cleaning
-
-Upload any CSV and get instant health insights:
-- **Auto-Detection:** Missing values, duplicates, data type mismatches
-- **Smart Fixing:** 6 cleaning methods (drop, mean, median, mode, forward fill, zero)
-- **Visual Feedback:** Glass-morphism modal with severity badges
-- **Before/After:** Detailed comparison summaries
-
-### 📊 Correlation Explorer
-
-Interactive heatmap for discovering relationships:
-- **Click-to-Select:** Click any cell to auto-select variables for regression
-- **Color-Coded:** Blue (negative) → White (neutral) → Red (positive)
-- **Smart Suggestions:** Automatically identifies strong correlations
-- **Export Ready:** Download high-res PNG heatmaps
-
-### 📈 Residual Analysis
-
-Scientific validation for regression models:
-- **Plotly Interactive:** Zoom, pan, hover tooltips
-- **Auto-Interpretation:** Good/Acceptable/Poor fit detection
-- **Statistical Metrics:** Mean, std dev, min/max errors
-- **Best Practices:** Built-in guide for reading residual plots
-
-### 💻 Code Export
-
-Generate production-ready Python scripts:
-- **3 Script Types:** Regression, EDA, Data Cleaning
-- **Syntax Highlighting:** VS Code Dark+ theme
-- **Copy & Download:** One-click clipboard or .py file
-- **Full Context:** Imports, usage guides, and comments included
-
-**Try it now:** Navigate to `/smart-analytics` after logging in!
-
----
-
-## �📋 Prerequisites
-
-Ensure you have the following installed on your system:
-
-| Requirement | Minimum Version | Recommended | Check Command |
-|-------------|----------------|-------------|---------------|
-| **Node.js** | 18.0.0 | 20.x LTS | `node --version` |
-| **Python** | 3.10.0 | 3.11+ | `python --version` |
-| **npm** | 9.0.0 | 10.x | `npm --version` |
-| **Git** | 2.30.0 | Latest | `git --version` |
-| **pip** | 23.0.0 | Latest | `pip --version` |
-
-### Optional (for Production)
-- **PostgreSQL** 15+ (for Supabase)
-- **Docker** (for containerized deployment)
-
----
-
-## 🚀 Quick Start
-
-<details open>
-<summary><b>🪟 Windows Users</b></summary>
-
-### Option 1: Double-click
-```
-📁 start-dev.bat
+### Windows
+```batch
+start-dev.bat
 ```
 
-### Option 2: Command Line
-```powershell
-.\start-dev.bat
-```
-
-</details>
-
-<details>
-<summary><b>🍎 macOS / 🐧 Linux Users</b></summary>
-
-### Make script executable (first time only)
+### macOS / Linux
 ```bash
 chmod +x start-dev.sh
-```
-
-### Run the script
-```bash
 ./start-dev.sh
 ```
 
-</details>
+The startup script will automatically:
+- Create Python virtual environment
+- Install backend dependencies
+- Run database migrations
+- Start Django server on port 8000
+- Install frontend dependencies
+- Start Vite dev server on port 5173
+- Open browser to application
 
-### 🎉 What Happens Automatically
+First-time setup takes approximately 3-5 minutes. Subsequent starts take ~10 seconds.
 
-```mermaid
-graph LR
-    A[Run Script] --> B[Create venv]
-    B --> C[Install Backend Deps]
-    C --> D[Run Migrations]
-    D --> E[Start Django :8000]
-    E --> F[Install Frontend Deps]
-    F --> G[Start Vite :5173]
-    G --> H[Open Browser]
-```
+## Manual Setup
 
-✅ Python virtual environment created  
-✅ Backend dependencies installed (Django 5.x, scikit-learn 1.7+, scipy 1.16+)  
-✅ Database migrated  
-✅ Django server running on `http://localhost:8000`  
-✅ Frontend dependencies installed (React 18, Highcharts 11, Papa Parse)  
-✅ Vite dev server running on `http://localhost:5173`  
-✅ Browser opens automatically  
-✅ 12 regression models ready for automatic selection  
-✅ NLP-inspired categorical chat interface with Highcharts  
-
-**⚡ First-time setup:** ~3-5 minutes | **Subsequent starts:** ~10 seconds  
-
----
-
-## 🔧 Manual Setup
-
-<details>
-<summary><b>Click to expand manual setup instructions</b></summary>
-
-### 1️⃣ Backend Setup (Django)
+### Backend (Django)
 
 ```bash
-# Navigate to project root
-cd /path/to/Dataviz
-
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv venv
 
-# Activate virtual environment
-# Windows:
+# Windows
 .\venv\Scripts\activate
-# macOS/Linux:
+
+# macOS/Linux
 source venv/bin/activate
 
 # Install dependencies
 pip install -r backend_django/requirements.txt
 
-# Apply database migrations
+# Run migrations
 python backend_django/manage.py migrate
 
-# Create superuser (optional)
-python backend_django/manage.py createsuperuser
-
-# Start the Django server
+# Start server
 python backend_django/manage.py runserver 8000
 ```
 
-**Backend will be available at:** `http://localhost:8000`
+Backend will be available at: `http://localhost:8000`
 
----
-
-### 2️⃣ Frontend Setup (React + Vite)
-
-Open a **new terminal window**:
+### Frontend (React + Vite)
 
 ```bash
 # Navigate to frontend directory
 cd frontend
 
-# Install Node dependencies
+# Install dependencies
 npm install
 
-# Start the development server
+# Start development server
 npm run dev
 ```
 
-**Frontend will be available at:** `http://localhost:5173`
+Frontend will be available at: `http://localhost:5173`
 
----
+## Configuration
 
-### 3️⃣ Verify Installation
+### Backend Environment Variables
 
-| Service | URL | Expected Response |
-|---------|-----|-------------------|
-| **Backend API** | http://localhost:8000/api/health | `{"status": "ok"}` |
-| **Frontend** | http://localhost:5173 | Landing page loads |
-| **Admin Panel** | http://localhost:8000/admin | Django admin login |
-
-</details>
-
----
-
-## 📊 Regression Models
-
-The platform automatically tests **12 comprehensive regression models** and selects the best fit:
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 📐 Basic Models
-| Model | Formula | Use Case |
-|-------|---------|----------|
-| **Linear** | `y = mx + b` | Straight-line trends |
-| **Polynomial** | `y = a₀ + a₁x + a₂x²...` | Curved patterns |
-| **Logarithmic** | `y = a·ln(x) + b` | Diminishing returns |
-| **Exponential** | `y = a·e^(bx)` | Explosive growth |
-| **Power** | `y = ax^b` | Scaling relationships |
-
-**Requirements:** Minimum 2 data points
-
-</td>
-<td width="50%" valign="top">
-
-### 🤖 Machine Learning Models
-| Model | Type | Use Case |
-|-------|------|----------|
-| **Ridge** | Regularized | Multicollinearity |
-| **Lasso** | Regularized | Feature selection |
-| **Elastic Net** | Hybrid | Combined benefits |
-| **SVR** | Kernel-based | Non-linear patterns |
-| **Decision Tree** | Tree-based | If-then rules |
-| **Random Forest** | Ensemble | Complex patterns |
-| **Quantile** | Robust | Outlier handling |
-
-**Requirements:** Minimum 10 data points
-
-</td>
-</tr>
-</table>
-
-### 🎯 Model Selection Process
-
-```
-Data Input → Test All Models → Calculate Metrics → Rank by Adj. R² → Return Best Model
-```
-
-**Metrics Calculated:**
-- **R²** - Coefficient of determination
-- **Adjusted R²** - Complexity-adjusted fit
-- **RMSE** - Root mean squared error
-- **MAE** - Mean absolute error
-
-**Selection Criteria:** Models ranked by **Adjusted R²** (prevents overfitting)
-
-> 📖 **Detailed Documentation:** See [REGRESSION_MODELS.md](REGRESSION_MODELS.md) for comprehensive model information
-
----
-
-## ⚙️ Configuration
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-### 🔧 Backend Configuration
-
-**Location:** `backend_django/.env`
+Create `backend_django/.env`:
 
 ```env
-# Database (Production)
+# Database
 DATABASE_URL=postgresql://user:pass@host:5432/db
 
-# Django Settings
+# Django
 DJANGO_SECRET_KEY=your-secret-key-here
 DEBUG=False
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# JWT Authentication
+# JWT
 JWT_SECRET=your-jwt-secret
 JWT_EXP_HOURS=24
 
@@ -462,14 +160,9 @@ FRONTEND_URL=http://localhost:5173
 OPENAI_API_KEY=sk-...
 ```
 
-**Default:** Uses SQLite for local development
+### Frontend Environment Variables
 
-</td>
-<td width="50%" valign="top">
-
-### 🎨 Frontend Configuration
-
-**Location:** `frontend/.env`
+Create `frontend/.env`:
 
 ```env
 # Backend API
@@ -484,378 +177,160 @@ VITE_ENABLE_AI=true
 VITE_ENABLE_EXPORT=true
 ```
 
-**Default:** Connects to `http://localhost:8000/api`
+## Regression Models
 
-</td>
-</tr>
-</table>
+The platform automatically tests 12 regression models and selects the best fit:
 
-### 🔐 Environment Setup Guide
+### Basic Models
+- **Linear Regression**: y = mx + b (straight-line trends)
+- **Polynomial Regression**: y = a₀ + a₁x + a₂x² (curved patterns)
+- **Logarithmic Regression**: y = a·ln(x) + b (diminishing returns)
+- **Exponential Regression**: y = a·e^(bx) (explosive growth)
+- **Power Regression**: y = ax^b (scaling relationships)
 
-1. **Copy example files:**
-   ```bash
-   cp backend_django/.env.example backend_django/.env
-   cp frontend/.env.example frontend/.env
-   ```
+### Machine Learning Models
+- **Ridge Regression**: Regularized regression for multicollinearity
+- **Lasso Regression**: Feature selection via L1 regularization
+- **Elastic Net**: Combined L1/L2 regularization
+- **Support Vector Regression**: Kernel-based non-linear modeling
+- **Decision Tree**: Rule-based regression
+- **Random Forest**: Ensemble tree-based modeling
+- **Quantile Regression**: Robust to outliers
 
-2. **Update with your credentials:**
-   - Get Supabase credentials from [supabase.com](https://supabase.com)
-   - Generate Django secret: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`
-   - Generate JWT secret: `python -c "import secrets; print(secrets.token_hex(32))"`
+**Selection Criteria**: Models ranked by Adjusted R² score to prevent overfitting.
 
-3. **Restart servers** to apply changes
+**Metrics Provided**: R², Adjusted R², RMSE (Root Mean Squared Error), MAE (Mean Absolute Error)
 
-> **⚠️ Important:** The backend MUST run on port **8000** (not 5000) to match frontend configuration. The startup script now uses port 8000 by default.
+## API Documentation
 
----
+Base URL: `http://localhost:8000/api`
 
-## 📚 API Documentation
+### Authentication Endpoints
 
-### 🔗 Base URL
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/auth/signup` | Register new user | No |
+| POST | `/auth/login` | User authentication | No |
+| GET | `/auth/verify` | Verify JWT token | Yes |
+
+### Data Analysis Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/data/analyze` | Perform regression analysis | No |
+| POST | `/data/save` | Save analysis results | Yes |
+| GET | `/data/analyses` | Get user's saved analyses | Yes |
+| GET | `/data/analysis/:id` | Get specific analysis | Yes |
+| DELETE | `/data/analysis/:id` | Delete analysis | Yes |
+
+### Draft Management Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/draft/save` | Auto-save draft | Yes |
+| GET | `/draft` | Get saved draft | Yes |
+| DELETE | `/draft` | Delete draft | Yes |
+| POST | `/draft/finalize` | Convert draft to analysis | Yes |
+
+### Smart Analytics Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/data/check-health` | Data health check | No |
+| POST | `/data/clean` | Apply cleaning operations | No |
+| POST | `/data/correlation` | Calculate correlation matrix | No |
+| POST | `/data/generate-code` | Generate Python code | No |
+
+## Application Routes
+
+| Route | Description | Auth Required |
+|-------|-------------|---------------|
+| `/` | Landing page | No |
+| `/login` | User authentication | No |
+| `/dashboard` | User's saved analyses | Yes |
+| `/manual-plot` | Regression analysis tool | No |
+| `/curve-plot` | Desmos mathematical graphing | No |
+| `/categorical` | Categorical data visualization | No |
+| `/smart-analytics` | Data cleaning and analytics | Yes |
+| `/profile` | User profile | Yes |
+
+## Project Structure
+
 ```
-http://localhost:8000/api
-```
-
-### 🛣️ Available Endpoints
-
-<table>
-<tr>
-<th width="15%">Method</th>
-<th width="30%">Endpoint</th>
-<th width="35%">Description</th>
-<th width="20%">Auth Required</th>
-</tr>
-
-<!-- Authentication -->
-<tr>
-<td colspan="4"><b>🔐 Authentication</b></td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/auth/signup</code></td>
-<td>Register a new user account</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/auth/login</code></td>
-<td>Login with email & password</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>GET</code></td>
-<td><code>/auth/verify</code></td>
-<td>Verify JWT token validity</td>
-<td>✅ Yes</td>
-</tr>
-
-<!-- Data Analysis -->
-<tr>
-<td colspan="4"><b>📊 Data Analysis</b></td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/analyze</code></td>
-<td>Perform regression analysis on data points</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/save</code></td>
-<td>Save analysis results to database</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>GET</code></td>
-<td><code>/data/analyses</code></td>
-<td>Retrieve user's saved analyses</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>GET</code></td>
-<td><code>/data/analysis/:id</code></td>
-<td>Get specific analysis by ID</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>DELETE</code></td>
-<td><code>/data/analysis/:id</code></td>
-<td>Delete saved analysis</td>
-<td>✅ Yes</td>
-</tr>
-
-<!-- Draft Management -->
-<tr>
-<td colspan="4"><b>📝 Draft Management</b></td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/draft/save</code></td>
-<td>Auto-save draft analysis (real-time)</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>GET</code></td>
-<td><code>/draft</code></td>
-<td>Retrieve saved draft</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>DELETE</code></td>
-<td><code>/draft</code></td>
-<td>Delete saved draft</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/draft/finalize</code></td>
-<td>Convert draft to saved analysis</td>
-<td>✅ Yes</td>
-</tr>
-
-<!-- System -->
-<tr>
-<td colspan="4"><b>⚡ System</b></td>
-</tr>
-<tr>
-<td><code>GET</code></td>
-<td><code>/health</code></td>
-<td>Check API health status</td>
-<td>❌ No</td>
-</tr>
-
-<!-- Smart Analytics (New!) -->
-<tr>
-<td colspan="4"><b>🆕 🧹 Smart Data Cleaning</b></td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/check-health</code></td>
-<td>Detect nulls, duplicates, type issues</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/clean</code></td>
-<td>Apply cleaning operations (6 methods)</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/correlation</code></td>
-<td>Calculate correlation matrix</td>
-<td>❌ No</td>
-</tr>
-<tr>
-<td><code>POST</code></td>
-<td><code>/data/generate-code</code></td>
-<td>Generate Python code (regression, EDA, cleaning)</td>
-<td>❌ No</td>
-</tr>
-
-</table>
-
-### 📋 Request/Response Examples
-
-<details>
-<summary><b>POST /data/analyze</b> - Perform Regression Analysis</summary>
-
-**Request:**
-```json
-{
-  "dataPoints": [
-    {"x": 1, "y": 2},
-    {"x": 2, "y": 4},
-    {"x": 3, "y": 6},
-    {"x": 4, "y": 8}
-  ]
-}
+Dataviz/
+├── backend_django/
+│   ├── api/
+│   │   ├── utils/
+│   │   │   ├── ai_helpers.py
+│   │   │   ├── code_generator.py
+│   │   │   ├── data_cleaning.py
+│   │   │   ├── data_validation.py
+│   │   │   ├── langchain_helpers.py
+│   │   │   ├── nlp_helpers.py
+│   │   │   └── regression_models.py
+│   │   ├── models.py
+│   │   ├── views.py
+│   │   └── admin.py
+│   ├── dataviz_backend/
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── manage.py
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ui/
+│   │   │   ├── AppLayout.jsx
+│   │   │   ├── DataAnalyzer.jsx
+│   │   │   ├── DataPlot.jsx
+│   │   │   ├── DesmosPlot.jsx
+│   │   │   ├── PlotlyChart.jsx
+│   │   │   └── UniversalChart.jsx
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── ManualPlotRegression.jsx
+│   │   │   ├── ManualPlotCurve.jsx
+│   │   │   └── CategoricalChatNLP.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── lib/
+│   │   │   ├── api.js
+│   │   │   ├── chartExport.js
+│   │   │   └── supabase.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
+├── docker-compose.yml
+├── start-dev.bat
+├── start-dev.sh
+├── .gitignore
+└── README.md
 ```
 
-**Response:**
-```json
-{
-  "model_name": "Linear Regression",
-  "model_type": "linear",
-  "equation": "y = 2.0000x + 0.0000",
-  "r2": 1.0000,
-  "adjusted_r2": 1.0000,
-  "rmse": 0.0000,
-  "mae": 0.0000,
-  "predictions": [[1, 2], [2, 4], [3, 6], [4, 8]],
-  "all_models_tested": [...]
-}
-```
-
-</details>
-
-<details>
-<summary><b>POST /auth/signup</b> - User Registration</summary>
-
-**Request:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePass123"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "User created successfully",
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}
-```
-
-</details>
-
-<details>
-<summary><b>🆕 POST /data/check-health</b> - Smart Data Health Check</summary>
-
-**Request:**
-```json
-{
-  "file_path": "csv_uploads/mydata.csv"
-}
-```
-
-**Response:**
-```json
-{
-  "has_errors": true,
-  "missing_rows": 12,
-  "missing_by_column": {
-    "Age": 8,
-    "Salary": 4
-  },
-  "duplicates": 5,
-  "total_rows": 100,
-  "total_columns": 5,
-  "issues": [
-    {
-      "type": "missing_values",
-      "severity": "warning",
-      "message": "⚠️ 12 rows contain missing values",
-      "affected_columns": ["Age", "Salary"]
-    }
-  ]
-}
-```
-
-</details>
-
-<details>
-<summary><b>🆕 POST /data/generate-code</b> - Code Export</summary>
-
-**Request:**
-```json
-{
-  "type": "regression",
-  "model_type": "random_forest",
-  "features": ["feature1", "feature2"],
-  "target": "target_variable",
-  "hyperparameters": {
-    "n_estimators": 100
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "code": "import pandas as pd\nfrom sklearn.ensemble import RandomForestRegressor\n...",
-  "type": "regression",
-  "language": "python"
-}
-```
-
-</details>
-
-> 📖 **Full API Documentation:** See [backend_django/README.md](backend_django/README.md)
-
----
-
-## 🎨 Application Pages
-
-| Page | Route | Description | Auth Required |
-|------|-------|-------------|---------------|
-| **Landing** | `/` | Welcome page with features overview | ❌ |
-| **Login** | `/login` | User authentication | ❌ |
-| **Dashboard** | `/dashboard` | User's saved analyses | ✅ |
-| **Regression Model** | `/manual-plot` | Advanced regression analysis | ❌ |
-| **Curve Plotter** | `/curve-plot` | Desmos mathematical graphing | ❌ |
-| **Categorical Chat** | `/categorical` | NLP-inspired categorical data visualization with 4-panel layout | ❌ |
-| **🆕 Smart Analytics** | `/smart-analytics` | Data cleaning, code export, residual analysis showcase | ✅ |
-| **Profile** | `/profile` | User profile settings | ✅ |
-| **AI Features** | `/ai` | AI-powered chart suggestions | ❌ |
-
-### 🌟 Featured: Categorical Chat Interface
-
-The **Categorical Chat** page provides an intelligent, interactive way to visualize categorical data:
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-**📊 Visualizer Panel**
-- 5 chart types: Bar, Pie, Histogram, Scatter, Heatmap
-- Powered by Highcharts for high-quality rendering
-- Dynamic theming (auto-switches with dark/light mode)
-- Export to PNG/PDF with theme selection
-- Click-to-drill-down interactivity
-- Drag & drop CSV upload
-
-**🤖 Intelligence Hub**
-- Chat-first input interface
-- NLP-inspired command parsing
-- Suggestion chips for common actions
-- Active column tracking with type detection
-- Real-time data processing
-
-</td>
-<td width="50%" valign="top">
-
-**📈 Categorical Insights**
-- Narrative AI summary of data patterns
-- Cardinality and distribution metrics
-- Top/bottom performer identification
-- Statistical analysis
-- Dynamic value indicators
-
-**🗂️ Smart Data Grid**
-- Paginated table view (10 items/page)
-- Search and filter capabilities
-- Drill-down from chart interactions
-- Column type indicators (📊 categorical, 🔢 numerical)
-- Real-time data updates
-
-</td>
-</tr>
-</table>
-
-**Supported Commands:**
-- `add [item] [value]` - Add data points
-- `set chart to [type]` - Change visualization
-- `top 5` / `bottom 5` - Show extremes
-- `sort ascending` / `sort descending`
-- `remove [item]` - Delete data points
-- `clear data` - Reset all data
-
----
-
-## 🚢 Deployment
-
-### 🐳 Docker Deployment
+## Testing
 
 ```bash
-# Build and run with Docker Compose
+# Backend tests
+cd backend_django
+python manage.py test
+
+# Frontend tests
+cd frontend
+npm run test
+
+# Linting
+npm run lint
+```
+
+## Deployment
+
+### Docker Deployment
+
+```bash
+# Build and run
 docker-compose up -d
 
 # View logs
@@ -865,297 +340,38 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### ☁️ Production Deployment
+### Production Checklist
 
-<table>
-<tr>
-<th>Platform</th>
-<th>Frontend</th>
-<th>Backend</th>
-<th>Database</th>
-</tr>
-<tr>
-<td><b>Recommended</b></td>
-<td>Vercel / Netlify</td>
-<td>Railway / Render</td>
-<td>Supabase</td>
-</tr>
-<tr>
-<td><b>Alternative</b></td>
-<td>AWS Amplify</td>
-<td>Heroku / AWS</td>
-<td>PostgreSQL RDS</td>
-</tr>
-</table>
-
-**Production Checklist:**
 - [ ] Set `DEBUG=False` in Django settings
-- [ ] Configure `ALLOWED_HOSTS` with actual domain
+- [ ] Configure `ALLOWED_HOSTS` with production domain
 - [ ] Update `CSRF_TRUSTED_ORIGINS` with production URLs
-- [ ] Set up environment variables (.env files NOT in git)
-- [ ] Enable HTTPS/SSL (configure `SECURE_SSL_REDIRECT=True`)
-- [ ] Update `VITE_API_URL` to production backend URL
-- [ ] Configure CORS with specific origins (disable `CORS_ALLOW_ALL_ORIGINS`)
+- [ ] Set environment variables securely
+- [ ] Enable HTTPS/SSL (`SECURE_SSL_REDIRECT=True`)
+- [ ] Update `VITE_API_URL` to production backend
+- [ ] Configure CORS with specific origins
 - [ ] Set up database backups
-- [ ] Configure error monitoring (Sentry recommended)
+- [ ] Configure error monitoring
 - [ ] Run security audits (`pip-audit`, `npm audit`)
-- [ ] Set strong `SECRET_KEY` and `JWT_SECRET`
-- [ ] Review and update `requirements.txt` dependencies
-- [ ] Configure static file serving (`collectstatic`)
+- [ ] Generate strong `SECRET_KEY` and `JWT_SECRET`
+- [ ] Run `collectstatic` for Django static files
 - [ ] Set up CDN for media files
 - [ ] Enable rate limiting on API endpoints
 
-> **📋 Full Checklist:** See [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) for detailed deployment guide
+## Troubleshooting
 
----
-
-## 🧪 Testing
+### Port Already in Use
 
 ```bash
-# Backend tests
-cd backend_django
-python manage.py test
-
-# Test regression module specifically
-python -c "from api.utils.regression_models import find_best_regression; result = find_best_regression([{'x': 1, 'y': 2}, {'x': 2, 'y': 4}]); print(f'Model: {result[\"model_name\"]}, R²: {result[\"r2\"]}')"
-
-# Frontend tests
-cd frontend
-npm run test
-
-# Lint checks
-npm run lint
-
-# Type checking
-npx tsc --noEmit
-```
-
-### ✅ Verification Tests
-
-**Quick Health Check:**
-```bash
-# Backend API health
-curl http://localhost:8000/api/health
-
-# Expected: {"status": "ok"}
-```
-
-**Test Regression Analysis:**
-```bash
-# Test the analyze endpoint
-curl -X POST http://localhost:8000/api/data/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"dataPoints": [{"x": 1, "y": 2}, {"x": 2, "y": 4}, {"x": 3, "y": 6}]}'
-
-# Expected: JSON response with model_name, equation, r2, etc.
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### 📝 Contribution Guidelines
-
-<table>
-<tr>
-<td width="33%" align="center">
-
-### 🐛 Report Bugs
-Found a bug?  
-[Open an issue](../../issues)
-
-Include:
-- Steps to reproduce
-- Expected behavior
-- Screenshots (if applicable)
-
-</td>
-<td width="33%" align="center">
-
-### ✨ Request Features
-Have an idea?  
-[Submit a feature request](../../issues)
-
-Include:
-- Use case
-- Expected behavior
-- Benefits
-
-</td>
-<td width="33%" align="center">
-
-### 🔧 Submit PRs
-Want to contribute code?  
-[Create a pull request](../../pulls)
-
-Follow:
-- Code style guide
-- Add tests
-- Update docs
-
-</td>
-</tr>
-</table>
-
-### 🔄 Development Workflow
-
-```bash
-# 1. Fork the repository
-git clone https://github.com/YOUR_USERNAME/Dataviz.git
-
-# 2. Create a feature branch
-git checkout -b feature/AmazingFeature
-
-# 3. Make your changes
-# ... code, code, code ...
-
-# 4. Commit your changes
-git commit -m 'Add some AmazingFeature'
-
-# 5. Push to your branch
-git push origin feature/AmazingFeature
-
-# 6. Open a Pull Request
-```
-
-### 📏 Code Style
-
-| Language | Style Guide | Linter |
-|----------|-------------|--------|
-| **JavaScript/TypeScript** | ESLint + Prettier | `npm run lint` |
-| **Python** | PEP 8 | `flake8` / `black` |
-| **CSS** | BEM naming | Tailwind classes |
-
----
-
-## 📄 Project Structure
-
-```
-Dataviz/
-├── 📁 backend_django/           # Django backend
-│   ├── 📁 api/                  # API application
-│   │   ├── 📁 utils/            # Utility modules
-│   │   │   ├── ai_helpers.py    # OpenAI integration
-│   │   │   └── regression_models.py  # ML models
-│   │   ├── models.py            # Database models
-│   │   ├── views.py             # API endpoints
-│   │   └── urls.py              # URL routing
-│   ├── 📁 dataviz_backend/      # Project settings
-│   ├── manage.py                # Django management
-│   └── requirements.txt         # Python dependencies
-│
-├── 📁 frontend/                 # React frontend
-│   ├── 📁 src/
-│   │   ├── 📁 components/       # React components
-│   │   │   ├── 📁 ui/           # shadcn/ui components
-│   │   │   ├── AppLayout.jsx
-│   │   │   ├── DataAnalyzer.jsx
-│   │   │   ├── DataPlot.jsx
-│   │   │   ├── DesmosPlot.jsx
-│   │   │   ├── UniversalChart.jsx
-│   │   │   ├── theme-provider.jsx
-│   │   │   └── theme-toggle.jsx
-│   │   ├── 📁 pages/            # Page components
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── LandingPage.jsx
-│   │   │   ├── ManualPlotRegression.jsx
-│   │   │   ├── ManualPlotCurve.jsx
-│   │   │   └── CategoricalChat.jsx  # NLP categorical viz
-│   │   ├── 📁 context/          # React context
-│   │   │   └── AuthContext.jsx
-│   │   ├── 📁 hooks/            # Custom hooks
-│   │   ├── 📁 lib/              # Utilities
-│   │   │   ├── api.js           # API client
-│   │   │   ├── chartExport.js   # Export utilities
-│   │   │   ├── supabase.js      # Supabase client
-│   │   │   └── utils.js         # Helper functions
-│   │   ├── App.jsx              # Main component
-│   │   └── main.jsx             # Entry point
-│   ├── package.json             # Node dependencies
-│   └── vite.config.js           # Vite configuration
-│
-├── 📁 media/                    # Uploaded files
-├── 📄 docker-compose.yml        # Docker configuration
-├── 📄 start-dev.bat             # Windows startup script
-├── 📄 start-dev.sh              # Unix startup script
-├── 📄 .gitignore                # Git ignore rules
-├── 📄 README.md                 # This file
-├── 📄 REGRESSION_MODELS.md      # Model documentation
-└── 📄 IMPLEMENTATION_SUMMARY.md # Implementation details
-```
-
----
-
-## 🎓 Learning Resources
-
-### 📚 Documentation
-- [Django Documentation](https://docs.djangoproject.com/)
-- [React Documentation](https://react.dev/)
-- [Vite Guide](https://vitejs.dev/guide/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [scikit-learn](https://scikit-learn.org/stable/)
-- [Supabase Docs](https://supabase.com/docs)
-
-### 🎥 Tutorials
-- [Django REST Framework Tutorial](https://www.django-rest-framework.org/tutorial/quickstart/)
-- [React + TypeScript](https://react-typescript-cheatsheet.netlify.app/)
-- [Machine Learning Basics](https://scikit-learn.org/stable/tutorial/index.html)
-
----
-
-## 🐛 Troubleshooting
-
-<details>
-<summary><b>Port already in use</b></summary>
-
-**Problem:** `Error: Port 8000 is already in use`
-
-**Solution:**
-```bash
-# Find and kill process using port
-# Windows:
+# Windows
 netstat -ano | findstr :8000
 taskkill /PID <PID> /F
 
-# macOS/Linux:
+# macOS/Linux
 lsof -ti:8000 | xargs kill -9
-
-# Or use a different port:
-python backend_django/manage.py runserver 8001
 ```
 
-</details>
+### Module Not Found Errors
 
-<details>
-<summary><b>Failed to connect to backend</b></summary>
-
-**Problem:** Frontend shows "Failed to analyze data" or "Failed to fetch"
-
-**Solution:**
-1. Verify backend is running: http://localhost:8000/api/health
-2. Check frontend `.env` has correct URL: `VITE_API_URL=http://localhost:8000/api`
-3. Restart both servers:
-   ```bash
-   # Kill all processes
-   # Windows: taskkill /F /IM python.exe /IM node.exe
-   # macOS/Linux: pkill python; pkill node
-   
-   # Restart with the script
-   .\start-dev.bat   # Windows
-   ./start-dev.sh    # macOS/Linux
-   ```
-4. Check browser console (F12) for detailed error messages
-
-</details>
-
-<details>
-<summary><b>Module not found errors</b></summary>
-
-**Problem:** `ModuleNotFoundError: No module named 'xyz'`
-
-**Solution:**
 ```bash
 # Backend
 pip install -r backend_django/requirements.txt
@@ -1164,121 +380,47 @@ pip install -r backend_django/requirements.txt
 cd frontend && npm install
 ```
 
-</details>
+### Database Migration Errors
 
-<details>
-<summary><b>Database migration errors</b></summary>
-
-**Problem:** Migration conflicts or errors
-
-**Solution:**
 ```bash
-# Reset migrations (local dev only!)
+# Reset database (development only)
 rm backend_django/db.sqlite3
 python backend_django/manage.py migrate
 ```
 
-</details>
+## Contributing
 
-<details>
-<summary><b>CORS errors in browser</b></summary>
+Contributions are welcome. Please follow these guidelines:
 
-**Problem:** `Access-Control-Allow-Origin` errors
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes (`git commit -m 'Add YourFeature'`)
+4. Push to the branch (`git push origin feature/YourFeature`)
+5. Open a Pull Request
 
-**Solution:** Check `FRONTEND_URL` in backend `.env` matches your frontend URL
+### Code Style
 
-</details>
+- JavaScript/TypeScript: Follow ESLint configuration
+- Python: Follow PEP 8 guidelines
+- CSS: Use Tailwind utility classes
 
----
+## License
 
-## 📊 Performance
+Distributed under the MIT License. See LICENSE for more information.
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **Initial Load** | < 2s | First page load |
-| **API Response** | < 200ms | Average endpoint response |
-| **Regression Analysis** | < 1s | 12 models tested |
-| **Chart Rendering** | < 100ms | Interactive updates |
-| **Build Time** | < 30s | Production build |
+## Support
 
----
+- GitHub Issues: For bug reports and feature requests
+- Documentation: Available in repository wiki
+- Email: your-email@example.com
 
-## 🔐 Security
+## Acknowledgments
 
-- ✅ JWT-based authentication
-- ✅ Password hashing with Django's built-in hasher
-- ✅ CORS protection
-- ✅ SQL injection prevention (ORM)
-- ✅ XSS protection (React escaping)
-- ✅ CSRF tokens for state-changing operations
-- ✅ Environment variable security
-- ⚠️ Enable HTTPS in production
-- ⚠️ Regular dependency updates
-
----
-
-## 📝 License
-
-Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
-
-```
-MIT License - Copyright (c) 2026 Dataviz Contributors
-```
-
----
-
-## 👥 Authors & Contributors
-
-<table>
-<tr>
-<td align="center">
-<img src="https://via.placeholder.com/100" width="100" alt="Author"/><br/>
-<b>Your Name</b><br/>
-<sub>Creator</sub>
-</td>
-<td>
-
-**Contributions Welcome!**
-
-We appreciate all contributions, big or small.  
-See our [contributing guidelines](#-contributing) to get started.
-
-</td>
-</tr>
-</table>
-
----
-
-## 🌟 Acknowledgments
-
-- [shadcn/ui](https://ui.shadcn.com/) - Beautiful component library
-- [Recharts](https://recharts.org/) - Composable charting library
-- [Highcharts](https://www.highcharts.com/) - Advanced charting
-- [Desmos](https://www.desmos.com/) - Mathematical graphing
-- [Supabase](https://supabase.com/) - Backend infrastructure
-- [scikit-learn](https://scikit-learn.org/) - Machine learning models
-- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
-
----
-
-## 📞 Support
-
-Need help? Here's how to get support:
-
-| Method | Link | Response Time |
-|--------|------|---------------|
-| **GitHub Issues** | [Open an issue](../../issues) | 24-48 hours |
-| **Email** | your-email@example.com | 2-3 days |
-| **Documentation** | [Wiki](../../wiki) | Instant |
-
----
-
-<div align="center">
-
-### ⭐ Star this repo if you find it helpful!
-
-**Made with ❤️ by the Dataviz Team**
-
-[⬆ Back to Top](#-dataviz---interactive-data-visualization--analysis-platform)
-
-</div>
+- shadcn/ui - Component library
+- Recharts - Charting library
+- Highcharts - Advanced charting
+- Plotly - Interactive 3D charts
+- Desmos - Mathematical graphing
+- Supabase - Backend infrastructure
+- scikit-learn - Machine learning models
+- Tailwind CSS - Styling framework

@@ -95,8 +95,6 @@ const Dashboard = () => {
     };
 
     const handleEditSession = (sessionData) => {
-        console.log('[Dashboard] Editing session:', sessionData);
-        
         // Navigate to the appropriate page and load the session
         const pageTypeMap = {
             'categorical': '/categorical',
@@ -108,15 +106,7 @@ const Dashboard = () => {
         if (path) {
             // Store session ID in sessionStorage so the page can restore it
             const storageKey = `session_id_${sessionData.page_type}`;
-            console.log('[Dashboard] Setting sessionStorage:', storageKey, '=', sessionData.session_id);
             sessionStorage.setItem(storageKey, sessionData.session_id);
-            
-            // Verify it was stored
-            const storedValue = sessionStorage.getItem(storageKey);
-            console.log('[Dashboard] Verified sessionStorage:', storageKey, '=', storedValue);
-            
-            // Navigate to the page
-            console.log('[Dashboard] Navigating to:', path);
             navigate(path);
             toast.success('Loading saved chart...');
         } else {

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Code2 } from 'lucide-react';
+import ChartCodeExportModal from './ChartCodeExportModal';
 
 /**
  * Advanced Plotly Chart Component
@@ -19,6 +20,7 @@ const PlotlyChart = ({
 }) => {
     const [plotData, setPlotData] = useState([]);
     const [layout, setLayout] = useState({});
+    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
     useEffect(() => {
         const isDark = theme === 'dark';
@@ -159,6 +161,14 @@ const PlotlyChart = ({
                             className="gap-2"
                         >
                             <Download className="h-4 w-4" /> Export SVG
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowCodeExportModal(true)}
+                            className="gap-2"
+                        >
+                            <Code2 className="h-4 w-4" /> Export Code
+                        </Button>
                         </Button>
                     </div>
                 </div>
@@ -208,6 +218,19 @@ const PlotlyChart = ({
                                 <div>
                                     <div className="text-muted-foreground">Data Points</div>
                                     <div className="text-lg font-semibold">
+            
+            {/* Code Export Modal */}
+            <ChartCodeExportModal
+                isOpen={showCodeExportModal}
+                onClose={() => setShowCodeExportModal(false)}
+                chartType={regressionResult ? 'regression' : 'scatter'}
+                regressionData={regressionResult ? {
+                    dataPoints: data.map(([x, y]) => ({ x, y })),
+                    equation: regressionResult.equation,
+                    modelType: 'linear'
+                } : null}
+                chartTitle={title}
+            />
                                         {regressionResult.points}
                                     </div>
                                 </div>

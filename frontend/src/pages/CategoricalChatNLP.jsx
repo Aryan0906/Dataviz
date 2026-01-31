@@ -8,12 +8,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
     Upload, AlertCircle, FileUp, RefreshCw,
     Send, BarChart3, PieChart, TreePalm, Search, Sparkles, TrendingUp, TrendingDown,
-    Database, AlertTriangle, Download, FileImage, FileText, Moon, Sun
+    Database, AlertTriangle, Download, FileImage, FileText, Moon, Sun, Code2
 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { UniversalChart } from "@/components/UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ChartCodeExportModal from "@/components/ChartCodeExportModal";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -66,6 +67,9 @@ const CategoricalChatNLP = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
+    
+    // Code export modal state
+    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
     // === NLP Query Processing ===
     const handleChatSubmit = async () => {
@@ -311,6 +315,13 @@ const CategoricalChatNLP = () => {
     };
 
     const confirmExport = async () => {
+        // Handle code export separately
+        if (exportFormat === "code") {
+            setShowExportDialog(false);
+            setShowCodeExportModal(true);
+            return;
+        }
+
         if (!chartContainerRef.current) {
             toast.error("Chart not found");
             return;
@@ -322,7 +333,7 @@ const CategoricalChatNLP = () => {
         try {
             if (exportFormat === "png") {
                 await exportChartAsPNG(chartContainerRef.current, filename, exportTheme);
-            } else {
+            } else if (exportFormat === "pdf") {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
         } catch (error) {
@@ -346,39 +357,53 @@ const CategoricalChatNLP = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* TOP-LEFT: Dynamic Visualizer */}
                     <Card ref={chartContainerRef} className="lg:row-span-2">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5" />
-                                {chartTitle}
-                            </CardTitle>
-                            {chartData && (
-                                <div className="flex gap-1">
-                                    <Button
-                                        variant={chartType === 'bar' ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => setChartType('bar')}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <BarChart3 className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant={chartType === 'pie' ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => setChartType('pie')}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <PieChart className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant={chartType === 'treemap' ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => setChartType('treemap')}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <TreePalm className="h-4 w-4" />
-                                    </Button>
+                        <CardHeader className="space-y-3">
+                            <div className="flex flex-row items-center justify-between flex-wrap gap-2">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Sparkles className="h-5 w-5" />
+                                    {chartTitle}
+                                </CardTitle>
+                                <div className="flex gap-2 items-center flex-wrap">
+                                    {chartData && (
+                                        <>
+                                            <div className="flex gap-1">
+                                                <Button
+                                                    variant={chartType === 'bar' ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => setChartType('bar')}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <BarChart3 className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant={chartType === 'pie' ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => setChartType('pie')}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <PieChart className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant={chartType === 'treemap' ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    onClick={() => setChartType('treemap')}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <TreePalm className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <Button
+                                                onClick={handleExportChart}
+                                                size="sm"
+                                                className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                                            >
+                                                <Download className="h-4 w-4" />
+                                                Export
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
-                            )}
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {!categoricalData.length ? (
@@ -741,6 +766,15 @@ const CategoricalChatNLP = () => {
                             Export Chart
                         </Button>
                         <Button
+                            onClick={() => setShowCodeExportModal(true)}
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                        >
+                            <Code2 className="h-4 w-4" />
+                            Export as Code
+                        </Button>
+                        <Button
                             onClick={() => {
                                 setCategoricalData([]);
                                 setChartData(null);
@@ -765,14 +799,14 @@ const CategoricalChatNLP = () => {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Export Chart</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Choose file format and theme for your exported chart
+                                Choose export format: PNG/PDF image or Python code
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="space-y-4">
                             {/* File Format Selection */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">File Format</label>
-                                <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-3">
+                                <label className="text-sm font-semibold">Export As</label>
+                                <div className="grid grid-cols-3 gap-3">
                                     <button
                                         onClick={() => setExportFormat("png")}
                                         className={cn(
@@ -797,13 +831,26 @@ const CategoricalChatNLP = () => {
                                         <FileText className="h-5 w-5" />
                                         <span className="text-sm font-medium">PDF</span>
                                     </button>
+                                    <button
+                                        onClick={() => setExportFormat("code")}
+                                        className={cn(
+                                            "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                            exportFormat === "code"
+                                                ? "border-primary bg-primary/10"
+                                                : "border-border hover:border-primary/50"
+                                        )}
+                                    >
+                                        <Code2 className="h-5 w-5" />
+                                        <span className="text-sm font-medium">Code</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Theme Selection */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Theme</label>
-                                <div className="grid grid-cols-2 gap-3">
+                            {/* Theme Selection - Only show for PNG/PDF */}
+                            {exportFormat !== "code" && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Theme</label>
+                                    <div className="grid grid-cols-2 gap-3">
                                     <button
                                         onClick={() => setExportTheme("light")}
                                         className={cn(
@@ -832,15 +879,25 @@ const CategoricalChatNLP = () => {
                                     </button>
                                 </div>
                             </div>
+                            )}
                         </div>
                         <div className="flex gap-2 justify-end">
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={confirmExport}>
-                                Export as {exportFormat.toUpperCase()}
+                                {exportFormat === "code" ? "Generate Code" : `Export as ${exportFormat.toUpperCase()}`}
                             </AlertDialogAction>
                         </div>
                     </AlertDialogContent>
                 </AlertDialog>
+
+                {/* Code Export Modal */}
+                <ChartCodeExportModal
+                    isOpen={showCodeExportModal}
+                    onClose={() => setShowCodeExportModal(false)}
+                    chartType={chartType}
+                    chartData={chartData}
+                    chartTitle={chartTitle}
+                />
             </div>
         </AppLayout>
     );

@@ -20,7 +20,8 @@ import {
     RefreshCw,
     Download, 
     FileImage, 
-    FileText 
+    FileText,
+    Code2
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -30,6 +31,7 @@ import Papa from "papaparse";
 import regression from "regression";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ChartCodeExportModal from "./ChartCodeExportModal";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -64,6 +66,9 @@ export const DataAnalyzer = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
+    
+    // Code export modal state
+    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -179,12 +184,8 @@ export const DataAnalyzer = () => {
         }, 100);
 
         try {
-            console.log('Sending data to backend:', data);
-            
             // Call backend API for comprehensive regression analysis
             const result = await dataAPI.analyze(data);
-            
-            console.log('Received result from backend:', result);
             
             if (!result) {
                 setError("Failed to analyze data");
@@ -676,14 +677,25 @@ export const DataAnalyzer = () => {
                     </Button>
                     
                     {data.length >= 2 && (
-                        <Button
-                            onClick={handleExportChart}
-                            size="sm"
-                            className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
-                        >
-                            <Download className="h-4 w-4" />
-                            Export Chart
-                        </Button>
+                        <>
+                            <Button
+                                onClick={handleExportChart}
+                                size="sm"
+                                className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                            >
+                                <Download className="h-4 w-4" />
+                                Export Chart
+                            </Button>
+                            <Button
+                                onClick={() => setShowCodeExportModal(true)}
+                                size="sm"
+                                variant="outline"
+                                className="gap-2"
+                            >
+                                <Code2 className="h-4 w-4" />
+                                Export as Code
+                            </Button>
+                        </>
                     )}
                     
                     <Button onClick={clearAll} variant="outline" size="sm" className="gap-2 ml-auto">
@@ -780,6 +792,19 @@ export const DataAnalyzer = () => {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+            
+            {/* Code Export Modal */}
+            <ChartCodeExportModal
+                isOpen={showCodeExportModal}
+                onClose={() => setShowCodeExportModal(false)}
+                chartType="regression"
+                regressionData={{
+                    dataPoints: data || [],
+                    equation: regressionResult?.equation || '',
+                    modelType: regressionType || 'linear'
+                }}
+                chartTitle="Regression Analysis"
+            />
         </div>
     );
 };

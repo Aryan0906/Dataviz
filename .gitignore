@@ -1,6 +1,4 @@
-# =============================================================================
-# Python & Django
-# =============================================================================
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,305 +6,113 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
-env.bak/
-venv.bak/
 build/
-develop-eggs/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
+dist/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-pip-log.txt
-pip-delete-this-directory.txt
 *.pyc
 *.pyo
 *.pyd
 
-# Django specific
+# Django
 db.sqlite3
 db.sqlite3-journal
 *.db
 *.sqlite
 *.sqlite3
 local_settings.py
-/media/
-/staticfiles/
-/static/
-backend_django/**/__pycache__/
-backend_django/media/
-backend_django/media/csv_uploads/
-backend_django/staticfiles/
+media/
+staticfiles/
+static/
+backend_django/media/csv_uploads/*.csv
+!backend_django/media/csv_uploads/.gitkeep
 
-# Python Machine Learning / Data Science
-*.joblib
-*.pkl
-*.pickle
-*.h5
-*.hdf5
-.ipynb_checkpoints/
-jupyter_notebook_config.py
-
-# =============================================================================
-# Node.js & React/Vite
-# =============================================================================
+# Node.js
 node_modules/
 dist/
 dist-ssr/
 build/
 *.local
-*.tsbuildinfo
 .vite/
 .next/
-out/
-.nuxt
-.cache
+.cache/
 
-# Frontend build outputs
-frontend/dist/
-frontend/build/
-frontend/.vite/
-frontend/node_modules/
-
-# =============================================================================
-# Environment Variables & Secrets
-# =============================================================================
+# Environment Variables
 .env
 .env.*
 .env.local
-.env.*.local
-.env.development.local
-.env.test.local
-.env.production.local
 .env.production
 *.env
-.envrc
 
-# =============================================================================
 # Logs
-# =============================================================================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
-*.log.*
 
-# =============================================================================
-# Testing & Coverage
-# =============================================================================
+# Testing
 .pytest_cache/
 .coverage
-.coverage.*
 htmlcov/
 coverage/
 .nyc_output/
-*.cover
-.hypothesis/
-.tox/
-nosetests.xml
-coverage.xml
-*.coveragerc
 
-# =============================================================================
-# Editor & IDE
-# =============================================================================
-# VSCode
+# IDEs
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-
-# IntelliJ IDEA
 .idea/
 *.iml
-*.iws
-*.ipr
-
-# Other editors
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-*.swp
-*.swo
-*~
-.project
-.classpath
-.settings/
-*.sublime-project
-*.sublime-workspace
 
-# =============================================================================
-# Operating System Files
-# =============================================================================
-# macOS
+# OS
 .DS_Store
-.DS_Store?
-._*
-.AppleDouble
-.LSOverride
-.Spotlight-V100
-.Trashes
-Icon
-.DocumentRevisions-V100
-.fseventsd
-.TemporaryItems
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Windows
 Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
 Desktop.ini
 $RECYCLE.BIN/
-*.lnk
-*.stackdump
 
-# Linux
-.directory
-.Trash-*
-.nfs*
-
-# =============================================================================
-# Package Managers & Dependencies
-# =============================================================================
+# Package Managers
 package-lock.json
-pnpm-lock.yaml
 yarn.lock
+pnpm-lock.yaml
 poetry.lock
 Pipfile.lock
 
-# =============================================================================
-# Temporary & Backup Files
-# =============================================================================
+# Temporary Files
 *.tmp
 *.temp
 *.bak
 *.backup
 *.old
 *.orig
-*.rej
-*.swp
-*.swo
-*~
-~*
 
-# =============================================================================
 # Docker
-# =============================================================================
 docker-compose.override.yml
-.dockerignore
 
-# =============================================================================
-# Security & Certificates
-# =============================================================================
+# Security
 *.pem
 *.key
 *.cert
 *.crt
-*.p12
-*.pfx
-*.cer
-*.der
 
-# =============================================================================
-# Miscellaneous
-# =============================================================================
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-.pylint.d/
-.ipynb_checkpoints
-*.sage.py
-.spyderproject
-.spyproject
-.ropeproject
-celerybeat-schedule
-celerybeat.pid
-*.mo
-*.pot
+# Machine Learning
+*.joblib
+*.pkl
+*.pickle
+*.h5
+.ipynb_checkpoints/
 
-# =============================================================================
 # Project Specific
-# =============================================================================
-# CSV uploads (keep folder structure, ignore uploaded files)
-backend_django/media/csv_uploads/*.csv
-!backend_django/media/csv_uploads/.gitkeep
-
-# Documentation exports and summaries (keep main docs)
-*.md.backup
-DASHBOARD_UPDATES.md
-SESSION_FIXES.md
-SESSION_PERSISTENCE.md
-TESTING_GUIDE.md
-ENHANCED_LIBRARIES_GUIDE.md
-
-# Generated lint outputs
 lint-output.txt
-frontend/lint-output.txt
-
-# Sample/test data files
-sample_categorical_data.csv
-test_regression.py
-
-# Virtual environment (if not using venv/)
-env/
-.venv/
-
-# Batch/shell scripts for local development
-*.bat
-*.sh
-!install-dependencies.bat
-!start-dev.bat
-!start-dev.sh
-!start-prod.bat
-!start-prod.sh
-
-# Migration summaries and implementation docs (generated during development)
-EXPORT_FEATURE_SUMMARY.md
-IMPLEMENTATION_SUMMARY.md
-MIGRATION.md
-PRODUCTION_CHECKLIST.md
-REGRESSION_MODELS.md
-SMART_ANALYTICS_IMPLEMENTATION.md
-
-# spaCy language models (download separately)
-backend_django/en_core_web_sm/
-backend_django/en_core_web_md/
-backend_django/en_core_web_lg/
-*.spacy
-
-# Celery & Redis
 celerybeat-schedule*
-celerybeat.pid
 dump.rdb
-redis-*.log
-
-# Polars cache
 .polars_cache/
-
-# LangChain cache
 .langchain/
-.langsmith/
-
-# Syntax highlighter cache (react-syntax-highlighter)
-.syntax-highlighter-cache/
-node_modules/react-syntax-highlighter/
