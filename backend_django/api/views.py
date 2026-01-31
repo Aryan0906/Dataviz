@@ -961,3 +961,197 @@ def restore_from_history(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ============================================================
+# SMART DATA CLEANING ENDPOINTS
+# ============================================================
+
+@csrf_exempt
+def check_data_health(request):
+    """
+    Performs health check on uploaded CSV to detect issues.
+    Returns: health report with missing values, duplicates, type warnings
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        file_path = body.get('file_path')
+        
+        if not file_path:
+            return JsonResponse({'error': 'file_path is required'}, status=400)
+        
+        # Resolve file path
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        if not os.path.exists(full_path):
+            return JsonResponse({'error': 'File not found'}, status=404)
+        
+        # Load CSV
+        df = pd.read_csv(full_path)
+        
+        # Import data cleaning utility
+        from .utils.data_cleaning import check_data_health as perform_health_check
+        
+        # Run health check
+        health_report = perform_health_check(df)
+        
+        return JsonResponse(health_report)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def clean_data(request):
+    """
+    Applies cleaning operations to CSV file.
+    Methods: 'drop', 'mean', 'median', 'mode', 'forward_fill', 'zero', 'drop_duplicates'
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        file_path = body.get('file_path')
+        method = body.get('method', 'drop')
+        columns = body.get('columns')  # Optional: specific columns to clean
+        save_as_new = body.get('save_as_new', False)
+        
+        if not file_path:
+            return JsonResponse({'error': 'file_path is required'}, status=400)
+        
+        # Resolve file path
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        if not os.path.exists(full_path):
+            return JsonResponse({'error': 'File not found'}, status=404)
+        
+        # Load CSV
+        df_original = pd.read_csv(full_path)
+        
+        # Import cleaning utilities
+        from .utils.data_cleaning import clean_data as perform_cleaning, get_cleaning_summary
+        
+        # Clean data
+        df_cleaned = perform_cleaning(df_original, method=method, columns=columns)
+        
+        # Get summary
+        summary = get_cleaning_summary(df_original, df_cleaned)
+        
+        # Save cleaned data
+        if save_as_new:
+            # Create new file with _cleaned suffix
+            base_name = os.path.splitext(file_path)[0]
+            new_file_path = f"{base_name}_cleaned.csv"
+            new_full_path = os.path.join(settings.MEDIA_ROOT, new_file_path)
+        else:
+            # Overwrite original
+            new_file_path = file_path
+            new_full_path = full_path
+        
+        # Save
+        df_cleaned.to_csv(new_full_path, index=False)
+        
+        return JsonResponse({
+            'success': True,
+            'file_path': new_file_path,
+            'summary': summary,
+            'method': method
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_correlation_matrix(request):
+    """
+    Calculate correlation matrix for numeric columns in CSV.
+    Returns: correlation data, strong correlations, column names
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        file_path = body.get('file_path')
+        
+        if not file_path:
+            return JsonResponse({'error': 'file_path is required'}, status=400)
+        
+        # Resolve file path
+        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        
+        if not os.path.exists(full_path):
+            return JsonResponse({'error': 'File not found'}, status=404)
+        
+        # Load CSV
+        df = pd.read_csv(full_path)
+        
+        # Import correlation utility
+        from .utils.data_cleaning import calculate_correlation_matrix
+        
+        # Calculate correlation
+        correlation_data = calculate_correlation_matrix(df)
+        
+        return JsonResponse(correlation_data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def generate_code_snippet(request):
+    """
+    Generate Python code snippet for model replication.
+    Types: 'regression', 'eda', 'cleaning'
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        code_type = body.get('type', 'regression')
+        
+        from .utils.code_generator import (
+            generate_regression_code,
+            generate_eda_code,
+            generate_data_cleaning_code
+        )
+        
+        if code_type == 'regression':
+            model_type = body.get('model_type', 'linear')
+            features = body.get('features', [])
+            target = body.get('target', 'target')
+            hyperparameters = body.get('hyperparameters', {})
+            
+            code = generate_regression_code(
+                model_type=model_type,
+                features=features,
+                target=target,
+                hyperparameters=hyperparameters
+            )
+            
+        elif code_type == 'eda':
+            columns = body.get('columns', [])
+            code = generate_eda_code(columns)
+            
+        elif code_type == 'cleaning':
+            method = body.get('method', 'drop')
+            missing_columns = body.get('missing_columns', [])
+            code = generate_data_cleaning_code(method, missing_columns)
+            
+        else:
+            return JsonResponse({'error': 'Invalid code type'}, status=400)
+        
+        return JsonResponse({
+            'code': code,
+            'type': code_type,
+            'language': 'python'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+

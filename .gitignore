@@ -286,6 +286,7 @@ IMPLEMENTATION_SUMMARY.md
 MIGRATION.md
 PRODUCTION_CHECKLIST.md
 REGRESSION_MODELS.md
+SMART_ANALYTICS_IMPLEMENTATION.md
 
 # spaCy language models (download separately)
 backend_django/en_core_web_sm/
@@ -305,3 +306,7 @@ redis-*.log
 # LangChain cache
 .langchain/
 .langsmith/
+
+# Syntax highlighter cache (react-syntax-highlighter)
+.syntax-highlighter-cache/
+node_modules/react-syntax-highlighter/

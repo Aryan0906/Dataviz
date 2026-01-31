@@ -498,6 +498,29 @@ def find_best_regression(data_points: List[Dict]) -> Optional[Dict]:
     if not best_model:
         return None
     
+    # Calculate residuals for the best model
+    X = np.array([p['x'] for p in data_points])
+    y_actual = np.array([p['y'] for p in data_points])
+    
+    # Get predictions from the model
+    if 'model' in best_model and best_model['model'] is not None:
+        # For sklearn models
+        try:
+            X_input = X.reshape(-1, 1)
+            if best_model.get('scaler'):
+                X_input = best_model['scaler'].transform(X_input)
+            if best_model.get('poly_features'):
+                X_input = best_model['poly_features'].transform(X_input)
+            y_predicted = best_model['model'].predict(X_input)
+        except:
+            y_predicted = np.array([best_model['predict'](x) for x in X])
+    else:
+        # For custom models with predict function
+        y_predicted = np.array([best_model['predict'](x) for x in X])
+    
+    # Calculate residuals
+    residuals = y_actual - y_predicted
+    
     # Return formatted result
     return {
         'model_name': best_model['name'],
@@ -508,5 +531,15 @@ def find_best_regression(data_points: List[Dict]) -> Optional[Dict]:
         'rmse': float(best_model['metrics']['rmse']),
         'mae': float(best_model['metrics']['mae']),
         'predict': best_model['predict'],  # Function for predictions
-        'all_models': selector.get_all_models_summary()
+        'all_models': selector.get_all_models_summary(),
+        # Residual analysis data
+        'actual': y_actual.tolist(),
+        'predicted': y_predicted.tolist(),
+        'residuals': residuals.tolist(),
+        'residual_stats': {
+            'mean': float(np.mean(residuals)),
+            'std': float(np.std(residuals)),
+            'min': float(np.min(residuals)),
+            'max': float(np.max(residuals))
+        }
     }

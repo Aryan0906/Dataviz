@@ -32,5 +32,10 @@ urlpatterns = [
     path("api/history/save", api.save_to_history),
     path("api/history/get", api.get_user_history),
     path("api/history/restore", api.restore_from_history),
+    # Smart data cleaning endpoints
+    path("api/data/check-health", api.check_data_health),
+    path("api/data/clean", api.clean_data),
+    path("api/data/correlation", api.get_correlation_matrix),
+    path("api/data/generate-code", api.generate_code_snippet),
 ]
 

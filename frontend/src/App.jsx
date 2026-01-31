@@ -19,6 +19,7 @@ const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
 const CategoricalChatNLP = lazy(() => import("./pages/CategoricalChatNLP"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const Profile = lazy(() => import("./pages/Profile"));
+const SmartAnalytics = lazy(() => import("./pages/SmartAnalytics"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -89,6 +90,14 @@ const App = () => (
                             element={
                                 <ProtectedRoute>
                                     <Profile />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/smart-analytics"
+                            element={
+                                <ProtectedRoute>
+                                    <SmartAnalytics />
                                 </ProtectedRoute>
                             }
                         />

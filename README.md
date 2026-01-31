@@ -39,6 +39,8 @@
 - Export charts (PNG/PDF/SVG) with theme selection
 - Advanced 3D plots with zoom/pan (Plotly)
 - Professional dashboard widgets (Tremor)
+- **🆕 Residual plots** - scientific model validation
+- **🆕 Correlation heatmap** - click-to-select variables
 
 </td>
 <td width="50%">
@@ -64,6 +66,17 @@
 - Export charts (PNG/PDF/SVG, Light/Dark)
 - **🆕 10-50x faster processing** with Polars
 - **🆕 CSV validation** with detailed error messages
+- **🆕 Smart data cleaning** - auto-detect & fix issues
+- **🆕 Code export** - generate Python scripts
+
+### 🧹 Smart Data Cleaning (New!)
+- Automatic health checks on CSV upload
+- Detects missing values per column
+- Identifies duplicate rows
+- Flags data type mismatches
+- 6 cleaning methods (drop, mean, median, mode, forward fill, zero)
+- Before/after comparison summaries
+- Glass-morphism modal UI
 
 </td>
 </tr>
@@ -76,6 +89,10 @@
 | **Multi-Model Analysis** | Automatically tests 12+ regression models | ✅ Active |
 | **Real-time Charting** | Dynamic visualization with Plotly & Highcharts | ✅ Active |
 | **Session Persistence** | Auto-save & restore across page refreshes | ✅ Active |
+| **Smart Data Cleaning** | Auto-detect nulls, duplicates, type issues | ✅ Active |
+| **Code Export** | Generate Python scripts (regression, EDA, cleaning) | ✅ Active |
+| **Residual Analysis** | Scientific validation with interpretation | ✅ Active |
+| **Correlation Heatmap** | Interactive matrix with click-to-select | ✅ Active |
 | **NLP Intelligence** | Fuzzy matching + entity extraction (spaCy) | ✅ Active |
 | **Smart Queries** | Natural language to Pandas/SQL (LangChain) | ✅ Active |
 | **Data Validation** | Schema validation with Pandera | ✅ Active |
@@ -104,6 +121,9 @@
 | **Tailwind CSS** | Styling | 3.x |
 | **shadcn/ui** | Component Library | Latest |
 | **Highcharts** | Advanced Charts | 11.x |
+| **Plotly.js 🆕** | Interactive 3D Charts | 2.x |
+| **React Syntax Highlighter 🆕** | Code Display | 15.x |
+| **Sonner 🆕** | Toast Notifications | 1.x |
 | **React Router** | Navigation | 6.x |
 | **React Query** | State Management | 5.x |
 | **Desmos** | Mathematical Graphing | API v1.8 |
@@ -167,7 +187,45 @@
 
 ---
 
-## 📋 Prerequisites
+## � Smart Analytics Features (New!)
+
+### 🧹 Intelligent Data Cleaning
+
+Upload any CSV and get instant health insights:
+- **Auto-Detection:** Missing values, duplicates, data type mismatches
+- **Smart Fixing:** 6 cleaning methods (drop, mean, median, mode, forward fill, zero)
+- **Visual Feedback:** Glass-morphism modal with severity badges
+- **Before/After:** Detailed comparison summaries
+
+### 📊 Correlation Explorer
+
+Interactive heatmap for discovering relationships:
+- **Click-to-Select:** Click any cell to auto-select variables for regression
+- **Color-Coded:** Blue (negative) → White (neutral) → Red (positive)
+- **Smart Suggestions:** Automatically identifies strong correlations
+- **Export Ready:** Download high-res PNG heatmaps
+
+### 📈 Residual Analysis
+
+Scientific validation for regression models:
+- **Plotly Interactive:** Zoom, pan, hover tooltips
+- **Auto-Interpretation:** Good/Acceptable/Poor fit detection
+- **Statistical Metrics:** Mean, std dev, min/max errors
+- **Best Practices:** Built-in guide for reading residual plots
+
+### 💻 Code Export
+
+Generate production-ready Python scripts:
+- **3 Script Types:** Regression, EDA, Data Cleaning
+- **Syntax Highlighting:** VS Code Dark+ theme
+- **Copy & Download:** One-click clipboard or .py file
+- **Full Context:** Imports, usage guides, and comments included
+
+**Try it now:** Navigate to `/smart-analytics` after logging in!
+
+---
+
+## �📋 Prerequisites
 
 Ensure you have the following installed on your system:
 
@@ -566,6 +624,35 @@ http://localhost:8000/api
 <td>❌ No</td>
 </tr>
 
+<!-- Smart Analytics (New!) -->
+<tr>
+<td colspan="4"><b>🆕 🧹 Smart Data Cleaning</b></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/data/check-health</code></td>
+<td>Detect nulls, duplicates, type issues</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/data/clean</code></td>
+<td>Apply cleaning operations (6 methods)</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/data/correlation</code></td>
+<td>Calculate correlation matrix</td>
+<td>❌ No</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/data/generate-code</code></td>
+<td>Generate Python code (regression, EDA, cleaning)</td>
+<td>❌ No</td>
+</tr>
+
 </table>
 
 ### 📋 Request/Response Examples
@@ -629,6 +716,68 @@ http://localhost:8000/api
 
 </details>
 
+<details>
+<summary><b>🆕 POST /data/check-health</b> - Smart Data Health Check</summary>
+
+**Request:**
+```json
+{
+  "file_path": "csv_uploads/mydata.csv"
+}
+```
+
+**Response:**
+```json
+{
+  "has_errors": true,
+  "missing_rows": 12,
+  "missing_by_column": {
+    "Age": 8,
+    "Salary": 4
+  },
+  "duplicates": 5,
+  "total_rows": 100,
+  "total_columns": 5,
+  "issues": [
+    {
+      "type": "missing_values",
+      "severity": "warning",
+      "message": "⚠️ 12 rows contain missing values",
+      "affected_columns": ["Age", "Salary"]
+    }
+  ]
+}
+```
+
+</details>
+
+<details>
+<summary><b>🆕 POST /data/generate-code</b> - Code Export</summary>
+
+**Request:**
+```json
+{
+  "type": "regression",
+  "model_type": "random_forest",
+  "features": ["feature1", "feature2"],
+  "target": "target_variable",
+  "hyperparameters": {
+    "n_estimators": 100
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "code": "import pandas as pd\nfrom sklearn.ensemble import RandomForestRegressor\n...",
+  "type": "regression",
+  "language": "python"
+}
+```
+
+</details>
+
 > 📖 **Full API Documentation:** See [backend_django/README.md](backend_django/README.md)
 
 ---
@@ -643,6 +792,7 @@ http://localhost:8000/api
 | **Regression Model** | `/manual-plot` | Advanced regression analysis | ❌ |
 | **Curve Plotter** | `/curve-plot` | Desmos mathematical graphing | ❌ |
 | **Categorical Chat** | `/categorical` | NLP-inspired categorical data visualization with 4-panel layout | ❌ |
+| **🆕 Smart Analytics** | `/smart-analytics` | Data cleaning, code export, residual analysis showcase | ✅ |
 | **Profile** | `/profile` | User profile settings | ✅ |
 | **AI Features** | `/ai` | AI-powered chart suggestions | ❌ |
 
