@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from .models import AnalysisResult, DraftAnalysis, Visualization
+from .models import AnalysisResult, DraftAnalysis, Visualization, PageSession, UserHistory
 from .utils.ai_helpers import (
     generate_metadata_summary,
     suggest_cleaning_actions,
@@ -738,3 +738,226 @@ def save_visualization_to_history(request):
         return JsonResponse({'error': 'Visualization not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============================================================================
+# Page Session Management - Auto-save and restore page state
+# ============================================================================
+
+@csrf_exempt
+def save_page_session(request):
+    """Save or update current page session state"""
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    # Allow both authenticated and anonymous users
+    body = json.loads(request.body.decode() or "{}")
+    user_id = body.get('user_id', 'anonymous')
+    session_id = body.get('session_id')
+    page_type = body.get('page_type')
+    state_data = body.get('state_data')
+    
+    if not all([session_id, page_type, state_data]):
+        return JsonResponse({
+            'error': 'session_id, page_type, and state_data are required'
+        }, status=400)
+    
+    try:
+        session, created = PageSession.objects.update_or_create(
+            session_id=session_id,
+            defaults={
+                'user_id': user_id,
+                'page_type': page_type,
+                'state_data': state_data,
+            }
+        )
+        
+        return JsonResponse({
+            'message': 'Session saved successfully',
+            'session_id': session.session_id,
+            'created': created
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_page_session(request):
+    """Retrieve saved page session by session_id"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+    
+    session_id = request.GET.get('session_id')
+    
+    if not session_id:
+        return JsonResponse({'error': 'session_id is required'}, status=400)
+    
+    try:
+        session = PageSession.objects.get(session_id=session_id)
+        return JsonResponse({
+            'session_id': session.session_id,
+            'page_type': session.page_type,
+            'state_data': session.state_data,
+            'last_accessed': session.last_accessed.isoformat(),
+        })
+    except PageSession.DoesNotExist:
+        return JsonResponse({'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_user_sessions(request):
+    """Get all sessions for a user (authenticated or anonymous)"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+    
+    user_id = request.GET.get('user_id', 'anonymous')
+    page_type = request.GET.get('page_type')  # Optional filter
+    
+    try:
+        sessions = PageSession.objects.filter(user_id=user_id)
+        if page_type:
+            sessions = sessions.filter(page_type=page_type)
+        
+        sessions = sessions[:20]  # Limit to last 20 sessions
+        
+        data = [{
+            'session_id': s.session_id,
+            'page_type': s.page_type,
+            'state_data': s.state_data,
+            'last_accessed': s.last_accessed.isoformat(),
+            'created_at': s.created_at.isoformat(),
+        } for s in sessions]
+        
+        return JsonResponse({'sessions': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def delete_page_session(request):
+    """Delete a specific page session"""
+    if request.method != "DELETE" and request.method != "POST":
+        return HttpResponseNotAllowed(["DELETE", "POST"])
+    
+    body = json.loads(request.body.decode() or "{}")
+    session_id = body.get('session_id')
+    
+    if not session_id:
+        return JsonResponse({'error': 'session_id is required'}, status=400)
+    
+    try:
+        session = PageSession.objects.get(session_id=session_id)
+        session.delete()
+        return JsonResponse({'message': 'Session deleted successfully'})
+    except PageSession.DoesNotExist:
+        return JsonResponse({'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============================================================================
+# User History Management - Track all user actions
+# ============================================================================
+
+@csrf_exempt
+def save_to_history(request):
+    """Save an action to user history"""
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    body = json.loads(request.body.decode() or "{}")
+    user_id = body.get('user_id', 'anonymous')
+    page_type = body.get('page_type')
+    action_type = body.get('action_type', 'create')
+    title = body.get('title')
+    snapshot_data = body.get('snapshot_data')
+    metadata = body.get('metadata', {})
+    
+    if not all([page_type, snapshot_data]):
+        return JsonResponse({
+            'error': 'page_type and snapshot_data are required'
+        }, status=400)
+    
+    try:
+        history = UserHistory.objects.create(
+            user_id=user_id,
+            page_type=page_type,
+            action_type=action_type,
+            title=title,
+            snapshot_data=snapshot_data,
+            metadata=metadata
+        )
+        
+        return JsonResponse({
+            'message': 'History saved successfully',
+            'history_id': history.id
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def get_user_history(request):
+    """Get user history with optional filters"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+    
+    user_id = request.GET.get('user_id', 'anonymous')
+    page_type = request.GET.get('page_type')  # Optional filter
+    action_type = request.GET.get('action_type')  # Optional filter
+    limit = int(request.GET.get('limit', 50))
+    
+    try:
+        history = UserHistory.objects.filter(user_id=user_id)
+        
+        if page_type:
+            history = history.filter(page_type=page_type)
+        if action_type:
+            history = history.filter(action_type=action_type)
+        
+        history = history[:limit]
+        
+        data = [{
+            'id': h.id,
+            'page_type': h.page_type,
+            'action_type': h.action_type,
+            'title': h.title,
+            'snapshot_data': h.snapshot_data,
+            'metadata': h.metadata,
+            'created_at': h.created_at.isoformat(),
+        } for h in history]
+        
+        return JsonResponse({'history': data})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def restore_from_history(request):
+    """Restore a specific history entry"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+    
+    history_id = request.GET.get('history_id')
+    
+    if not history_id:
+        return JsonResponse({'error': 'history_id is required'}, status=400)
+    
+    try:
+        history = UserHistory.objects.get(id=history_id)
+        return JsonResponse({
+            'id': history.id,
+            'page_type': history.page_type,
+            'action_type': history.action_type,
+            'title': history.title,
+            'snapshot_data': history.snapshot_data,
+            'metadata': history.metadata,
+            'created_at': history.created_at.isoformat(),
+        })
+    except UserHistory.DoesNotExist:
+        return JsonResponse({'error': 'History entry not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+

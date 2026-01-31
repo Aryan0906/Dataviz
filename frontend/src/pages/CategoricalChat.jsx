@@ -1,10 +1,11 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HCHeatmap from "highcharts/modules/heatmap";
 import HCExporting from "highcharts/modules/exporting";
 import AppLayout from "@/components/AppLayout";
 import { useTheme } from "@/components/theme-provider";
+import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -296,6 +297,36 @@ export const CategoricalChatPanel = () => {
     const [dragActive, setDragActive] = useState(false);
     const itemsPerPage = 10;
 
+    // Prepare state for persistence
+    const sessionState = useMemo(() => ({
+        chartType,
+        data,
+        messages,
+        chartTitle,
+        columns,
+        activeColumns,
+        csvMetadata,
+        selectedCategory,
+    }), [chartType, data, messages, chartTitle, columns, activeColumns, csvMetadata, selectedCategory]);
+
+    // Restore state callback
+    const restoreState = useCallback((savedState) => {
+        if (savedState.chartType) setChartType(savedState.chartType);
+        if (savedState.data) setData(savedState.data);
+        if (savedState.messages) setMessages(savedState.messages);
+        if (savedState.chartTitle) setChartTitle(savedState.chartTitle);
+        if (savedState.columns) setColumns(savedState.columns);
+        if (savedState.activeColumns) setActiveColumns(savedState.activeColumns);
+        if (savedState.csvMetadata) setCsvMetadata(savedState.csvMetadata);
+        if (savedState.selectedCategory) setSelectedCategory(savedState.selectedCategory);
+    }, []);
+
+    // Enable auto-save and restoration
+    const { saveNow } = usePageSession('categorical', sessionState, restoreState);
+    
+    // Enable history tracking
+    const { logCreate, logUpdate, logExport } = useHistoryLogger('categorical');
+
     const stats = useMemo(() => computeStats(data), [data]);
     const histogram = useMemo(() => buildHistogram(data), [data]);
 
@@ -487,6 +518,13 @@ export const CategoricalChatPanel = () => {
                                 text: `Successfully imported ${parsed.length} categories from "${file.name}". Using "${categoryCol.name}" as labels and "${numericCol.name}" as values.`,
                             },
                         ]);
+                        
+                        // Log CSV upload to history
+                        logCreate(`CSV Import: ${file.name}`, parsed, {
+                            filename: file.name,
+                            rowCount: parsed.length,
+                            columns: detectedColumns.map(c => ({ name: c.name, type: c.type })),
+                        });
                     } else {
                         toast.error("No valid data found in selected columns");
                     }
@@ -581,6 +619,13 @@ export const CategoricalChatPanel = () => {
             } else {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
+            
+            // Log export to history
+            logExport(chartTitle, { chartType, data, timestamp }, {
+                format: exportFormat,
+                theme: exportTheme,
+                filename,
+            });
         } catch (error) {
             console.error("Export failed:", error);
         }
@@ -1124,6 +1169,21 @@ export const CategoricalChatPanel = () => {
                                 {chartTitle}
                             </CardTitle>
                             <div className="flex items-center gap-2 flex-wrap">
+                                {/* Session Status */}
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="gap-2 h-8 text-xs"
+                                    onClick={async () => {
+                                        await saveNow();
+                                        toast.success("Session saved manually!");
+                                    }}
+                                    title="Manually save current session"
+                                >
+                                    <RefreshCcw className="h-3.5 w-3.5" />
+                                    <span className="hidden sm:inline">Save</span>
+                                </Button>
+                                
                                 {/* All Chart Types Dropdown */}
                                 <select
                                     value={chartType}

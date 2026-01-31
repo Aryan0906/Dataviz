@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { dataAPI } from "@/lib/api";
-import { User, Mail, Calendar, Database } from "lucide-react";
+import { User, Mail, Calendar, Database, Activity } from "lucide-react";
+import { getUserSessions } from "@/lib/sessionManager";
 
 const Profile = () => {
     const { user } = useAuth();
     const [analysisCount, setAnalysisCount] = useState(0);
     const [draft, setDraft] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [savedChartsCount, setSavedChartsCount] = useState(0);
 
     // Get user data from Supabase
     const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || "User";
@@ -28,6 +30,10 @@ const Profile = () => {
                 // Fetch draft
                 const { draft: draftData } = await dataAPI.getDraft();
                 setDraft(draftData);
+
+                // Fetch saved sessions
+                const sessions = await getUserSessions();
+                setSavedChartsCount(sessions.length);
             } catch {
                 // Ignore errors
             } finally {
@@ -114,6 +120,20 @@ const Profile = () => {
                                     </div>
                                     <Badge variant="secondary" className="text-lg px-3 py-1">
                                         {analysisCount}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Saved Charts</p>
+                                        <p className="text-2xl font-bold">{loading ? "..." : savedChartsCount}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Across all chart types
+                                        </p>
+                                    </div>
+                                    <Badge variant="secondary" className="text-lg px-3 py-1 bg-emerald-500/10 text-emerald-600 border-emerald-500/50">
+                                        <Activity className="h-4 w-4 mr-1" />
+                                        {savedChartsCount}
                                     </Badge>
                                 </div>
 

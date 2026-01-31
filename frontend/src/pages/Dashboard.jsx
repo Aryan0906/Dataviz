@@ -7,15 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Trash2, RefreshCcw } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Trash2, RefreshCcw, Edit, LineChart, Activity, Sparkles, ChevronDown } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Dashboard = () => {
     const { session } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [analyses, setAnalyses] = useState([]);
     const [draft, setDraft] = useState(null);
     const [query, setQuery] = useState("");
+    const [savedSessions, setSavedSessions] = useState([]);
+    const [sessionsLoading, setSessionsLoading] = useState(true);
 
     const fetchHistory = async () => {
         if (!session) return;
@@ -34,8 +44,26 @@ const Dashboard = () => {
         }
     };
 
+    const fetchSessions = async () => {
+        setSessionsLoading(true);
+        try {
+            const sessions = await getUserSessions();
+            // Sort by updated_at descending
+            const sorted = sessions.sort((a, b) => 
+                new Date(b.updated_at) - new Date(a.updated_at)
+            );
+            setSavedSessions(sorted);
+        } catch (error) {
+            console.error('Failed to fetch sessions:', error);
+            toast.error("Failed to load saved charts");
+        } finally {
+            setSessionsLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchHistory();
+        fetchSessions();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session]);
 
@@ -55,20 +83,193 @@ const Dashboard = () => {
         }
     };
 
+    const handleDeleteSession = async (sessionId) => {
+        if (!confirm("Delete this saved chart?")) return;
+        try {
+            await deletePageSession(sessionId);
+            toast.success("Chart deleted");
+            setSavedSessions(prev => prev.filter(s => s.session_id !== sessionId));
+        } catch {
+            toast.error("Delete failed");
+        }
+    };
+
+    const handleEditSession = (sessionData) => {
+        console.log('[Dashboard] Editing session:', sessionData);
+        
+        // Navigate to the appropriate page and load the session
+        const pageTypeMap = {
+            'categorical': '/categorical',
+            'regression': '/manual-plot/regression',
+            'curve': '/manual-plot/curve',
+        };
+        
+        const path = pageTypeMap[sessionData.page_type];
+        if (path) {
+            // Store session ID in sessionStorage so the page can restore it
+            const storageKey = `session_id_${sessionData.page_type}`;
+            console.log('[Dashboard] Setting sessionStorage:', storageKey, '=', sessionData.session_id);
+            sessionStorage.setItem(storageKey, sessionData.session_id);
+            
+            // Verify it was stored
+            const storedValue = sessionStorage.getItem(storageKey);
+            console.log('[Dashboard] Verified sessionStorage:', storageKey, '=', storedValue);
+            
+            // Navigate to the page
+            console.log('[Dashboard] Navigating to:', path);
+            navigate(path);
+            toast.success('Loading saved chart...');
+        } else {
+            console.error('[Dashboard] Unknown page type:', sessionData.page_type);
+            toast.error('Unknown chart type');
+        }
+    };
+
+    const handleCreateNew = (type) => {
+        const routeMap = {
+            'curve': '/manual-plot/curve',
+            'regression': '/manual-plot/regression',
+            'categorical': '/categorical',
+        };
+        navigate(routeMap[type]);
+    };
+
+    const getChartIcon = (pageType) => {
+        switch (pageType) {
+            case 'categorical':
+                return <Sparkles className="h-5 w-5 text-purple-500" />;
+            case 'regression':
+                return <LineChart className="h-5 w-5 text-blue-500" />;
+            case 'curve':
+                return <Activity className="h-5 w-5 text-green-500" />;
+            default:
+                return <Activity className="h-5 w-5" />;
+        }
+    };
+
+    const getChartTypeLabel = (pageType) => {
+        switch (pageType) {
+            case 'categorical':
+                return 'Categorical Plot';
+            case 'regression':
+                return 'Regression Model';
+            case 'curve':
+                return 'Curve Plot';
+            default:
+                return 'Chart';
+        }
+    };
+
     return (
         <AppLayout>
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
                     <div className="flex items-center gap-2">
-                        <Link to="/manual-plot">
-                            <Button className="gap-2"><Plus className="h-4 w-4" /> New Analysis</Button>
-                        </Link>
-                        <Button variant="outline" onClick={fetchHistory} className="gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button className="gap-2">
+                                    <Plus className="h-4 w-4" /> Create New <ChevronDown className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => handleCreateNew('curve')} className="gap-2 cursor-pointer">
+                                    <Activity className="h-4 w-4 text-green-500" />
+                                    <div>
+                                        <div className="font-medium">Curve Plot</div>
+                                        <div className="text-xs text-muted-foreground">Interactive mathematical graphs</div>
+                                    </div>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCreateNew('regression')} className="gap-2 cursor-pointer">
+                                    <LineChart className="h-4 w-4 text-blue-500" />
+                                    <div>
+                                        <div className="font-medium">Regression Model</div>
+                                        <div className="text-xs text-muted-foreground">Fit data to regression models</div>
+                                    </div>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCreateNew('categorical')} className="gap-2 cursor-pointer">
+                                    <Sparkles className="h-4 w-4 text-purple-500" />
+                                    <div>
+                                        <div className="font-medium">Categorical Plot</div>
+                                        <div className="text-xs text-muted-foreground">AI-powered data visualization</div>
+                                    </div>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button variant="outline" onClick={() => { fetchHistory(); fetchSessions(); }} className="gap-2">
                             <RefreshCcw className="h-4 w-4" /> Refresh
                         </Button>
                     </div>
                 </div>
+
+                {/* Saved Charts Section */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Saved Charts</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {sessionsLoading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {[...Array(6)].map((_, i) => (
+                                    <Skeleton key={i} className="h-32" />
+                                ))}
+                            </div>
+                        ) : savedSessions.length === 0 ? (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <Activity className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                <p>No saved charts yet.</p>
+                                <p className="text-sm">Create a new chart to get started!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {savedSessions.map(sessionData => (
+                                    <Card key={sessionData.session_id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                                        <CardContent className="p-4">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                {getChartIcon(sessionData.page_type)}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium truncate">{getChartTypeLabel(sessionData.page_type)}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {new Date(sessionData.updated_at).toLocaleString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                                {sessionData.page_type === 'categorical' && sessionData.state_data?.chartTitle ? (
+                                                    sessionData.state_data.chartTitle
+                                                ) : sessionData.page_type === 'regression' && sessionData.state_data?.data ? (
+                                                    `${sessionData.state_data.data.length} data points · ${sessionData.state_data.regressionType || 'regression'}`
+                                                ) : sessionData.page_type === 'curve' && sessionData.state_data?.expressions ? (
+                                                    `${sessionData.state_data.expressions.length} expressions`
+                                                ) : (
+                                                    'Saved session'
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleEditSession(sessionData)}
+                                                    className="flex-1 gap-1"
+                                                >
+                                                    <Edit className="h-3 w-3" /> Edit
+                                                </Button>
+                                                <Button 
+                                                    variant="destructive" 
+                                                    size="sm" 
+                                                    onClick={() => handleDeleteSession(sessionData.session_id)}
+                                                    className="gap-1"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Draft Analysis Section */}
                 {draft && (

@@ -23,5 +23,14 @@ urlpatterns = [
     path("api/ai/query", api.query_ai),
     path("api/ai/latest", api.get_latest_visualization),
     path("api/ai/save", api.save_visualization_to_history),
+    # Page session management
+    path("api/session/save", api.save_page_session),
+    path("api/session/get", api.get_page_session),
+    path("api/session/list", api.get_user_sessions),
+    path("api/session/delete", api.delete_page_session),
+    # User history tracking
+    path("api/history/save", api.save_to_history),
+    path("api/history/get", api.get_user_history),
+    path("api/history/restore", api.restore_from_history),
 ]
 

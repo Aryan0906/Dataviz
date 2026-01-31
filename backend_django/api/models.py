@@ -61,3 +61,54 @@ class DraftAnalysis(models.Model):
         ordering = ['-updated_at']
 
 
+class PageSession(models.Model):
+    """Store user session data for each page to persist state across refreshes"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    session_id = models.CharField(max_length=100, db_index=True, unique=True)  # Unique session identifier
+    page_type = models.CharField(
+        max_length=50, 
+        choices=[
+            ('categorical', 'Categorical Chat'),
+            ('regression', 'Regression Plot'),
+            ('curve', 'Curve Plot'),
+        ]
+    )
+    state_data = models.JSONField()  # Complete page state (data, chartType, messages, etc.)
+    last_accessed = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "page_sessions"
+        ordering = ['-last_accessed']
+        indexes = [
+            models.Index(fields=['user_id', 'page_type']),
+        ]
+
+
+class UserHistory(models.Model):
+    """Store complete history of all user interactions across all pages"""
+    user_id = models.CharField(max_length=100, db_index=True)
+    page_type = models.CharField(max_length=50)
+    action_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('create', 'Create'),
+            ('update', 'Update'),
+            ('delete', 'Delete'),
+            ('view', 'View'),
+            ('export', 'Export'),
+        ]
+    )
+    title = models.CharField(max_length=255, blank=True, null=True)
+    snapshot_data = models.JSONField()  # Complete data snapshot at time of action
+    metadata = models.JSONField(blank=True, null=True)  # Additional context (chart type, file name, etc.)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_history"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user_id', 'page_type', 'created_at']),
+        ]
+
+

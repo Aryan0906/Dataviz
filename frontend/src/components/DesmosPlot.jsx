@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, Sun, Moon } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, Sun, Moon, Save } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
+import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -101,6 +102,37 @@ const DesmosPlot = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
+
+    // Session state for persistence
+    const sessionState = useMemo(() => ({
+        expressions,
+        exportTheme,
+    }), [expressions, exportTheme]);
+
+    // Restore state callback
+    const restoreState = useCallback((savedState) => {
+        console.log('[DesmosPlot] Restoring state:', savedState);
+        if (savedState.expressions) {
+            setExpressions(savedState.expressions);
+            // Restore expressions to calculator if it's ready
+            if (calculatorRef.current) {
+                savedState.expressions.forEach(expr => {
+                    try {
+                        calculatorRef.current.setExpression(expr);
+                    } catch (error) {
+                        console.error('[DesmosPlot] Error restoring expression:', error);
+                    }
+                });
+            }
+        }
+        if (savedState.exportTheme) {
+            setExportTheme(savedState.exportTheme);
+        }
+    }, []);
+
+    // Session persistence hooks
+    const { saveNow } = usePageSession('curve', sessionState, restoreState);
+    const { logExport } = useHistoryLogger('curve');
 
     // Follow app theme (system aware)
     useEffect(() => {
@@ -319,6 +351,17 @@ const DesmosPlot = () => {
                 pdf.save(`${filename}.pdf`);
                 toast.success(`Chart exported as PDF (${exportTheme})`);
             }
+
+            // Log export to history
+            logExport({
+                title: 'Desmos Graph Export',
+                metadata: {
+                    expressionCount: expressions.length,
+                    format: exportFormat,
+                    theme: exportTheme,
+                    filename: filename,
+                },
+            });
         } catch (error) {
             console.error("Export failed", error);
             toast.error("Export failed. Try again after the graph loads.");
@@ -384,6 +427,15 @@ const DesmosPlot = () => {
             {/* Top Toolbar */}
             <div className="flex gap-2 items-center justify-between bg-card border rounded-lg p-3">
                 <div className="flex gap-2 items-center flex-wrap">
+                    <Button
+                        onClick={() => saveNow()}
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <Save className="h-4 w-4" />
+                        Save Session
+                    </Button>
                     <Button
                         onClick={() => handleExportClick("png")}
                         size="sm"

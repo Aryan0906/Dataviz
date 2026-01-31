@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,28 @@ export const DataAnalyzer = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
+
+    // Prepare state for session persistence
+    const sessionState = useMemo(() => ({
+        data,
+        regressionResult,
+        regressionType,
+        polynomialDegree,
+    }), [data, regressionResult, regressionType, polynomialDegree]);
+
+    // Restore state callback
+    const restoreState = useCallback((savedState) => {
+        if (savedState.data) setData(savedState.data);
+        if (savedState.regressionResult) setRegressionResult(savedState.regressionResult);
+        if (savedState.regressionType) setRegressionType(savedState.regressionType);
+        if (savedState.polynomialDegree) setPolynomialDegree(savedState.polynomialDegree);
+    }, []);
+
+    // Enable auto-save and restoration
+    const { saveNow } = usePageSession('regression', sessionState, restoreState);
+    
+    // Enable history tracking
+    const { logCreate, logUpdate, logExport } = useHistoryLogger('regression');
 
     // Load draft from Supabase on mount
     useEffect(() => {
@@ -448,6 +471,14 @@ export const DataAnalyzer = () => {
             } else {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
+            
+            // Log export to history
+            logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
+                format: exportFormat,
+                theme: exportTheme,
+                filename,
+                regressionType: regressionResult?.type,
+            });
         } catch (error) {
             console.error("Export failed:", error);
         }
@@ -629,17 +660,33 @@ export const DataAnalyzer = () => {
                 />
             )}
 
-            {data.length > 0 && regressionResult && (
-                <div className="flex gap-2">
+            {data.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
                     <Button
-                        onClick={handleExportChart}
+                        onClick={async () => {
+                            await saveNow();
+                            toast.success("Session saved manually!");
+                        }}
                         size="sm"
-                        className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                        variant="ghost"
+                        className="gap-2"
                     >
-                        <Download className="h-4 w-4" />
-                        Export
+                        <RefreshCw className="h-4 w-4" />
+                        Save Session
                     </Button>
-                    <Button onClick={clearAll} variant="outline" size="sm" className="gap-2">
+                    
+                    {data.length >= 2 && (
+                        <Button
+                            onClick={handleExportChart}
+                            size="sm"
+                            className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                        >
+                            <Download className="h-4 w-4" />
+                            Export Chart
+                        </Button>
+                    )}
+                    
+                    <Button onClick={clearAll} variant="outline" size="sm" className="gap-2 ml-auto">
                         <RefreshCw className="h-4 w-4" />
                         Clear All
                     </Button>
