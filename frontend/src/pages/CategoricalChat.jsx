@@ -36,11 +36,13 @@ import {
     AlertTriangle,
     Search,
     Send,
+    Code2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ExportCodeButton from "@/components/ExportCodeButton";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -1198,15 +1200,24 @@ export const CategoricalChatPanel = () => {
                                 </select>
                                 
                                 {data.length > 0 && (
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="gap-2 h-8"
-                                        onClick={() => handleExportChart()}
-                                    >
-                                        <Download className="h-3.5 w-3.5" />
-                                        <span className="hidden sm:inline text-xs">Export</span>
-                                    </Button>
+                                    <>
+                                        <ExportCodeButton
+                                            chartType={chartType}
+                                            categoricalData={data}
+                                            chartTitle={chartTitle}
+                                            buttonSize="sm"
+                                            buttonClassName="h-8"
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="gap-2 h-8"
+                                            onClick={() => handleExportChart()}
+                                        >
+                                            <Download className="h-3.5 w-3.5" />
+                                            <span className="hidden sm:inline text-xs">Export</span>
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>

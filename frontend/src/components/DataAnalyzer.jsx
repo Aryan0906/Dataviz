@@ -31,7 +31,7 @@ import Papa from "papaparse";
 import regression from "regression";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
-import ChartCodeExportModal from "./ChartCodeExportModal";
+import ExportCodeButton from "./ExportCodeButton";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -66,9 +66,6 @@ export const DataAnalyzer = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
-    
-    // Code export modal state
-    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -686,15 +683,16 @@ export const DataAnalyzer = () => {
                                 <Download className="h-4 w-4" />
                                 Export Chart
                             </Button>
-                            <Button
-                                onClick={() => setShowCodeExportModal(true)}
-                                size="sm"
-                                variant="outline"
-                                className="gap-2"
-                            >
-                                <Code2 className="h-4 w-4" />
-                                Export as Code
-                            </Button>
+                            <ExportCodeButton
+                                chartType="regression"
+                                regressionData={{
+                                    dataPoints: data || [],
+                                    equation: regressionResult?.equation || '',
+                                    modelType: regressionType || 'linear'
+                                }}
+                                chartTitle="Regression Analysis"
+                                buttonText="Export Code"
+                            />
                         </>
                     )}
                     
@@ -792,19 +790,6 @@ export const DataAnalyzer = () => {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
-            
-            {/* Code Export Modal */}
-            <ChartCodeExportModal
-                isOpen={showCodeExportModal}
-                onClose={() => setShowCodeExportModal(false)}
-                chartType="regression"
-                regressionData={{
-                    dataPoints: data || [],
-                    equation: regressionResult?.equation || '',
-                    modelType: regressionType || 'linear'
-                }}
-                chartTitle="Regression Analysis"
-            />
         </div>
     );
 };

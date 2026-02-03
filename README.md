@@ -1,54 +1,57 @@
 # Dataviz - Interactive Data Visualization Platform
 
-A full-stack data visualization and analysis platform built with React, Django, and machine learning capabilities. Provides automated regression modeling, interactive charting, smart data cleaning, and code generation features.
+A full-stack data visualization and analysis platform built with React, Django, and machine learning capabilities. Provides automated regression modeling, interactive charting, and Python code generation features.
 
 ## Features
 
 ### Core Capabilities
 - **Authentication System**: JWT-based secure user authentication with Supabase integration
 - **Data Visualization**: Interactive charts (Bar, Pie, Scatter, Heatmap, Histogram) with Plotly and Highcharts
-- **Advanced Analytics**: Automatic selection from 12 regression models (Linear to Random Forest)
-- **Categorical Analysis**: NLP-powered chat interface for categorical data exploration
-- **Mathematical Graphing**: Desmos integration for curve plotting
-- **Export Options**: PNG, PDF, SVG with light/dark theme selection, and Python code generation
+- **Advanced Analytics**: Automatic selection from multiple regression models (Linear, Polynomial, Exponential, Logarithmic, Power)
+- **Categorical Analysis**: AI-powered chat interface for categorical data exploration with natural language processing
+- **Mathematical Graphing**: Desmos integration for curve plotting and mathematical function visualization
+- **Export Options**: PNG, PDF, SVG with light/dark theme selection, and Python code generation for all chart types
 
-### Smart Analytics
-- **Data Health Checks**: Automatic detection of missing values, duplicates, and type mismatches
-- **Data Cleaning**: Six methods including mean/median imputation, forward fill, and drop
-- **Correlation Analysis**: Interactive heatmap with click-to-select variables
-- **Residual Analysis**: Scientific model validation with statistical interpretation
-- **Code Export**: Generate Python scripts for regression, EDA, and data cleaning
-- **Session Persistence**: Auto-save functionality with 2-second intervals
+### Regression Analysis
+- **Multiple Model Types**: Linear, Polynomial (degrees 2-4), Exponential, Logarithmic, and Power regression
+- **Automatic Model Selection**: Analyzes data and recommends the best-fit model
+- **Comprehensive Metrics**: R², Adjusted R², RMSE, MAE, and detailed residual analysis
+- **Visual Validation**: Interactive charts with regression lines, confidence intervals, and residual plots
+- **Python Code Export**: Generate ready-to-run Python scripts for Matplotlib, Seaborn, and Plotly
+
+### Categorical Data Analysis
+- **NLP-Powered Chat**: Natural language queries to explore categorical data patterns
+- **Multiple Chart Types**: Bar charts, pie charts, histograms, scatter plots, and heatmaps
+- **Smart Insights**: Automatic pattern detection and statistical summaries
+- **Interactive Visualizations**: Hover tooltips, zoom, pan, and drill-down capabilities
+- **Code Generation**: Export analysis as Python scripts for reproducibility
 
 ### Technical Features
-- **Fast Processing**: 10-50x performance improvement with Polars
-- **NLP Intelligence**: Fuzzy matching and entity extraction using spaCy
-- **Smart Queries**: Natural language to Pandas/SQL conversion via LangChain
-- **Data Validation**: Schema validation with Pandera
-- **Background Tasks**: Async processing with Celery and Redis
+- **Session Persistence**: Auto-save functionality with real-time state management
+- **Theme Support**: Complete dark/light mode with theme-aware exports
 - **Responsive Design**: Mobile, tablet, and desktop optimized UI
-- **Theme Support**: Complete dark/light mode switching
+- **Fast Processing**: Efficient data handling and visualization rendering
+- **Reusable Components**: Standardized export buttons and modals across all pages
 
 ## Technology Stack
-
-### Frontend
-- **Framework**: React 18.x with TypeScript
-- **Build Tool**: Vite 5.x
-- **Styling**: Tailwind CSS 3.x with shadcn/ui components
-- **Charts**: Plotly.js 2.x, Highcharts 11.x, Recharts
-- **State Management**: React Query 5.x
-- **Routing**: React Router 6.x
-- **Additional**: Papa Parse (CSV), Desmos API, React Syntax Highlighter
 
 ### Backend
 - **Framework**: Django 5.x with Django REST Framework 3.x
 - **Language**: Python 3.11+
 - **Database**: PostgreSQL 15.x (Production), SQLite 3.x (Development)
-- **ML Libraries**: scikit-learn 1.8+, scipy 1.17+, NumPy 2.x, Pandas 3.x, Polars 1.x
-- **NLP**: spaCy 3.8+, TheFuzz 0.22+, LangChain 1.x
-- **Task Queue**: Celery 5.x with Redis 7.x
-- **Validation**: Pandera 0.29+
+- **ML Libraries**: scikit-learn 1.8+, scipy 1.17+, NumPy 2.x
+- **Data Processing**: Pandas 2.x for data manipulation
+- **Validation**: Built-in data validation and error handling
 - **Authentication**: PyJWT 2.x with Supabase
+
+### Frontend
+- **Framework**: React 18.x with JSX
+- **Build Tool**: Vite 5.x for fast development and builds
+- **Styling**: Tailwind CSS 3.x with shadcn/ui components
+- **Charts**: Plotly.js 2.x, Highcharts 11.x, Desmos API
+- **State Management**: React Context and Hooks
+- **Routing**: React Router 6.x
+- **Additional**: Papa Parse (CSV parsing), Lucide React (icons)
 
 ## Prerequisites
 
@@ -179,27 +182,25 @@ VITE_ENABLE_EXPORT=true
 
 ## Regression Models
 
-The platform automatically tests 12 regression models and selects the best fit:
+The platform supports multiple regression types with automatic model fitting:
 
-### Basic Models
-- **Linear Regression**: y = mx + b (straight-line trends)
-- **Polynomial Regression**: y = a₀ + a₁x + a₂x² (curved patterns)
+### Available Models
+- **Linear Regression**: y = mx + b (straight-line relationships)
+- **Polynomial Regression (Degree 2-4)**: y = a₀ + a₁x + a₂x² + ... (curved patterns)
+- **Exponential Regression**: y = a·e^(bx) (exponential growth/decay)
 - **Logarithmic Regression**: y = a·ln(x) + b (diminishing returns)
-- **Exponential Regression**: y = a·e^(bx) (explosive growth)
-- **Power Regression**: y = ax^b (scaling relationships)
+- **Power Regression**: y = ax^b (power-law relationships)
 
-### Machine Learning Models
-- **Ridge Regression**: Regularized regression for multicollinearity
-- **Lasso Regression**: Feature selection via L1 regularization
-- **Elastic Net**: Combined L1/L2 regularization
-- **Support Vector Regression**: Kernel-based non-linear modeling
-- **Decision Tree**: Rule-based regression
-- **Random Forest**: Ensemble tree-based modeling
-- **Quantile Regression**: Robust to outliers
+**Selection Process**: The system analyzes your data pattern and recommends the most appropriate model type.
 
-**Selection Criteria**: Models ranked by Adjusted R² score to prevent overfitting.
+**Metrics Provided**: 
+- R² (Coefficient of Determination)
+- Adjusted R² (Adjusted for model complexity)
+- RMSE (Root Mean Squared Error)
+- MAE (Mean Absolute Error)
+- Residual plots for model validation
 
-**Metrics Provided**: R², Adjusted R², RMSE (Root Mean Squared Error), MAE (Mean Absolute Error)
+**Code Export**: All regression models can be exported as Python scripts for Matplotlib, Seaborn, and Plotly, with the exact model type preserved.
 
 ## API Documentation
 
@@ -222,6 +223,8 @@ Base URL: `http://localhost:8000/api`
 | GET | `/data/analyses` | Get user's saved analyses | Yes |
 | GET | `/data/analysis/:id` | Get specific analysis | Yes |
 | DELETE | `/data/analysis/:id` | Delete analysis | Yes |
+| POST | `/data/categorical` | Analyze categorical data | No |
+| POST | `/data/export-code` | Generate Python export code | No |
 
 ### Draft Management Endpoints
 
@@ -232,27 +235,27 @@ Base URL: `http://localhost:8000/api`
 | DELETE | `/draft` | Delete draft | Yes |
 | POST | `/draft/finalize` | Convert draft to analysis | Yes |
 
-### Smart Analytics Endpoints
+### Session Management Endpoints
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
-| POST | `/data/check-health` | Data health check | No |
-| POST | `/data/clean` | Apply cleaning operations | No |
-| POST | `/data/correlation` | Calculate correlation matrix | No |
-| POST | `/data/generate-code` | Generate Python code | No |
+| POST | `/session/save` | Save page session state | Yes |
+| GET | `/session/:page` | Retrieve session state | Yes |
+| DELETE | `/session/:page` | Clear session state | Yes |
 
 ## Application Routes
 
 | Route | Description | Auth Required |
 |-------|-------------|---------------|
-| `/` | Landing page | No |
+| `/` | Landing page with feature overview | No |
 | `/login` | User authentication | No |
-| `/dashboard` | User's saved analyses | Yes |
-| `/manual-plot` | Regression analysis tool | No |
-| `/curve-plot` | Desmos mathematical graphing | No |
-| `/categorical` | Categorical data visualization | No |
-| `/smart-analytics` | Data cleaning and analytics | Yes |
-| `/profile` | User profile | Yes |
+| `/dashboard` | User's saved analyses and dashboard | Yes |
+| `/manual-plot/regression` | Regression analysis tool | No |
+| `/manual-plot/curve` | Desmos mathematical graphing | No |
+| `/manual-plot/categorical` | Categorical data visualization | No |
+| `/categorical-chat` | NLP-powered categorical analysis | No |
+| `/ai` | AI features and tools | Yes |
+| `/profile` | User profile and settings | Yes |
 
 ## Project Structure
 
@@ -263,9 +266,6 @@ Dataviz/
 │   │   ├── utils/
 │   │   │   ├── ai_helpers.py
 │   │   │   ├── code_generator.py
-│   │   │   ├── data_cleaning.py
-│   │   │   ├── data_validation.py
-│   │   │   ├── langchain_helpers.py
 │   │   │   ├── nlp_helpers.py
 │   │   │   └── regression_models.py
 │   │   ├── models.py
@@ -283,18 +283,22 @@ Dataviz/
 │   │   │   ├── ui/
 │   │   │   ├── AppLayout.jsx
 │   │   │   ├── DataAnalyzer.jsx
-│   │   │   ├── DataPlot.jsx
 │   │   │   ├── DesmosPlot.jsx
 │   │   │   ├── PlotlyChart.jsx
-│   │   │   └── UniversalChart.jsx
+│   │   │   ├── ChartCodeExportModal.jsx
+│   │   │   └── ExportCodeButton.jsx
 │   │   ├── pages/
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── LandingPage.jsx
 │   │   │   ├── ManualPlotRegression.jsx
 │   │   │   ├── ManualPlotCurve.jsx
+│   │   │   ├── ManualPlotCategorical.jsx
 │   │   │   └── CategoricalChatNLP.jsx
 │   │   ├── context/
 │   │   │   └── AuthContext.jsx
+│   │   ├── hooks/
+│   │   │   ├── usePageSession.js
+│   │   │   └── use-toast.js
 │   │   ├── lib/
 │   │   │   ├── api.js
 │   │   │   ├── chartExport.js
@@ -416,11 +420,11 @@ Distributed under the MIT License. See LICENSE for more information.
 
 ## Acknowledgments
 
-- shadcn/ui - Component library
-- Recharts - Charting library
-- Highcharts - Advanced charting
-- Plotly - Interactive 3D charts
-- Desmos - Mathematical graphing
-- Supabase - Backend infrastructure
+- shadcn/ui - Beautiful component library
+- Plotly - Interactive charting library
+- Highcharts - Advanced data visualization
+- Desmos - Mathematical graphing engine
+- Supabase - Authentication and backend infrastructure
 - scikit-learn - Machine learning models
-- Tailwind CSS - Styling framework
+- Tailwind CSS - Utility-first styling framework
+- Lucide React - Modern icon library

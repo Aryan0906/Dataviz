@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, Sun, Moon, Save, Code2 } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, Sun, Moon, Save } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { generateFilename } from "@/lib/chartExport";
 import { cn } from "@/lib/utils";
-import ChartCodeExportModal from "./ChartCodeExportModal";
 
 // Shared loader promise to avoid parallel loads
 let desmosPromise = null;
@@ -95,6 +94,7 @@ const loadCdnGraph = () =>
 const DesmosPlot = () => {
     const containerRef = useRef(null);
     const calculatorRef = useRef(null);
+    const expressionsRef = useRef([]);
     const { theme } = useTheme();
     const [currentTheme, setCurrentTheme] = useState("light");
     const [expressions, setExpressions] = useState([]);
@@ -103,7 +103,50 @@ const DesmosPlot = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
-    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
+
+    // Function to extract expressions from calculator
+    const extractExpressionsFromCalculator = () => {
+        if (!calculatorRef.current) {
+            console.warn('[DesmosPlot] Calculator not initialized');
+            return [];
+        }
+        
+        try {
+            const state = calculatorRef.current.getState();
+            console.log('[DesmosPlot] Calculator state:', state);
+            
+            if (!state || !state.expressions) {
+                console.warn('[DesmosPlot] No expressions in state');
+                return [];
+            }
+            
+            const extractedExpressions = [];
+            const exprList = state.expressions.list || state.expressions;
+            
+            console.log('[DesmosPlot] Expressions list:', exprList);
+            
+            // Handle both array and List types
+            if (Array.isArray(exprList)) {
+                exprList.forEach((expr) => {
+                    if (expr.latex && expr.latex.trim() && expr.type !== 'folder') {
+                        extractedExpressions.push(expr.latex);
+                    }
+                });
+            } else if (exprList && typeof exprList.forEach === 'function') {
+                exprList.forEach((expr) => {
+                    if (expr.latex && expr.latex.trim() && expr.type !== 'folder') {
+                        extractedExpressions.push(expr.latex);
+                    }
+                });
+            }
+            
+            console.log('[DesmosPlot] Extracted expressions:', extractedExpressions);
+            return extractedExpressions;
+        } catch (error) {
+            console.error('[DesmosPlot] Error extracting expressions:', error);
+            return [];
+        }
+    };
 
     // Session state for persistence
     const sessionState = useMemo(() => ({
@@ -446,15 +489,6 @@ const DesmosPlot = () => {
                         <Download className="h-4 w-4" />
                         Export
                     </Button>
-                    <Button
-                        onClick={() => setShowCodeExportModal(true)}
-                        size="sm"
-                        variant="outline"
-                        className="gap-2"
-                    >
-                        <Code2 className="h-4 w-4" />
-                        Export Code
-                    </Button>
                     <Button onClick={clearAll} variant="outline" size="sm" className="gap-2">
                         <RefreshCw className="h-4 w-4" />
                         Clear
@@ -601,21 +635,6 @@ const DesmosPlot = () => {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
-
-            {/* Code Export Modal */}
-            <ChartCodeExportModal
-                isOpen={showCodeExportModal}
-                onClose={() => setShowCodeExportModal(false)}
-                chartType="scatter"
-                chartData={{
-                    labels: expressions.map((_, i) => `Expression ${i + 1}`),
-                    datasets: [{
-                        data: [],
-                        backgroundColor: []
-                    }]
-                }}
-                chartTitle="Desmos Mathematical Plot"
-            />
         </div>
     );
 };
