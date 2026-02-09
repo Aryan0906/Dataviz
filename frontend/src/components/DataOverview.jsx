@@ -109,11 +109,10 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
     ],
     zmid: 0,
     colorbar: {
-      title: 'Correlation',
+      title: { text: 'Correlation', font: { color: '#e2e8f0' } },
       thickness: 20,
       len: 0.7,
       tickfont: { color: '#94a3b8' },
-      title: { font: { color: '#e2e8f0' } },
     },
     hovertemplate: '%{x} vs %{y}<br>Correlation: %{z:.3f}<extra></extra>',
   }];
@@ -192,11 +191,10 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
         </Card>
 
         {/* Missing Values */}
-        <Card className={`bg-gradient-to-br ${
-          healthData.missing_rows > 0 
-            ? 'from-orange-500/10 to-orange-600/5 border-orange-500/20' 
+        <Card className={`bg-gradient-to-br ${healthData.missing_rows > 0
+            ? 'from-orange-500/10 to-orange-600/5 border-orange-500/20'
             : 'from-green-500/10 to-green-600/5 border-green-500/20'
-        }`}>
+          }`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
@@ -204,9 +202,8 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${
-              healthData.missing_rows > 0 ? 'text-orange-400' : 'text-green-400'
-            }`}>
+            <div className={`text-3xl font-bold ${healthData.missing_rows > 0 ? 'text-orange-400' : 'text-green-400'
+              }`}>
               {healthData.missing_rows}
             </div>
             <p className="text-xs text-slate-400 mt-1">
@@ -216,11 +213,10 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
         </Card>
 
         {/* Duplicates */}
-        <Card className={`bg-gradient-to-br ${
-          healthData.duplicates > 0 
-            ? 'from-red-500/10 to-red-600/5 border-red-500/20' 
+        <Card className={`bg-gradient-to-br ${healthData.duplicates > 0
+            ? 'from-red-500/10 to-red-600/5 border-red-500/20'
             : 'from-green-500/10 to-green-600/5 border-green-500/20'
-        }`}>
+          }`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
               <Copy className="h-4 w-4" />
@@ -228,9 +224,8 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`text-3xl font-bold ${
-              healthData.duplicates > 0 ? 'text-red-400' : 'text-green-400'
-            }`}>
+            <div className={`text-3xl font-bold ${healthData.duplicates > 0 ? 'text-red-400' : 'text-green-400'
+              }`}>
               {healthData.duplicates}
             </div>
             <p className="text-xs text-slate-400 mt-1">

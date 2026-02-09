@@ -1,14 +1,14 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-    Upload, AlertCircle, FileUp, RefreshCw,
+import {
+    AlertCircle, FileUp, RefreshCw,
     Send, BarChart3, PieChart, TreePalm, Search, Sparkles, TrendingUp, TrendingDown,
-    Database, AlertTriangle, Download, FileImage, FileText, Moon, Sun, Code2
+    Database, AlertTriangle, Download, Code2, FileImage, FileText, Moon, Sun
 } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
@@ -34,17 +34,17 @@ const CategoricalChatNLP = () => {
     const [categoricalData, setCategoricalData] = useState([]); // Raw CSV data
     const [columns, setColumns] = useState([]); // Column metadata with types
     const [activeColumns, setActiveColumns] = useState([]); // Columns available for querying
-    
+
     // === NLP & Chat State ===
     const [chatInput, setChatInput] = useState("");
     const [chatHistory, setChatHistory] = useState([]);
     const [isProcessingQuery, setIsProcessingQuery] = useState(false);
-    
+
     // === Visualization State ===
     const [chartType, setChartType] = useState("bar"); // bar, pie, treemap
     const [chartData, setChartData] = useState(null);
     const [chartTitle, setChartTitle] = useState("Visualizer");
-    
+
     // === Insights State ===
     const [insights, setInsights] = useState({
         summary: "",
@@ -54,20 +54,20 @@ const CategoricalChatNLP = () => {
         missingData: 0,
         totalCount: 0
     });
-    
+
     // === Table State ===
     const [filteredData, setFilteredData] = useState([]);
     const [tableSearch, setTableSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
-    
+
     const [error, setError] = useState("");
 
     // Export theme dialog state
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
-    
+
     // Code export modal state
     const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
@@ -80,36 +80,36 @@ const CategoricalChatNLP = () => {
 
         setIsProcessingQuery(true);
         setChatHistory(prev => [...prev, { type: 'user', message: chatInput }]);
-        
+
         try {
             // TODO: Replace with actual backend API call
             // For now, simulate NLP processing
             const response = await simulateNLPProcessing(chatInput, categoricalData, columns);
-            
+
             // Update visualization
             setChartData(response.chart);
             setChartTitle(response.chart.title || chatInput);
             setInsights(response.insights);
             setFilteredData(response.table_data || categoricalData);
-            
+
             // Add system response to chat
             setChatHistory(prev => [
-                ...prev, 
-                { 
-                    type: 'system', 
-                    message: response.insights.summary || "Chart generated successfully" 
+                ...prev,
+                {
+                    type: 'system',
+                    message: response.insights.summary || "Chart generated successfully"
                 }
             ]);
-            
+
             setChatInput("");
             toast.success("Query processed successfully");
-        } catch (err) {
+        } catch (_err) {
             toast.error("Failed to process query");
             setChatHistory(prev => [
-                ...prev, 
-                { 
-                    type: 'error', 
-                    message: "I couldn't understand that query. Try asking 'Show count by [Column Name]'" 
+                ...prev,
+                {
+                    type: 'error',
+                    message: "I couldn't understand that query. Try asking 'Show count by [Column Name]'"
                 }
             ]);
         } finally {
@@ -121,20 +121,20 @@ const CategoricalChatNLP = () => {
     const simulateNLPProcessing = async (query, rawData, cols) => {
         // Simple keyword matching for demo
         const lowerQuery = query.toLowerCase();
-        
+
         // Find column mentioned in query
-        let targetColumn = cols.find(col => 
+        let targetColumn = cols.find(col =>
             lowerQuery.includes(col.name.toLowerCase())
         );
-        
+
         if (!targetColumn) {
             targetColumn = cols.find(col => col.type === 'categorical');
         }
-        
+
         if (!targetColumn) {
             throw new Error("No categorical column found");
         }
-        
+
         // Aggregate data
         const aggregated = {};
         rawData.forEach(row => {
@@ -143,16 +143,16 @@ const CategoricalChatNLP = () => {
                 aggregated[value] = (aggregated[value] || 0) + 1;
             }
         });
-        
+
         const labels = Object.keys(aggregated);
         const values = Object.values(aggregated);
-        
+
         // Find top and bottom performers
         const max = Math.max(...values);
         const min = Math.min(...values);
         const maxIndex = values.indexOf(max);
         const minIndex = values.indexOf(min);
-        
+
         return {
             chart: {
                 title: `Count by ${targetColumn.name}`,
@@ -165,7 +165,7 @@ const CategoricalChatNLP = () => {
                 }]
             },
             insights: {
-                summary: `${labels[maxIndex]} leads with ${max} items, which is ${(max/min).toFixed(1)}x higher than ${labels[minIndex]}.`,
+                summary: `${labels[maxIndex]} leads with ${max} items, which is ${(max / min).toFixed(1)}x higher than ${labels[minIndex]}.`,
                 cardinality: labels.length,
                 topPerformer: { label: labels[maxIndex], value: max },
                 bottomPerformer: { label: labels[minIndex], value: min },
@@ -188,7 +188,7 @@ const CategoricalChatNLP = () => {
             'rgba(14, 165, 233, 0.8)',   // sky
             'rgba(251, 191, 36, 0.8)',   // amber
         ];
-        
+
         return Array(count).fill(0).map((_, i) => colors[i % colors.length]);
     };
 
@@ -196,7 +196,7 @@ const CategoricalChatNLP = () => {
     const handleChartClick = (label) => {
         const targetColumn = activeColumns.find(col => col.type === 'categorical');
         if (!targetColumn) return;
-        
+
         const filtered = categoricalData.filter(row => row[targetColumn.name] === label);
         setFilteredData(filtered);
         setTableSearch(label);
@@ -225,7 +225,7 @@ const CategoricalChatNLP = () => {
                 complete: (results) => {
                     try {
                         const rawData = results.data;
-                        
+
                         if (rawData.length === 0) {
                             setError("No valid data found in CSV file");
                             return;
@@ -236,10 +236,10 @@ const CategoricalChatNLP = () => {
                         const columnMetadata = headers.map(header => {
                             // Determine if column is categorical or numerical
                             const sampleValues = rawData.slice(0, 10).map(row => row[header]);
-                            const isCategorical = sampleValues.some(val => 
+                            const isCategorical = sampleValues.some(val =>
                                 typeof val === 'string' || isNaN(parseFloat(val))
                             );
-                            
+
                             return {
                                 name: header,
                                 type: isCategorical ? 'categorical' : 'numerical'
@@ -250,15 +250,15 @@ const CategoricalChatNLP = () => {
                         setColumns(columnMetadata);
                         setActiveColumns(columnMetadata);
                         setFilteredData(rawData);
-                        
+
                         // Add welcome message to chat
                         setChatHistory([
-                            { 
-                                type: 'system', 
-                                message: `Loaded ${rawData.length} rows with ${columnMetadata.length} columns. Ask me anything about your data!` 
+                            {
+                                type: 'system',
+                                message: `Loaded ${rawData.length} rows with ${columnMetadata.length} columns. Ask me anything about your data!`
                             }
                         ]);
-                        
+
                         toast.success(`Imported ${rawData.length} rows from file`);
 
                         // Reset file input
@@ -295,9 +295,9 @@ const CategoricalChatNLP = () => {
             setFilteredData(categoricalData);
             return;
         }
-        
-        const filtered = categoricalData.filter(row => 
-            Object.values(row).some(val => 
+
+        const filtered = categoricalData.filter(row =>
+            Object.values(row).some(val =>
                 String(val).toLowerCase().includes(tableSearch.toLowerCase())
             )
         );
@@ -740,7 +740,7 @@ const CategoricalChatNLP = () => {
                                 </>
                             ) : categoricalData.length > 0 ? (
                                 <div className="text-center py-8 text-muted-foreground">
-                                    No matching results for "{tableSearch}"
+                                    No matching results for &quot;{tableSearch}&quot;
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -851,34 +851,34 @@ const CategoricalChatNLP = () => {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Theme</label>
                                     <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setExportTheme("light")}
-                                        className={cn(
-                                            "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
-                                            exportTheme === "light"
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border hover:border-primary/50"
-                                        )}
-                                    >
-                                        <Sun className="h-5 w-5" />
-                                        <span className="text-sm font-medium">Light</span>
-                                        <span className="text-xs text-muted-foreground">White bg</span>
-                                    </button>
-                                    <button
-                                        onClick={() => setExportTheme("dark")}
-                                        className={cn(
-                                            "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
-                                            exportTheme === "dark"
-                                                ? "border-primary bg-primary/10"
-                                                : "border-border hover:border-primary/50"
-                                        )}
-                                    >
-                                        <Moon className="h-5 w-5" />
-                                        <span className="text-sm font-medium">Dark</span>
-                                        <span className="text-xs text-muted-foreground">Dark bg</span>
-                                    </button>
+                                        <button
+                                            onClick={() => setExportTheme("light")}
+                                            className={cn(
+                                                "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                                exportTheme === "light"
+                                                    ? "border-primary bg-primary/10"
+                                                    : "border-border hover:border-primary/50"
+                                            )}
+                                        >
+                                            <Sun className="h-5 w-5" />
+                                            <span className="text-sm font-medium">Light</span>
+                                            <span className="text-xs text-muted-foreground">White bg</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setExportTheme("dark")}
+                                            className={cn(
+                                                "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                                exportTheme === "dark"
+                                                    ? "border-primary bg-primary/10"
+                                                    : "border-border hover:border-primary/50"
+                                            )}
+                                        >
+                                            <Moon className="h-5 w-5" />
+                                            <span className="text-sm font-medium">Dark</span>
+                                            <span className="text-xs text-muted-foreground">Dark bg</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
                             )}
                         </div>
                         <div className="flex gap-2 justify-end">

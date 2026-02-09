@@ -19,7 +19,7 @@ export default function NotFound() {
                 </CardHeader>
                 <CardContent className="space-y-4 text-center">
                     <p className="text-muted-foreground">
-                        The page you're looking for doesn't exist.
+                        The page you&apos;re looking for doesn&apos;t exist.
                     </p>
                     <Button onClick={() => navigate("/")} className="w-full">
                         Go Back to Home

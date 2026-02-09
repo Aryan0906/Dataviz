@@ -1,16 +1,15 @@
 import { useState } from "react";
 import AppLayout from "@/components/AppLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DataHealthModal from "@/components/DataHealthModal";
 import CodeExportModal from "@/components/CodeExportModal";
 import ResidualPlot from "@/components/ResidualPlot";
-import { 
-  Sparkles, 
-  Code2, 
-  TrendingUp, 
+import {
+  Sparkles,
+  Code2,
+  TrendingUp,
   Database,
   FileCheck,
   Zap
@@ -85,7 +84,7 @@ const SmartAnalytics = () => {
                   6 cleaning methods (drop, mean, median, etc.)
                 </li>
               </ul>
-              <Button 
+              <Button
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 onClick={() => setHealthModalOpen(true)}
               >
@@ -125,7 +124,7 @@ const SmartAnalytics = () => {
                   Export as PNG
                 </li>
               </ul>
-              <Button 
+              <Button
                 className="w-full bg-green-600 hover:bg-green-700"
                 variant="secondary"
                 disabled
@@ -166,7 +165,7 @@ const SmartAnalytics = () => {
                   Complete with imports & usage guide
                 </li>
               </ul>
-              <Button 
+              <Button
                 className="w-full bg-purple-600 hover:bg-purple-700"
                 onClick={() => setCodeModalOpen(true)}
               >

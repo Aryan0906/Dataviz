@@ -18,9 +18,9 @@ import { useTheme } from '@/components/theme-provider';
  * ChartCodeExportModal - Export visualization code for different chart types
  * Supports: bar, pie, treemap, scatter, regression, histogram, heatmap, curve
  */
-const ChartCodeExportModal = ({ 
-  isOpen, 
-  onClose, 
+const ChartCodeExportModal = ({
+  isOpen,
+  onClose,
   chartType = 'bar',  // 'bar', 'pie', 'treemap', 'scatter', 'regression', 'histogram', 'heatmap', 'curve'
   chartData = null,   // Chart data object - can be Highcharts data or categorical data
   regressionData = null, // For regression charts
@@ -30,16 +30,15 @@ const ChartCodeExportModal = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('matplotlib');
-  const [loading, setLoading] = useState(false);
   const { theme } = useTheme();
 
   // Safety check - don't render if critical data is missing
   if (!isOpen) return null;
 
-  console.log('ChartCodeExportModal render:', { 
-    chartType, 
-    hasRegressionData: !!regressionData, 
-    hasCategoricalData: !!categoricalData, 
+  console.log('ChartCodeExportModal render:', {
+    chartType,
+    hasRegressionData: !!regressionData,
+    hasCategoricalData: !!categoricalData,
     hasChartData: !!chartData,
     hasCurveData: !!curveData,
     curveData: curveData,
@@ -74,11 +73,11 @@ const ChartCodeExportModal = ({
     if (chartType === 'regression' && regressionData) {
       return generateRegressionCode(library, regressionData);
     }
-    
+
     if (chartType === 'curve' && curveData) {
       return generateCurveCode(library, curveData);
     }
-    
+
     // Handle categorical data format (from CategoricalChat)
     if (categoricalData) {
       switch (chartType) {
@@ -96,7 +95,7 @@ const ChartCodeExportModal = ({
           return '# Chart type not supported';
       }
     }
-    
+
     if (chartData) {
       switch (chartType) {
         case 'bar':
@@ -111,7 +110,7 @@ const ChartCodeExportModal = ({
           return '# Chart type not supported';
       }
     }
-    
+
     return '# No data available';
   };
 
@@ -472,7 +471,7 @@ print("No data available for regression analysis")
     // Determine if it's polynomial regression
     const isPolynomial = modelType.includes('polynomial');
     const polynomialDegree = isPolynomial ? parseInt(modelType.split('-')[1] || '2') : 2;
-    
+
     // Check for other regression types
     const isExponential = modelType === 'exponential';
     const isLogarithmic = modelType === 'logarithmic';
@@ -1671,7 +1670,7 @@ except Exception as e:
   // Curve/Mathematical plot code generator (for Desmos-style plots)
   const generateCurveCode = (library, curveData) => {
     const expressions = curveData?.expressions || [];
-    
+
     if (expressions.length === 0) {
       return `"""
 Mathematical Curve Plot - ${chartTitle}
@@ -1943,7 +1942,7 @@ except Exception as e:
     print(f"PNG export requires kaleido: pip install kaleido")
 `;
     }
-    
+
     return generateCurveCode('matplotlib', curveData); // Fallback
   };
 
