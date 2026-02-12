@@ -14,10 +14,11 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Copy, Check, Download, Code2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { dataAPI } from '@/lib/api';
 
-const CodeExportModal = ({ 
-  isOpen, 
-  onClose, 
+const CodeExportModal = ({
+  isOpen,
+  onClose,
   modelType = 'linear',
   features = [],
   target = 'target',
@@ -38,41 +39,23 @@ const CodeExportModal = ({
   const fetchCodeSnippets = async () => {
     setLoading(true);
     try {
-      // Fetch regression code
-      const regressionRes = await fetch('http://localhost:8000/api/data/generate-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'regression',
-          model_type: modelType,
-          features: features,
-          target: target,
-          hyperparameters: hyperparameters,
-        }),
+      // Fetch regression code using centralized API
+      const regressionData = await dataAPI.generateCode([], 'regression', {
+        model_type: modelType,
+        features: features,
+        target: target,
+        hyperparameters: hyperparameters,
       });
-      const regressionData = await regressionRes.json();
 
-      // Fetch EDA code
-      const edaRes = await fetch('http://localhost:8000/api/data/generate-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'eda',
-          columns: [...features, target],
-        }),
+      // Fetch EDA code using centralized API
+      const edaData = await dataAPI.generateCode([], 'eda', {
+        columns: [...features, target],
       });
-      const edaData = await edaRes.json();
 
-      // Fetch cleaning code
-      const cleaningRes = await fetch('http://localhost:8000/api/data/generate-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'cleaning',
-          method: 'drop',
-        }),
+      // Fetch cleaning code using centralized API
+      const cleaningData = await dataAPI.generateCode([], 'cleaning', {
+        method: 'drop',
       });
-      const cleaningData = await cleaningRes.json();
 
       setCodeSnippets({
         regression: regressionData.code,
@@ -178,7 +161,7 @@ const CodeExportModal = ({
                   )}
                 </Button>
               </div>
-              
+
               <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-800">
                 <SyntaxHighlighter
                   language="python"
@@ -238,7 +221,7 @@ const CodeExportModal = ({
                   )}
                 </Button>
               </div>
-              
+
               <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-800">
                 <SyntaxHighlighter
                   language="python"
@@ -297,7 +280,7 @@ const CodeExportModal = ({
                   )}
                 </Button>
               </div>
-              
+
               <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-800">
                 <SyntaxHighlighter
                   language="python"

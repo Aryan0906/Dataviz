@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { dataAPI } from '@/lib/api';
 
 const DataOverview = ({ filePath, onVariableSelect }) => {
   const [healthData, setHealthData] = useState(null);
@@ -31,22 +32,12 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
   const fetchDataOverview = async () => {
     setLoading(true);
     try {
-      // Fetch health check
-      const healthRes = await fetch('http://localhost:8000/api/data/check-health', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_path: filePath }),
-      });
-      const healthData = await healthRes.json();
+      // Fetch health check using centralized API
+      const healthData = await dataAPI.checkDataHealth(filePath);
       setHealthData(healthData);
 
-      // Fetch correlation matrix
-      const corrRes = await fetch('http://localhost:8000/api/data/correlation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_path: filePath }),
-      });
-      const corrData = await corrRes.json();
+      // Fetch correlation matrix using centralized API
+      const corrData = await dataAPI.getCorrelationMatrix(filePath);
       setCorrelationData(corrData);
     } catch (error) {
       console.error('Failed to fetch data overview:', error);
@@ -192,8 +183,8 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
 
         {/* Missing Values */}
         <Card className={`bg-gradient-to-br ${healthData.missing_rows > 0
-            ? 'from-orange-500/10 to-orange-600/5 border-orange-500/20'
-            : 'from-green-500/10 to-green-600/5 border-green-500/20'
+          ? 'from-orange-500/10 to-orange-600/5 border-orange-500/20'
+          : 'from-green-500/10 to-green-600/5 border-green-500/20'
           }`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
@@ -214,8 +205,8 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
 
         {/* Duplicates */}
         <Card className={`bg-gradient-to-br ${healthData.duplicates > 0
-            ? 'from-red-500/10 to-red-600/5 border-red-500/20'
-            : 'from-green-500/10 to-green-600/5 border-green-500/20'
+          ? 'from-red-500/10 to-red-600/5 border-red-500/20'
+          : 'from-green-500/10 to-green-600/5 border-green-500/20'
           }`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">

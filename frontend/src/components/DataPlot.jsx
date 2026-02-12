@@ -1,10 +1,29 @@
-import { useMemo, forwardRef } from "react";
+import { useMemo, forwardRef, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Download } from "lucide-react";
+import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
+import { useTheme } from "@/components/theme-provider";
 
 export const DataPlot = forwardRef(({ data, regression }, ref) => {
+    const chartContainerRef = useRef(null);
+    const { theme } = useTheme();
+
+    const handleExportSVG = useCallback(() => {
+        const el = chartContainerRef.current;
+        if (!el) return;
+        const currentTheme = theme === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : (theme || 'light');
+        const filename = generateFilename('dataviz-regression-chart');
+        exportChartAsSVG(el, filename, currentTheme, {
+            title: regression?.equation ? `Regression: ${regression.equation}` : 'Regression Chart',
+            chartType: 'regression',
+            description: `Regression chart with ${data.length} data points${regression ? `, R²=${regression.r2.toFixed(4)}` : ''}`,
+        });
+    }, [theme, data, regression]);
 
     const plotData = useMemo(() => {
         if (data.length === 0) return [];
@@ -77,6 +96,16 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                         Chart
                     </CardTitle>
                     <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleExportSVG}
+                            className="gap-1.5 text-xs"
+                            title="Export chart as SVG/XML"
+                        >
+                            <Download className="h-3.5 w-3.5" />
+                            Export SVG
+                        </Button>
                         <div className="flex flex-col gap-2 items-end">
                             <div className="flex gap-2">
                                 <Badge variant="outline">{data.length} points</Badge>
@@ -96,7 +125,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="h-80">
+                <div className="h-80" ref={chartContainerRef}>
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={plotData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />

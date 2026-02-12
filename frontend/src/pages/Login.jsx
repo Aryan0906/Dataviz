@@ -54,7 +54,7 @@ const Login = () => {
                 }
             } else {
                 toast.success("Login successful!");
-                navigate("/profile");
+                navigate("/dashboard");
             }
         } catch (error) {
             toast.error(error.message || "Login failed. Please try again.");
@@ -112,7 +112,7 @@ const Login = () => {
                     toast.success("Account created successfully!", {
                         duration: 3000,
                     });
-                    navigate("/profile");
+                    navigate("/dashboard");
                 }
             }
         } catch (error) {

@@ -21,13 +21,14 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { dataAPI } from '@/lib/api';
 
-const DataHealthModal = ({ 
-  isOpen, 
-  onClose, 
-  filePath, 
-  onCleaned, 
-  autoCheck = true 
+const DataHealthModal = ({
+  isOpen,
+  onClose,
+  filePath,
+  onCleaned,
+  autoCheck = true
 }) => {
   const [healthReport, setHealthReport] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,19 +43,7 @@ const DataHealthModal = ({
   const checkHealth = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/data/check-health', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ file_path: filePath }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Health check failed');
-      }
-
-      const data = await response.json();
+      const data = await dataAPI.checkDataHealth(filePath);
       setHealthReport(data);
     } catch (error) {
       console.error('Health check error:', error);
@@ -67,31 +56,18 @@ const DataHealthModal = ({
   const handleClean = async (method) => {
     setCleaning(true);
     try {
-      const response = await fetch('http://localhost:8000/api/data/clean', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          file_path: filePath,
-          method: method,
-          save_as_new: false, // Overwrite original
-        }),
+      const data = await dataAPI.cleanData(filePath, {
+        method: method,
+        save_as_new: false, // Overwrite original
       });
 
-      if (!response.ok) {
-        throw new Error('Data cleaning failed');
-      }
-
-      const data = await response.json();
-      
       toast.success(`Data cleaned successfully! Removed ${data.summary.rows_removed} rows`);
-      
+
       // Notify parent component
       if (onCleaned) {
         onCleaned(data);
       }
-      
+
       // Re-check health
       await checkHealth();
     } catch (error) {
@@ -189,7 +165,7 @@ const DataHealthModal = ({
                     Detected Issues
                   </h3>
                   {healthReport.issues.map((issue, index) => (
-                    <Alert 
+                    <Alert
                       key={index}
                       className="bg-slate-900/50 border-slate-700"
                     >
@@ -202,17 +178,17 @@ const DataHealthModal = ({
                           {issue.affected_columns && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               {issue.affected_columns.slice(0, 5).map((col) => (
-                                <Badge 
+                                <Badge
                                   key={col}
-                                  variant="outline" 
+                                  variant="outline"
                                   className="text-xs border-slate-700"
                                 >
                                   {col}
                                 </Badge>
                               ))}
                               {issue.affected_columns.length > 5 && (
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className="text-xs border-slate-700"
                                 >
                                   +{issue.affected_columns.length - 5} more

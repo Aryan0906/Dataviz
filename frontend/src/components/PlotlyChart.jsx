@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Plot from 'react-plotly.js';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Code2 } from 'lucide-react';
 import ChartCodeExportModal from './ChartCodeExportModal';
+import { wrapSvgWithXmlMetadata, generateFilename } from '@/lib/chartExport';
+import { toast } from 'sonner';
 
 /**
  * Advanced Plotly Chart Component
  * Replaces simple Recharts for scientific/regression visualizations
  */
-const PlotlyChart = ({ 
-    data = [], 
-    regressionResult = null, 
+const PlotlyChart = ({
+    data = [],
+    regressionResult = null,
     chartType = 'scatter',
     title = 'Data Visualization',
     xLabel = 'X',
@@ -21,10 +23,11 @@ const PlotlyChart = ({
     const [plotData, setPlotData] = useState([]);
     const [layout, setLayout] = useState({});
     const [showCodeExportModal, setShowCodeExportModal] = useState(false);
+    const plotRef = useRef(null);
 
     useEffect(() => {
         const isDark = theme === 'dark';
-        
+
         // Prepare data traces
         const traces = [];
 
@@ -65,7 +68,7 @@ const PlotlyChart = ({
         // Confidence interval (if available)
         if (regressionResult?.confidence_interval) {
             const { lower, upper } = regressionResult.confidence_interval;
-            
+
             traces.push({
                 x: [...data.map(p => p[0]), ...data.map(p => p[0]).reverse()],
                 y: [...upper, ...lower.reverse()],
@@ -84,8 +87,8 @@ const PlotlyChart = ({
         setLayout({
             title: {
                 text: title,
-                font: { 
-                    size: 18, 
+                font: {
+                    size: 18,
                     color: isDark ? '#e5e7eb' : '#111827',
                     family: 'Inter, system-ui, sans-serif'
                 }
@@ -122,22 +125,66 @@ const PlotlyChart = ({
         });
     }, [data, regressionResult, chartType, title, xLabel, yLabel, theme]);
 
-    const handleExport = (format) => {
-        const filename = `${title.replace(/\s+/g, '_')}_${Date.now()}`;
-        
-        // Plotly has built-in download
-        const config = {
-            toImageButtonOptions: {
-                format: format, // 'png', 'svg', 'jpeg'
-                filename: filename,
+    const handleExportPNG = () => {
+        const plotEl = plotRef.current?.el;
+        if (!plotEl) return;
+
+        const Plotly = window.Plotly || require('plotly.js');
+        const filename = generateFilename(title.replace(/\s+/g, '_'));
+
+        Plotly.downloadImage(plotEl, {
+            format: 'png',
+            filename: filename,
+            height: 800,
+            width: 1200,
+            scale: 2
+        });
+    };
+
+    const handleExportSVG = async () => {
+        try {
+            const plotEl = plotRef.current?.el;
+            if (!plotEl) {
+                toast.error('Chart not ready for export');
+                return;
+            }
+
+            const Plotly = window.Plotly || require('plotly.js');
+            const filename = generateFilename(title.replace(/\s+/g, '_'));
+
+            // Use Plotly's toImage to generate SVG string
+            const svgDataUrl = await Plotly.toImage(plotEl, {
+                format: 'svg',
                 height: 800,
                 width: 1200,
-                scale: 2 // Higher quality
-            }
-        };
+            });
 
-        // Trigger download via config
-        console.log('Export triggered', config);
+            // Convert data URL to raw SVG string
+            const svgString = decodeURIComponent(svgDataUrl.replace('data:image/svg+xml,', ''));
+
+            // Wrap with XML metadata
+            const xmlDocument = wrapSvgWithXmlMetadata(svgString, {
+                title: title,
+                chartType: regressionResult ? 'regression-plotly' : 'scatter-plotly',
+                description: `Plotly ${chartType} chart: ${title}${regressionResult?.equation ? ` (${regressionResult.equation})` : ''}`,
+            });
+
+            // Download
+            const blob = new Blob([xmlDocument], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${filename}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast.success('Chart exported as SVG/XML');
+        } catch (error) {
+            console.error('SVG export failed:', error);
+            toast.error('Failed to export chart as SVG');
+        }
     };
 
     return (
@@ -146,35 +193,36 @@ const PlotlyChart = ({
                 <div className="flex items-center justify-between">
                     <CardTitle>{title}</CardTitle>
                     <div className="flex gap-2">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleExport('png')}
+                            onClick={handleExportPNG}
                             className="gap-2"
                         >
                             <Download className="h-4 w-4" /> Export PNG
                         </Button>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleExport('svg')}
+                            onClick={handleExportSVG}
                             className="gap-2"
                         >
                             <Download className="h-4 w-4" /> Export SVG
-                        <Button 
-                            variant="outline" 
+                        </Button>
+                        <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setShowCodeExportModal(true)}
                             className="gap-2"
                         >
                             <Code2 className="h-4 w-4" /> Export Code
                         </Button>
-                        </Button>
                     </div>
                 </div>
             </CardHeader>
             <CardContent>
                 <Plot
+                    ref={plotRef}
                     data={plotData}
                     layout={layout}
                     config={{
@@ -193,7 +241,7 @@ const PlotlyChart = ({
                     style={{ width: '100%', height: '500px' }}
                     useResizeHandler={true}
                 />
-                
+
                 {/* Statistics Display */}
                 {regressionResult && (
                     <div className="mt-4 p-4 bg-muted rounded-lg">
@@ -218,19 +266,6 @@ const PlotlyChart = ({
                                 <div>
                                     <div className="text-muted-foreground">Data Points</div>
                                     <div className="text-lg font-semibold">
-            
-            {/* Code Export Modal */}
-            <ChartCodeExportModal
-                isOpen={showCodeExportModal}
-                onClose={() => setShowCodeExportModal(false)}
-                chartType={regressionResult ? 'regression' : 'scatter'}
-                regressionData={regressionResult ? {
-                    dataPoints: data.map(([x, y]) => ({ x, y })),
-                    equation: regressionResult.equation,
-                    modelType: 'linear'
-                } : null}
-                chartTitle={title}
-            />
                                         {regressionResult.points}
                                     </div>
                                 </div>
@@ -238,6 +273,19 @@ const PlotlyChart = ({
                         </div>
                     </div>
                 )}
+
+                {/* Code Export Modal */}
+                <ChartCodeExportModal
+                    isOpen={showCodeExportModal}
+                    onClose={() => setShowCodeExportModal(false)}
+                    chartType={regressionResult ? 'regression' : 'scatter'}
+                    regressionData={regressionResult ? {
+                        dataPoints: data.map(([x, y]) => ({ x, y })),
+                        equation: regressionResult.equation,
+                        modelType: 'linear'
+                    } : null}
+                    chartTitle={title}
+                />
             </CardContent>
         </Card>
     );

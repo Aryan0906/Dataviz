@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, Sun, Moon, Save } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Sun, Moon, Save } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
+import { wrapSvgWithXmlMetadata } from "@/lib/chartExport";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import {
     DropdownMenu,
@@ -110,21 +111,21 @@ const DesmosPlot = () => {
             console.warn('[DesmosPlot] Calculator not initialized');
             return [];
         }
-        
+
         try {
             const state = calculatorRef.current.getState();
             console.log('[DesmosPlot] Calculator state:', state);
-            
+
             if (!state || !state.expressions) {
                 console.warn('[DesmosPlot] No expressions in state');
                 return [];
             }
-            
+
             const extractedExpressions = [];
             const exprList = state.expressions.list || state.expressions;
-            
+
             console.log('[DesmosPlot] Expressions list:', exprList);
-            
+
             // Handle both array and List types
             if (Array.isArray(exprList)) {
                 exprList.forEach((expr) => {
@@ -139,7 +140,7 @@ const DesmosPlot = () => {
                     }
                 });
             }
-            
+
             console.log('[DesmosPlot] Extracted expressions:', extractedExpressions);
             return extractedExpressions;
         } catch (error) {
@@ -376,6 +377,36 @@ const DesmosPlot = () => {
                 link.click();
                 document.body.removeChild(link);
                 toast.success(`Chart exported as PNG (${exportTheme})`);
+            } else if (exportFormat === "svg") {
+                // Create SVG with embedded image and XML metadata
+                const rect = containerRef.current?.getBoundingClientRect();
+                const width = Math.max(1, Math.floor(rect?.width || 800));
+                const height = Math.max(1, Math.floor(rect?.height || 600));
+                const bg = exportTheme === "dark" ? "#09090b" : "#ffffff";
+
+                const rawSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="${bg}" />
+  <image href="${dataUrl}" width="${width}" height="${height}" />
+</svg>`;
+
+                // Get current expressions for metadata
+                const currentExpressions = expressions.map(e => e.latex || e.label || '').filter(Boolean);
+                const xmlDocument = wrapSvgWithXmlMetadata(rawSvg, {
+                    title: 'Desmos Graph Export',
+                    chartType: 'mathematical-curve',
+                    description: `Desmos graph with ${currentExpressions.length} expression(s): ${currentExpressions.slice(0, 3).join(', ')}${currentExpressions.length > 3 ? '...' : ''}`,
+                });
+
+                const blob = new Blob([xmlDocument], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${filename}.svg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                toast.success(`Chart exported as SVG/XML (${exportTheme})`);
             } else {
                 const img = new Image();
                 img.src = dataUrl;
@@ -441,22 +472,22 @@ const DesmosPlot = () => {
             try {
                 const state = calculatorRef.current.getState();
                 console.log("Current state:", state);
-                
+
                 if (state && state.expressions) {
                     // expressions is a Map, so we need to iterate using .forEach
                     const expressionIds = [];
                     state.expressions.forEach((expr) => {
                         expressionIds.push(expr.id);
                     });
-                    
+
                     console.log("Expression IDs to remove:", expressionIds);
-                    
+
                     // Remove each expression by ID
                     expressionIds.forEach((id) => {
                         calculatorRef.current.removeExpression({ id });
                     });
                 }
-                
+
                 setExpressions([]);
                 toast.success("All expressions cleared");
             } catch (error) {
@@ -567,7 +598,7 @@ const DesmosPlot = () => {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-sm font-medium">File Format</label>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-3 gap-3">
                                 <button
                                     onClick={() => setExportFormat("png")}
                                     className={cn(
@@ -579,6 +610,18 @@ const DesmosPlot = () => {
                                 >
                                     <FileImage className="h-5 w-5" />
                                     <span className="text-sm font-medium">PNG</span>
+                                </button>
+                                <button
+                                    onClick={() => setExportFormat("svg")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportFormat === "svg"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <FileCode className="h-5 w-5" />
+                                    <span className="text-sm font-medium">SVG</span>
                                 </button>
                                 <button
                                     onClick={() => setExportFormat("pdf")}

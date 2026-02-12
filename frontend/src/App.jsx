@@ -10,8 +10,11 @@ import { Loader } from "lucide-react";
 // Lazy load route components for code splitting
 const Login = lazy(() => import("./pages/Login"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const ModernLandingPage = lazy(() => import("./pages/ModernLandingPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const ModernDashboard = lazy(() => import("./pages/ModernDashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
+const ModernManualPlot = lazy(() => import("./pages/ModernManualPlot"));
 const ManualPlotCurve = lazy(() => import("./pages/ManualPlotCurve"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
@@ -36,11 +39,20 @@ const App = () => (
             <BrowserRouter>
                 <Suspense fallback={<LoadingFallback />}>
                     <Routes>
-                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/" element={<ModernLandingPage />} />
+                        <Route path="/landing-classic" element={<LandingPage />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Login />} />
                         <Route
                             path="/dashboard"
+                            element={
+                                <ProtectedRoute>
+                                    <ModernDashboard />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/dashboard-classic"
                             element={
                                 <ProtectedRoute>
                                     <Dashboard />
@@ -49,6 +61,19 @@ const App = () => (
                         />
                         <Route
                             path="/manual-plot"
+                            element={
+                                <ProtectedRoute>
+                                    <ModernManualPlot />
+                                </ProtectedRoute>
+                            }
+                        >
+                            <Route index element={<Navigate to="/manual-plot" replace />} />
+                            <Route path="curve" element={<ManualPlotCurve />} />
+                            <Route path="regression" element={<ManualPlotRegression />} />
+                            <Route path="categorical" element={<ManualPlotCategorical />} />
+                        </Route>
+                        <Route
+                            path="/manual-plot-classic"
                             element={
                                 <ProtectedRoute>
                                     <ManualPlot />
