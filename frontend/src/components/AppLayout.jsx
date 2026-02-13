@@ -74,11 +74,18 @@ const AppLayout = ({ children }) => {
             badge: null,
         },
         {
+            title: 'Smart Analytics',
+            url: '/smart-analytics',
+            icon: Zap,
+            description: 'Advanced features',
+            badge: 'New',
+        },
+        {
             title: 'AI Features',
             url: '/ai',
             icon: Sparkles,
             description: 'AI-powered analysis',
-            badge: 'New',
+            badge: null,
         },
         {
             title: 'Data Analyzer',
@@ -105,16 +112,19 @@ const AppLayout = ({ children }) => {
             title: 'Profile',
             url: '/profile',
             icon: User,
+            description: 'Manage your account',
         },
         {
             title: 'Documentation',
-            url: '#',
+            url: '/documentation',
             icon: BookOpen,
+            description: 'Help & guides',
         },
         {
             title: 'Settings',
             url: '#',
             icon: Settings,
+            description: 'App preferences',
         },
     ];
 
@@ -286,8 +296,8 @@ const AppLayout = ({ children }) => {
                                         <Link
                                             to={crumb.url}
                                             className={`hover:text-foreground transition-colors ${index === pageInfo.breadcrumbs.length - 1
-                                                    ? 'text-foreground font-semibold'
-                                                    : 'hover:underline'
+                                                ? 'text-foreground font-semibold'
+                                                : 'hover:underline'
                                                 }`}
                                         >
                                             {crumb.name}

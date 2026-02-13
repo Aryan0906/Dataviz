@@ -91,12 +91,19 @@ const ModernDashboard = () => {
 
     const features = [
         {
+            title: "Smart Analytics",
+            description: "Data health, cleaning, correlation & code export",
+            icon: Zap,
+            href: "/smart-analytics",
+            gradient: "from-purple-600 to-purple-800",
+            badge: "New"
+        },
+        {
             title: "AI-Powered Analysis",
             description: "Get intelligent insights from your data automatically",
             icon: Brain,
             href: "/ai",
             gradient: "from-slate-600 to-slate-800",
-            badge: "New"
         },
         {
             title: "Data Analyzer",
@@ -104,6 +111,13 @@ const ModernDashboard = () => {
             icon: TrendingUp,
             href: "/manual-plot",
             gradient: "from-blue-600 to-blue-800",
+        },
+        {
+            title: "Mathematical Graphing",
+            description: "Interactive Desmos integration for curve plotting",
+            icon: Activity,
+            href: "/manual-plot?tab=curve",
+            gradient: "from-green-600 to-green-800",
         },
         {
             title: "Categorical Analysis",
@@ -159,7 +173,7 @@ const ModernDashboard = () => {
                                     Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}!
                                 </h1>
                                 <p className="text-slate-200 mt-1">
-                                    Ready to transform your data into insights?
+                                    Choose a feature below to analyze your data and discover insights
                                 </p>
                             </div>
                         </div>

@@ -11,8 +11,7 @@ import {
   Code2,
   TrendingUp,
   Database,
-  FileCheck,
-  Zap
+  FileCheck
 } from "lucide-react";
 
 const SmartAnalytics = () => {
@@ -39,26 +38,27 @@ const SmartAnalytics = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Sparkles className="h-8 w-8 text-purple-500" />
+              <Sparkles className="h-8 w-8 text-primary" />
               Smart Analytics Features
             </h1>
             <p className="text-muted-foreground mt-2">
-              Professional-grade data analysis tools powered by AI
+              Automated data cleaning, quality checks, code generation & advanced visualizations
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              💡 Click cards below to explore interactive demos of each feature
             </p>
           </div>
-          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-            🆕 New Features
-          </Badge>
+          <Badge variant="secondary">🆕 New Features</Badge>
         </div>
 
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Smart Data Cleaning */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-500/20 hover:border-blue-500/40">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-border hover:border-primary/40">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <FileCheck className="h-8 w-8 text-blue-500" />
-                <Badge variant="outline" className="border-blue-500/30">Backend + Frontend</Badge>
+                <FileCheck className="h-8 w-8 text-primary" />
+                <Badge variant="outline">Backend + Frontend</Badge>
               </div>
               <CardTitle className="mt-4">Smart Data Cleaning</CardTitle>
               <CardDescription>
@@ -68,24 +68,24 @@ const SmartAnalytics = () => {
             <CardContent className="space-y-3">
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Detects missing values per column
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Identifies duplicate rows
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Flags data type mismatches
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   6 cleaning methods (drop, mean, median, etc.)
                 </li>
               </ul>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full"
                 onClick={() => setHealthModalOpen(true)}
               >
                 Try Demo
@@ -94,11 +94,11 @@ const SmartAnalytics = () => {
           </Card>
 
           {/* Correlation Heatmap */}
-          <Card className="hover:shadow-lg transition-shadow border-green-500/20 hover:border-green-500/40">
+          <Card className="hover:shadow-lg transition-shadow border-border hover:border-primary/40">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <Database className="h-8 w-8 text-green-500" />
-                <Badge variant="outline" className="border-green-500/30">API Ready</Badge>
+                <Database className="h-8 w-8 text-primary" />
+                <Badge variant="outline">API Ready</Badge>
               </div>
               <CardTitle className="mt-4">Correlation Heatmap</CardTitle>
               <CardDescription>
@@ -108,25 +108,25 @@ const SmartAnalytics = () => {
             <CardContent className="space-y-3">
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Plotly.js interactive heatmap
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Click cells to select variables
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Auto-identifies strong correlations
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Export as PNG
                 </li>
               </ul>
               <Button
-                className="w-full bg-green-600 hover:bg-green-700"
-                variant="secondary"
+                className="w-full"
+                variant="outline"
                 disabled
               >
                 Coming to Dashboard
@@ -135,11 +135,11 @@ const SmartAnalytics = () => {
           </Card>
 
           {/* Code Export */}
-          <Card className="hover:shadow-lg transition-shadow border-purple-500/20 hover:border-purple-500/40">
+          <Card className="hover:shadow-lg transition-shadow border-border hover:border-primary/40">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <Code2 className="h-8 w-8 text-purple-500" />
-                <Badge variant="outline" className="border-purple-500/30">Ready</Badge>
+                <Code2 className="h-8 w-8 text-primary" />
+                <Badge variant="outline">Ready</Badge>
               </div>
               <CardTitle className="mt-4">Code Export</CardTitle>
               <CardDescription>
@@ -149,24 +149,24 @@ const SmartAnalytics = () => {
             <CardContent className="space-y-3">
               <ul className="text-sm space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Regression, EDA, and Cleaning scripts
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Syntax highlighting (VS Code theme)
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Copy to clipboard or download .py
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
+                  <span className="text-primary mt-0.5">•</span>
                   Complete with imports & usage guide
                 </li>
               </ul>
               <Button
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                className="w-full"
                 onClick={() => setCodeModalOpen(true)}
               >
                 Try Demo
@@ -175,52 +175,11 @@ const SmartAnalytics = () => {
           </Card>
         </div>
 
-        {/* API Endpoints Section */}
-        <Card className="border-orange-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-orange-500" />
-              New API Endpoints
-            </CardTitle>
-            <CardDescription>
-              4 production-ready backend endpoints
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-orange-400">POST /api/data/check-health</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Detects nulls, duplicates, and type issues
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-green-400">POST /api/data/clean</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Applies cleaning operations to CSV
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-blue-400">POST /api/data/correlation</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Calculates correlation matrix
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-purple-400">POST /api/data/generate-code</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Generates Python code snippets
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Live Demo Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-pink-500" />
+              <TrendingUp className="h-6 w-6 text-primary" />
               Residual Plot (Live Demo)
             </CardTitle>
             <CardDescription>
@@ -232,40 +191,6 @@ const SmartAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* File Locations */}
-        <Card className="border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-lg">📁 Component Locations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm font-mono">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/DataHealthModal.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/CodeExportModal.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/ResidualPlot.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/DataOverview.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Backend</Badge>
-                <code className="text-green-400">backend_django/api/utils/data_cleaning.py</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Backend</Badge>
-                <code className="text-green-400">backend_django/api/utils/code_generator.py</code>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Modals */}

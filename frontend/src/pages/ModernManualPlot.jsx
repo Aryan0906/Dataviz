@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { TrendingUp, Sigma, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import EnhancedDataAnalyzer from '@/components/EnhancedDataAnalyzer';
+import DesmosPlot from '@/components/DesmosPlot';
+import ManualPlotCategorical from './ManualPlotCategorical';
 
 const ModernManualPlot = () => {
     const [activeTab, setActiveTab] = useState('regression');
@@ -12,6 +14,12 @@ const ModernManualPlot = () => {
     return (
         <AppLayout>
             <div className="space-y-6">
+                {/* Page Header */}
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Data Analyzer</h1>
+                    <p className="text-muted-foreground">Advanced analysis tools for regression, mathematical graphing, and categorical data</p>
+                </div>
+
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="regression" className="gap-2">
@@ -36,19 +44,22 @@ const ModernManualPlot = () => {
                     </TabsContent>
 
                     <TabsContent value="curve" className="mt-6">
-                        <Card className="p-8 text-center text-muted-foreground">
-                            <Sigma className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Curve fitting feature will be available here.</p>
-                            <p className="text-sm mt-2">Navigate to the original route for existing functionality.</p>
-                        </Card>
+                        <div className="space-y-4">
+                            <div>
+                                <h2 className="text-2xl font-bold">Mathematical Curve Plotting</h2>
+                                <p className="text-muted-foreground">
+                                    Use Desmos to create interactive mathematical graphs and visualizations
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Enter LaTeX expressions like y=x^2 or choose from presets
+                                </p>
+                            </div>
+                            <DesmosPlot />
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="categorical" className="mt-6">
-                        <Card className="p-8 text-center text-muted-foreground">
-                            <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Categorical plotting feature will be available here.</p>
-                            <p className="text-sm mt-2">Navigate to the original route for existing functionality.</p>
-                        </Card>
+                        <ManualPlotCategorical />
                     </TabsContent>
                 </Tabs>
 

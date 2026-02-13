@@ -536,7 +536,7 @@ export const EnhancedDataAnalyzer = () => {
                                 Add Data Points
                             </CardTitle>
                             <CardDescription>
-                                Enter individual data points or import from CSV
+                                Enter X,Y coordinates manually or import from CSV (must have X,Y columns)
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -549,6 +549,7 @@ export const EnhancedDataAnalyzer = () => {
                                         value={xValue}
                                         onChange={(e) => setXValue(e.target.value)}
                                         onKeyPress={handleKeyPress}
+                                        title="Enter the independent variable (X-axis)"
                                     />
                                 </div>
                                 <div className="flex-1 space-y-2">
@@ -559,10 +560,11 @@ export const EnhancedDataAnalyzer = () => {
                                         value={yValue}
                                         onChange={(e) => setYValue(e.target.value)}
                                         onKeyPress={handleKeyPress}
+                                        title="Enter the dependent variable (Y-axis)"
                                     />
                                 </div>
                                 <div className="flex items-end">
-                                    <Button onClick={addPoint} className="gap-2 h-10">
+                                    <Button onClick={addPoint} className="gap-2 h-10" title="Add this data point (or press Enter)">
                                         <Plus className="h-4 w-4" />
                                         Add Point
                                     </Button>

@@ -97,13 +97,22 @@ const DesmosPlot = () => {
     const calculatorRef = useRef(null);
     const expressionsRef = useRef([]);
     const { theme } = useTheme();
-    const [currentTheme, setCurrentTheme] = useState("light");
+
+    // Detect initial theme properly
+    const getInitialTheme = () => {
+        if (theme === "system") {
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        return theme || "light";
+    };
+
+    const [currentTheme, setCurrentTheme] = useState(getInitialTheme());
     const [expressions, setExpressions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
-    const [exportTheme, setExportTheme] = useState("light");
+    const [exportTheme, setExportTheme] = useState(getInitialTheme());
 
     // Function to extract expressions from calculator
     const extractExpressionsFromCalculator = () => {
@@ -215,7 +224,12 @@ const DesmosPlot = () => {
                 });
 
                 calculatorRef.current = calc;
-                applyTheme(calc, currentTheme);
+
+                // Apply theme immediately with current theme state
+                const themeToApply = getInitialTheme();
+                console.log('[DesmosPlot] Applying initial theme:', themeToApply);
+                applyTheme(calc, themeToApply);
+
                 setIsLoading(false);
             } catch (error) {
                 console.error("Graph init error", error);
@@ -231,12 +245,20 @@ const DesmosPlot = () => {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Theme updates
+    // Theme updates with retry for DOM readiness
     useEffect(() => {
         if (calculatorRef.current) {
+            console.log('[DesmosPlot] Theme changed to:', currentTheme);
             applyTheme(calculatorRef.current, currentTheme);
+
+            // Re-apply after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                if (calculatorRef.current) {
+                    applyTheme(calculatorRef.current, currentTheme);
+                }
+            }, 100);
         }
         setExportTheme(currentTheme === "dark" ? "dark" : "light");
     }, [currentTheme]);
@@ -249,11 +271,15 @@ const DesmosPlot = () => {
             return `hsl(${trimmed})`;
         };
 
-        const bg = getColor("background", "#0a0a0a");
-        const panel = getColor("card", "#0f0f0f");
-        const border = getColor("border", "#1f1f1f");
-        const text = getColor("foreground", "#e6e6e6");
-        const mutedText = getColor("muted-foreground", "#cfd2d4");
+        // Enhanced dark mode colors with better contrast
+        const isDark = themeMode === "dark";
+        const bg = isDark ? "#09090b" : getColor("background", "#ffffff");
+        const panel = isDark ? "#18181b" : getColor("card", "#f9f9f9");
+        const border = isDark ? "#3f3f46" : getColor("border", "#e4e4e7");
+        const text = isDark ? "#fafafa" : getColor("foreground", "#09090b");
+        const mutedText = isDark ? "#a1a1aa" : getColor("muted-foreground", "#71717a");
+        const graphBg = isDark ? "#0f0f12" : "#ffffff";
+        const hoverBg = isDark ? "#27272a" : "#f4f4f5";
 
         const containerId = containerRef.current?.id || "graph-container";
         let styleElement = document.getElementById(`${containerId}-theme-style`);
@@ -264,15 +290,17 @@ const DesmosPlot = () => {
         }
 
         styleElement.textContent = `
+            /* Main container */
             #${containerId} {
                 background-color: ${bg} !important;
             }
+            
+            /* Calculator containers and panels */
             #${containerId} .dcg-container,
             #${containerId} .dcg-expressions,
             #${containerId} .dcg-expressionlist,
             #${containerId} .dcg-expressions-scrollable,
             #${containerId} .dcg-expressions-content,
-            #${containerId} .dcg-grapher-container,
             #${containerId} .dcg-left-gutter,
             #${containerId} .dcg-hud,
             #${containerId} .dcg-expressionsTopbar {
@@ -280,9 +308,101 @@ const DesmosPlot = () => {
                 color: ${text} !important;
                 border-color: ${border} !important;
             }
-            #${containerId} .dcg-expressionitem,
+            
+            /* Graph paper background - lighter in dark mode */
+            #${containerId} .dcg-grapher-container {
+                background-color: ${graphBg} !important;
+            }
+            #${containerId} .dcg-graphpaper {
+                background-color: ${graphBg} !important;
+            }
+            
+            /* Expression items and inputs */
+            #${containerId} .dcg-expressionitem {
+                background-color: ${panel} !important;
+                color: ${text} !important;
+                border-color: ${border} !important;
+            }
+            #${containerId} .dcg-expressionitem:hover {
+                background-color: ${hoverBg} !important;
+            }
             #${containerId} .dcg-expressionitem input,
-            #${containerId} .dcg-expressionitem textarea,
+            #${containerId} .dcg-expressionitem textarea {
+                background-color: ${panel} !important;
+                color: ${text} !important;
+                border-color: ${border} !important;
+            }
+            
+            /* Math field styling */
+            #${containerId} .dcg-mq-root-block,
+            #${containerId} .dcg-math-field,
+            #${containerId} .dcg-mq-editable-field {
+                background-color: transparent !important;
+                color: ${text} !important;
+            }
+            #${containerId} .dcg-mq-math-mode {
+                color: ${text} !important;
+            }
+            
+            /* Input fields */
+            #${containerId} input,
+            #${containerId} textarea {
+                background-color: ${panel} !important;
+                color: ${text} !important;
+                border-color: ${border} !important;
+            }
+            
+            /* Buttons */
+            #${containerId} .dcg-icon-btn,
+            #${containerId} .dcg-btn-flat,
+            #${containerId} .dcg-btn-light-gray,
+            #${containerId} .dcg-action-button {
+                background-color: ${panel} !important;
+                color: ${text} !important;
+                border-color: ${border} !important;
+            }
+            #${containerId} .dcg-icon-btn:hover,
+            #${containerId} .dcg-btn-flat:hover,
+            #${containerId} .dcg-btn-light-gray:hover,
+            #${containerId} .dcg-action-button:hover {
+                background-color: ${hoverBg} !important;
+            }
+            
+            /* Menus and tooltips */
+            #${containerId} .dcg-tooltip,
+            #${containerId} .dcg-menu,
+            #${containerId} .dcg-popover,
+            #${containerId} .dcg-dropdown,
+            #${containerId} .dcg-option-item,
+            #${containerId} .dcg-selectable {
+                background-color: ${panel} !important;
+                color: ${text} !important;
+                border-color: ${border} !important;
+            }
+            #${containerId} .dcg-option-item:hover {
+                background-color: ${hoverBg} !important;
+            }
+            
+            /* Axis labels with better visibility */
+            #${containerId} .dcg-axis-label,
+            #${containerId} .dcg-tick-label {
+                color: ${mutedText} !important;
+                font-weight: 500 !important;
+            }
+            
+            /* Icons with proper contrast */
+            #${containerId} .dcg-icon-btn svg,
+            #${containerId} .dcg-btn-flat svg,
+            #${containerId} .dcg-btn-light-gray svg,
+            #${containerId} .dcg-icon svg,
+            #${containerId} .dcg-action-button svg,
+            #${containerId} .dcg-icon-inline svg {
+                fill: ${text} !important;
+                color: ${text} !important;
+            }
+            
+            /* Settings panel */
+            #${containerId} .dcg-settings-pillbox,
             #${containerId} .dcg-basic-toggle,
             #${containerId} .dcg-action-card,
             #${containerId} .dcg-exppanel {
@@ -290,55 +410,49 @@ const DesmosPlot = () => {
                 color: ${text} !important;
                 border-color: ${border} !important;
             }
-            #${containerId} input,
-            #${containerId} textarea,
-            #${containerId} .dcg-mq-root-block,
-            #${containerId} .dcg-math-field {
-                background-color: ${panel} !important;
+            
+            /* Scrollbar styling for dark mode */
+            ${isDark ? `
+            #${containerId} ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            #${containerId} ::-webkit-scrollbar-track {
+                background: ${panel};
+            }
+            #${containerId} ::-webkit-scrollbar-thumb {
+                background: ${border};
+                border-radius: 4px;
+            }
+            #${containerId} ::-webkit-scrollbar-thumb:hover {
+                background: ${mutedText};
+            }
+            ` : ''}
+            
+            /* Expression color indicators - keep visible */
+            #${containerId} .dcg-expression-icon-container {
+                opacity: 1 !important;
+            }
+            
+            /* Folder items */
+            #${containerId} .dcg-folder-title {
                 color: ${text} !important;
-                border-color: ${border} !important;
             }
-            #${containerId} .dcg-tooltip,
-            #${containerId} .dcg-menu,
-            #${containerId} .dcg-popover,
-            #${containerId} .dcg-option-item,
-            #${containerId} .dcg-selectable {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            #${containerId} .dcg-icon-btn,
-            #${containerId} .dcg-btn-flat,
-            #${containerId} .dcg-btn-light-gray {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            #${containerId} .dcg-icon-btn:hover,
-            #${containerId} .dcg-btn-flat:hover,
-            #${containerId} .dcg-btn-light-gray:hover {
-                background-color: ${bg} !important;
-            }
-            #${containerId} .dcg-graphpaper {
-                background-color: ${bg} !important;
-            }
-            #${containerId} .dcg-axis-label, #${containerId} .dcg-tick-label {
-                color: ${mutedText} !important;
-            }
-            #${containerId} .dcg-icon-btn svg,
-            #${containerId} .dcg-btn-flat svg,
-            #${containerId} .dcg-btn-light-gray svg,
-            #${containerId} .dcg-icon svg,
-            #${containerId} .dcg-expressionitem .dcg-action-button svg,
-            #${containerId} .dcg-icon-inline svg {
-                fill: ${text} !important;
-                color: ${text} !important;
+            
+            /* Slider controls */
+            #${containerId} .dcg-slider-container,
+            #${containerId} .dcg-slider-thumb {
+                background-color: ${hoverBg} !important;
             }
         `;
 
-        // Align Desmos internal settings with theme (no forced projector mode)
+        // Align Desmos internal settings with theme
         try {
-            calc.updateSettings({ projectorMode: themeMode === "dark" });
+            calc.updateSettings({
+                projectorMode: isDark,
+                // Additional settings for better visibility
+                clearIntoDarkMode: isDark
+            });
         } catch (err) {
             console.warn("Unable to set calculator settings", err);
         }
@@ -500,6 +614,13 @@ const DesmosPlot = () => {
 
     return (
         <div className="space-y-4">
+            {/* Help Text */}
+            <div className="bg-muted/50 border rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground">📊 Interactive Math Graphing:</strong> Enter LaTeX expressions (e.g., y=x^2, x^2+y^2=25) or choose from presets. Click expressions to edit, drag to pan, scroll to zoom.
+                </p>
+            </div>
+
             {/* Top Toolbar */}
             <div className="flex gap-2 items-center justify-between bg-card border rounded-lg p-3">
                 <div className="flex gap-2 items-center flex-wrap">
@@ -508,6 +629,7 @@ const DesmosPlot = () => {
                         size="sm"
                         variant="outline"
                         className="gap-2"
+                        title="Save current graph to session"
                     >
                         <Save className="h-4 w-4" />
                         Save Session
@@ -516,11 +638,12 @@ const DesmosPlot = () => {
                         onClick={() => handleExportClick("png")}
                         size="sm"
                         className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                        title="Export graph as image or PDF"
                     >
                         <Download className="h-4 w-4" />
                         Export
                     </Button>
-                    <Button onClick={clearAll} variant="outline" size="sm" className="gap-2">
+                    <Button onClick={clearAll} variant="outline" size="sm" className="gap-2" title="Clear all expressions">
                         <RefreshCw className="h-4 w-4" />
                         Clear
                     </Button>
@@ -528,7 +651,7 @@ const DesmosPlot = () => {
                     {/* Presets Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
+                            <Button variant="outline" size="sm" className="gap-2" title="Quick-load common mathematical functions">
                                 <ChevronDown className="h-4 w-4" />
                                 Presets
                             </Button>
@@ -546,8 +669,27 @@ const DesmosPlot = () => {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                    Theme: <span className="font-semibold">{currentTheme === "dark" ? "Dark" : "Light"}</span>
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => {
+                            const newTheme = currentTheme === "dark" ? "light" : "dark";
+                            setCurrentTheme(newTheme);
+                            toast.success(`Switched to ${newTheme} theme`);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2"
+                        title="Toggle theme for graph"
+                    >
+                        {currentTheme === "dark" ? (
+                            <Sun className="h-4 w-4" />
+                        ) : (
+                            <Moon className="h-4 w-4" />
+                        )}
+                    </Button>
+                    <div className="text-sm text-muted-foreground">
+                        Theme: <span className="font-semibold capitalize">{currentTheme}</span>
+                    </div>
                 </div>
             </div>
 
@@ -581,7 +723,8 @@ const DesmosPlot = () => {
                         id="graph-container"
                         className="w-full h-[600px]"
                         style={{
-                            backgroundColor: "hsl(var(--background))",
+                            backgroundColor: currentTheme === "dark" ? "#09090b" : "#ffffff",
+                            minHeight: "600px"
                         }}
                     />
                 </div>

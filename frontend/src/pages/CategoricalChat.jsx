@@ -287,7 +287,7 @@ export const CategoricalChatPanel = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
-    
+
     // New states for NLP features
     const [columns, setColumns] = useState([]);
     const [activeColumns, setActiveColumns] = useState([]);
@@ -325,7 +325,7 @@ export const CategoricalChatPanel = () => {
 
     // Enable auto-save and restoration
     const { saveNow } = usePageSession('categorical', sessionState, restoreState);
-    
+
     // Enable history tracking
     const { logCreate, logUpdate, logExport } = useHistoryLogger('categorical');
 
@@ -336,7 +336,7 @@ export const CategoricalChatPanel = () => {
     const getThemeColors = useCallback(() => {
         const root = document.documentElement;
         const isDark = theme === 'dark' || (theme === 'system' && root.classList.contains('dark'));
-        
+
         return {
             foreground: isDark ? 'hsl(210 40% 98%)' : 'hsl(222.2 84% 4.9%)',
             background: isDark ? 'hsl(222.2 84% 4.9%)' : 'hsl(0 0% 100%)',
@@ -350,20 +350,20 @@ export const CategoricalChatPanel = () => {
     // Enhanced insights
     const insights = useMemo(() => {
         if (data.length === 0) return null;
-        
+
         const sorted = [...data].sort((a, b) => b.value - a.value);
         const topPerformer = sorted[0];
         const bottomPerformer = sorted[sorted.length - 1];
         const total = data.reduce((sum, d) => sum + d.value, 0);
         const cardinality = new Set(data.map(d => d.label)).size;
         const missingData = 0; // Can be calculated from CSV parsing
-        
+
         // Generate narrative summary
         const topPercent = total > 0 ? ((topPerformer.value / total) * 100).toFixed(1) : 0;
         const avgValue = total / data.length;
         const multiplier = (topPerformer.value / avgValue).toFixed(1);
         const narrative = `${topPerformer.label} is the dominant category with a value of ${topPerformer.value}, accounting for ${topPercent}% of the total. This is ${multiplier}x higher than the average (${avgValue.toFixed(1)}).`;
-        
+
         return {
             topPerformer,
             bottomPerformer,
@@ -379,18 +379,18 @@ export const CategoricalChatPanel = () => {
     // Filtered and paginated data for table
     const filteredData = useMemo(() => {
         let filtered = data;
-        
+
         // Filter by selected category (drill-down)
         if (selectedCategory) {
             filtered = filtered.filter((d) => normalizeLabel(d.label) === normalizeLabel(selectedCategory));
         }
-        
+
         // Filter by search
         if (tableSearch) {
             const search = tableSearch.toLowerCase();
             filtered = filtered.filter((d) => d.label.toLowerCase().includes(search));
         }
-        
+
         return filtered;
     }, [data, tableSearch, selectedCategory]);
 
@@ -490,14 +490,14 @@ export const CategoricalChatPanel = () => {
                 });
 
                 setColumns(detectedColumns);
-                
+
                 // Try to auto-detect label and value columns
                 const categoryCol = detectedColumns.find((c) => c.type === "categorical");
                 const numericCol = detectedColumns.find((c) => c.type === "numerical");
 
                 if (categoryCol && numericCol) {
                     setActiveColumns([categoryCol.name, numericCol.name]);
-                    
+
                     const parsed = rows
                         .map((row) => ({
                             label: String(row[categoryCol.name] || "").trim(),
@@ -520,7 +520,7 @@ export const CategoricalChatPanel = () => {
                                 text: `Successfully imported ${parsed.length} categories from "${file.name}". Using "${categoryCol.name}" as labels and "${numericCol.name}" as values.`,
                             },
                         ]);
-                        
+
                         // Log CSV upload to history
                         logCreate(`CSV Import: ${file.name}`, parsed, {
                             filename: file.name,
@@ -539,7 +539,7 @@ export const CategoricalChatPanel = () => {
                         const row = rows[i];
                         const firstVal = Object.values(row)[0];
                         const secondVal = Object.values(row)[1];
-                        
+
                         if (firstVal && secondVal) {
                             const label = String(firstVal).trim();
                             const value = parseFloat(secondVal);
@@ -621,7 +621,7 @@ export const CategoricalChatPanel = () => {
             } else {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
-            
+
             // Log export to history
             logExport(chartTitle, { chartType, data, timestamp }, {
                 format: exportFormat,
@@ -667,7 +667,7 @@ export const CategoricalChatPanel = () => {
     const chartArea = () => {
         if (!data.length) {
             return (
-                <div 
+                <div
                     className={cn(
                         "flex flex-col items-center justify-center h-72 border-2 border-dashed rounded-lg transition-colors",
                         dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30"
@@ -708,7 +708,7 @@ export const CategoricalChatPanel = () => {
         }
 
         const themeColors = getThemeColors();
-        
+
         const baseChartConfig = {
             chart: {
                 backgroundColor: "transparent",
@@ -1155,6 +1155,9 @@ export const CategoricalChatPanel = () => {
                     <p className="text-muted-foreground text-sm">
                         Describe what you want to see; the assistant will update categories, switch chart types, and surface stats.
                     </p>
+                    <p className="text-xs text-muted-foreground">
+                        💡 Try: "add Sales 150", "set chart to heatmap", "show stats", or import CSV
+                    </p>
                 </div>
                 <div className="flex items-center gap-2 bg-muted/60 rounded-lg px-3 py-2 text-sm">
                     <MessageSquare className="h-4 w-4" />
@@ -1185,7 +1188,7 @@ export const CategoricalChatPanel = () => {
                                     <RefreshCcw className="h-3.5 w-3.5" />
                                     <span className="hidden sm:inline">Save</span>
                                 </Button>
-                                
+
                                 {/* All Chart Types Dropdown */}
                                 <select
                                     value={chartType}
@@ -1198,7 +1201,7 @@ export const CategoricalChatPanel = () => {
                                         </option>
                                     ))}
                                 </select>
-                                
+
                                 {data.length > 0 && (
                                     <>
                                         <ExportCodeButton
@@ -1272,8 +1275,8 @@ export const CategoricalChatPanel = () => {
                                     placeholder="Ask a question: 'Which category has the highest value?' or 'Show top 5'"
                                     className="min-h-[80px] pr-10"
                                 />
-                                <Button 
-                                    onClick={sendMessage} 
+                                <Button
+                                    onClick={sendMessage}
                                     size="sm"
                                     disabled={processing}
                                     className="absolute bottom-2 right-2 h-7 w-7 p-0"
@@ -1285,7 +1288,7 @@ export const CategoricalChatPanel = () => {
                                     )}
                                 </Button>
                             </div>
-                            
+
                             {/* Suggestion Chips */}
                             {data.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
@@ -1327,7 +1330,7 @@ export const CategoricalChatPanel = () => {
                                     </Button>
                                 </div>
                             )}
-                            
+
                             <div className="text-xs text-muted-foreground">
                                 Press Ctrl+Enter to send • Try: "add Apple 25", "switch to pie", or "stats"
                             </div>
@@ -1388,6 +1391,7 @@ export const CategoricalChatPanel = () => {
                                 variant="outline"
                                 className="flex-1 gap-2"
                                 onClick={() => fileInputRef.current?.click()}
+                                title="Import CSV with label and value columns"
                             >
                                 <Upload className="h-4 w-4" />
                                 Import CSV
@@ -1502,9 +1506,9 @@ export const CategoricalChatPanel = () => {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             {selectedCategory && (
-                                <Button 
-                                    size="sm" 
-                                    variant="outline" 
+                                <Button
+                                    size="sm"
+                                    variant="outline"
                                     onClick={() => {
                                         setSelectedCategory(null);
                                         toast.success("Filter cleared");
@@ -1526,7 +1530,7 @@ export const CategoricalChatPanel = () => {
                                 <AlertDescription>No categories yet. Use chat, Quick Add, or import CSV.</AlertDescription>
                             </Alert>
                         )}
-                        
+
                         {data.length > 0 && (
                             <>
                                 {/* Search */}

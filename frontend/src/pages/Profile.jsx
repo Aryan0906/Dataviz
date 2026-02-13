@@ -49,6 +49,9 @@ const Profile = () => {
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
                     <p className="text-muted-foreground">Your account information and statistics</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        View your activity across all analysis tools and saved sessions
+                    </p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">

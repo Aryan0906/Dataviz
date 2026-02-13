@@ -43,6 +43,7 @@ const AIFeatures = () => {
     const chartRef = useRef(null);
     const [exporting, setExporting] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showHelp, setShowHelp] = useState(true);
 
     // Auto-resume functionality
     useEffect(() => {
@@ -276,7 +277,10 @@ const AIFeatures = () => {
                         AI-Powered Data Analysis
                     </h2>
                     <p className="text-muted-foreground mt-1">
-                        Upload CSV files and generate insights using natural language
+                        Upload CSV files and generate insights using natural language queries
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        💡 Tip: Ask questions like "Show sales trend" or "Compare by category"
                     </p>
                 </div>
 
@@ -287,6 +291,9 @@ const AIFeatures = () => {
                             <Upload className="h-5 w-5" />
                             Upload CSV File
                         </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Drag & drop or click to browse. Max 10MB. CSV format only.
+                        </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div
