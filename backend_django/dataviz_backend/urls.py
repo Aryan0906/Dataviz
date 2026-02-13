@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from api import views as api
 
 urlpatterns = [
@@ -37,5 +37,7 @@ urlpatterns = [
     path("api/data/clean", api.clean_data),
     path("api/data/correlation", api.get_correlation_matrix),
     path("api/data/generate-code", api.generate_code_snippet),
+    # Todos API
+    path("api/", include("todos.urls")),
 ]
 

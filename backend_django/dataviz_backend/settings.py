@@ -29,7 +29,7 @@ if not DEBUG:
 INSTALLED_APPS = [
     "django.contrib.admin","django.contrib.auth","django.contrib.contenttypes",
     "django.contrib.sessions","django.contrib.messages","django.contrib.staticfiles",
-    "corsheaders","rest_framework","api",
+    "corsheaders","rest_framework","django_filters","api","todos",
 ]
 
 MIDDLEWARE = [
