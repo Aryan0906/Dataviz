@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useStorytelling } from "@/context/StorytellingContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +21,7 @@ import confetti from "canvas-confetti";
 
 const OnboardingWizard = ({ onComplete }) => {
     const navigate = useNavigate();
+    const { unlockAchievement } = useStorytelling();
     const [currentStep, setCurrentStep] = useState(0);
     const [sampleDataUploaded, setSampleDataUploaded] = useState(false);
 
@@ -70,6 +72,7 @@ const OnboardingWizard = ({ onComplete }) => {
             }, 2500);
         } else if (currentStep === 3) {
             // Final step - complete onboarding
+            unlockAchievement('completed-onboarding');
             if (onComplete) onComplete();
             navigate("/dashboard");
         }

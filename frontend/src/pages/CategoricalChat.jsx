@@ -1144,24 +1144,29 @@ export const CategoricalChatPanel = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        NLP + Categorical Plotting
-                    </div>
-                    <h1 className="text-2xl font-bold">Chat-driven categorical analysis</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Describe what you want to see; the assistant will update categories, switch chart types, and surface stats.
+        <div className="space-y-6" style={{ fontFamily: "'Raleway', sans-serif" }}>
+            {/* ── Luxury Panel Header ── */}
+            <div className="flex items-start justify-between gap-4 flex-wrap pb-5 border-b border-[#E8E4DC]">
+                <div>
+                    <p className="text-[#0F172A] mb-1" style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase" }}>
+                        NLP + Categorical Analysis
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                        💡 Try: "add Sales 150", "set chart to heatmap", "show stats", or import CSV
+                    <h1 className="text-2xl font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        Chat-Driven Data Visualization
+                    </h1>
+                    <p className="text-sm text-[#6B6B6B]">
+                        Describe what you want to see — the assistant updates categories, switches chart types, and surfaces stats.
                     </p>
+                    <p className="text-xs text-[#D4AF37]/80 mt-1">
+                        Try: "add Sales 150", "set chart to heatmap", "show stats", or import CSV
+                    </p>
+                    <div className="mt-4 w-10 h-0.5 bg-[#D4AF37]" />
                 </div>
-                <div className="flex items-center gap-2 bg-muted/60 rounded-lg px-3 py-2 text-sm">
-                    <MessageSquare className="h-4 w-4" />
-                    Natural language controls
+                <div className="flex items-center gap-2 border border-[#0F172A]/20 bg-[#0F172A]/5 px-3 py-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-[#0F172A]" />
+                    <span className="text-xs text-[#0F172A]" style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        Natural Language Controls
+                    </span>
                 </div>
             </div>
 
@@ -1226,7 +1231,7 @@ export const CategoricalChatPanel = () => {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                        <div ref={chartContainerRef} className="rounded-lg border bg-muted/30 p-1 min-h-[480px]">{chartArea()}</div>
+                        <div ref={chartContainerRef} className="border border-[#E8E4DC] bg-white p-1 min-h-[480px]">{chartArea()}</div>
                         {pendingEdit && (
                             <div className="relative z-[100] rounded-lg border-2 border-primary bg-background p-4 shadow-2xl">
                                 <div className="flex items-center gap-2 font-semibold mb-3">
@@ -1431,8 +1436,8 @@ export const CategoricalChatPanel = () => {
                     <CardContent className="space-y-4">
                         {/* NLP Narrative Summary */}
                         {insights && (
-                            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                                <p className="text-sm leading-relaxed">{insights.narrative}</p>
+                            <div className="p-4 bg-[#FAFAF7] border-l-2 border-[#0F172A]">
+                                <p className="text-sm leading-relaxed text-[#4A4A4A]">{insights.narrative}</p>
                             </div>
                         )}
 
@@ -1459,33 +1464,33 @@ export const CategoricalChatPanel = () => {
                         {/* Top/Bottom Performers */}
                         {insights && (
                             <div className="space-y-2 border-t pt-3">
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingUp className="h-4 w-4 text-green-600" />
-                                        <div>
-                                            <div className="font-semibold text-sm">{insights.topPerformer.label}</div>
-                                            <div className="text-xs text-muted-foreground">Top Performer</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-semibold">{insights.topPerformer.value}</div>
-                                        <div className="text-xs text-muted-foreground">{insights.topPerformerPercent}%</div>
-                                    </div>
-                                </div>
+                                <div className="flex items-center justify-between p-3 border border-[#0F172A]/20 bg-[#0F172A]/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <TrendingUp className="h-4 w-4 text-[#0F172A]" />
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.topPerformer.label}</div>
+                                                            <div className="text-xs text-[#6B6B6B]" style={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.6rem" }}>Top Performer</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-semibold text-[#0F172A]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.topPerformer.value}</div>
+                                                        <div className="text-xs text-[#6B6B6B]">{insights.topPerformerPercent}%</div>
+                                                    </div>
+                                                </div>
 
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingDown className="h-4 w-4 text-orange-600" />
-                                        <div>
-                                            <div className="font-semibold text-sm">{insights.bottomPerformer.label}</div>
-                                            <div className="text-xs text-muted-foreground">Bottom Performer</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-semibold">{insights.bottomPerformer.value}</div>
-                                        <div className="text-xs text-muted-foreground">{insights.bottomPerformerPercent}%</div>
-                                    </div>
-                                </div>
+                                                <div className="flex items-center justify-between p-3 border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <TrendingDown className="h-4 w-4 text-[#A8893A]" />
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.bottomPerformer.label}</div>
+                                                            <div className="text-xs text-[#6B6B6B]" style={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.6rem" }}>Bottom Performer</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-semibold text-[#A8893A]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.bottomPerformer.value}</div>
+                                                        <div className="text-xs text-[#6B6B6B]">{insights.bottomPerformerPercent}%</div>
+                                                    </div>
+                                                </div>
                             </div>
                         )}
                     </CardContent>

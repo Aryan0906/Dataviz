@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import LandingNav from "@/components/LandingNav";
+import LandingFooter from "@/components/LandingFooter";
 import {
     Sparkles,
     TrendingUp,
@@ -94,37 +96,8 @@ const EnhancedStorytellingLanding = () => {
 
     return (
         <div className="min-h-screen bg-black text-white overflow-hidden">
-            {/* Floating Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-                style={{
-                    background: scrollY > 50 ? 'rgba(0, 0, 0, 0.9)' : 'transparent',
-                    backdropFilter: scrollY > 50 ? 'blur(20px)' : 'none',
-                    borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.1)' : 'none'
-                }}>
-                <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-xl">
-                            <Sparkles className="size-5 text-white" />
-                        </div>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                            DataViz
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <Link to="/login">
-                            <Button variant="ghost" className="text-white hover:bg-white/10">
-                                Sign In
-                            </Button>
-                        </Link>
-                        <Link to="/signup">
-                            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 border-0 gap-2">
-                                Start Free
-                                <Rocket className="h-4 w-4" />
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </nav>
+            {/* Navigation */}
+            <LandingNav variant="dark" />
 
             {/* Immersive Hero Section */}
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -215,7 +188,7 @@ const EnhancedStorytellingLanding = () => {
                             <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
                                 {stats.users.toLocaleString()}+
                             </div>
-                            <div className="text-gray-400 text-lg">Data Storytellers</div>
+                            <div className="text-muted-foreground text-lg">Data Storytellers</div>
                         </div>
 
                         <div className="text-center group">
@@ -226,7 +199,7 @@ const EnhancedStorytellingLanding = () => {
                             <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                                 {stats.insights.toLocaleString()}+
                             </div>
-                            <div className="text-gray-400 text-lg">Insights Discovered</div>
+                            <div className="text-muted-foreground text-lg">Insights Discovered</div>
                         </div>
 
                         <div className="text-center group">
@@ -237,14 +210,14 @@ const EnhancedStorytellingLanding = () => {
                             <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent">
                                 {stats.companies.toLocaleString()}+
                             </div>
-                            <div className="text-gray-400 text-lg">Companies Trust Us</div>
+                            <div className="text-muted-foreground text-lg">Companies Trust Us</div>
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* The Journey - Scroll-triggered Story */}
-            <section className="py-32 relative">
+            <section id="journey" className="py-32 relative scroll-mt-20">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-20">
                         <Badge className="mb-6 bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border-blue-500/30 px-6 py-2 backdrop-blur-xl">
@@ -258,7 +231,7 @@ const EnhancedStorytellingLanding = () => {
                                 A Story
                             </span>
                         </h2>
-                        <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
                             From confusion to clarity in four transformative steps
                         </p>
                     </div>
@@ -267,16 +240,16 @@ const EnhancedStorytellingLanding = () => {
                         {/* Step 1 */}
                         <div className="grid md:grid-cols-2 gap-16 items-center">
                             <div className="space-y-6">
-                                <Badge className="bg-slate-500/20 text-slate-300 border-slate-500/30">
+                                <Badge className="bg-slate-500/20 text-slate-200 border-slate-500/30">
                                     Chapter 01
                                 </Badge>
                                 <h3 className="text-4xl font-bold">The Challenge</h3>
-                                <p className="text-xl text-gray-400 leading-relaxed">
+                                <p className="text-xl text-gray-300 leading-relaxed">
                                     You're drowning in spreadsheets. Numbers everywhere,
                                     but no clear story. The insights you need are buried
                                     under layers of complexity.
                                 </p>
-                                <div className="flex items-center gap-3 text-slate-400">
+                                <div className="flex items-center gap-3 text-slate-300">
                                     <ArrowRight className="h-5 w-5" />
                                     <span>Before DataViz: Hours of manual analysis</span>
                                 </div>
@@ -317,16 +290,16 @@ const EnhancedStorytellingLanding = () => {
                                 </Card>
                             </div>
                             <div className="space-y-6 order-1 md:order-2">
-                                <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30">
+                                <Badge className="bg-blue-500/20 text-blue-200 border-blue-500/30">
                                     Chapter 02
                                 </Badge>
                                 <h3 className="text-4xl font-bold">The Discovery</h3>
-                                <p className="text-xl text-gray-400 leading-relaxed">
+                                <p className="text-xl text-gray-300 leading-relaxed">
                                     Our AI becomes your data detective. Upload your data
                                     and watch as patterns emerge, relationships reveal themselves,
                                     and insights crystallize.
                                 </p>
-                                <div className="flex items-center gap-3 text-blue-400">
+                                <div className="flex items-center gap-3 text-blue-300">
                                     <Zap className="h-5 w-5" />
                                     <span>Analysis complete in seconds, not hours</span>
                                 </div>
@@ -336,16 +309,16 @@ const EnhancedStorytellingLanding = () => {
                         {/* Step 3 */}
                         <div className="grid md:grid-cols-2 gap-16 items-center">
                             <div className="space-y-6">
-                                <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                                <Badge className="bg-purple-500/20 text-purple-200 border-purple-500/30">
                                     Chapter 03
                                 </Badge>
                                 <h3 className="text-4xl font-bold">The Revelation</h3>
-                                <p className="text-xl text-gray-400 leading-relaxed">
+                                <p className="text-xl text-gray-300 leading-relaxed">
                                     The moment of truth. Your data speaks in clear,
                                     beautiful visualizations. Complex correlations become
                                     simple truths. You don't just see numbers—you understand them.
                                 </p>
-                                <div className="flex items-center gap-3 text-purple-400">
+                                <div className="flex items-center gap-3 text-purple-300">
                                     <Brain className="h-5 w-5" />
                                     <span>AI explains insights in plain English</span>
                                 </div>
@@ -367,7 +340,7 @@ const EnhancedStorytellingLanding = () => {
                                                     <div className="w-12 bg-gradient-to-t from-purple-600 to-blue-600 rounded-t h-5/6" />
                                                 </div>
                                             </div>
-                                            <div className="text-center text-sm text-gray-400 pt-4 border-t border-purple-700/30">
+                                            <div className="text-center text-sm text-muted-foreground pt-4 border-t border-purple-700/30">
                                                 Strong positive correlation detected: R² = 0.94
                                             </div>
                                         </div>
@@ -400,16 +373,16 @@ const EnhancedStorytellingLanding = () => {
                                 </Card>
                             </div>
                             <div className="space-y-6 order-1 md:order-2">
-                                <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                                <Badge className="bg-green-500/20 text-green-200 border-green-500/30">
                                     Chapter 04
                                 </Badge>
                                 <h3 className="text-4xl font-bold">The Impact</h3>
-                                <p className="text-xl text-gray-400 leading-relaxed">
+                                <p className="text-xl text-gray-300 leading-relaxed">
                                     Your story is ready for the world. Export stunning visualizations,
                                     comprehensive reports, or production-ready code. Share insights
                                     that drive decisions and inspire action.
                                 </p>
-                                <div className="flex items-center gap-3 text-green-400">
+                                <div className="flex items-center gap-3 text-green-300">
                                     <Rocket className="h-5 w-5" />
                                     <span>From discovery to presentation in minutes</span>
                                 </div>
@@ -420,7 +393,7 @@ const EnhancedStorytellingLanding = () => {
             </section>
 
             {/* Features Showcase */}
-            <section className="py-32 relative">
+            <section id="features" className="py-32 relative scroll-mt-20">
                 <div className="absolute inset-0 bg-gradient-to-b from-black via-blue-950/10 to-black" />
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="text-center mb-20">
@@ -497,7 +470,7 @@ const EnhancedStorytellingLanding = () => {
                                         )}
                                     </div>
                                     <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-                                    <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                                    <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                                 </CardContent>
                             </Card>
                         ))}
@@ -506,7 +479,7 @@ const EnhancedStorytellingLanding = () => {
             </section>
 
             {/* Social Proof - Real Stories */}
-            <section className="py-32 relative">
+            <section id="testimonials" className="py-32 relative scroll-mt-20">
                 <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/10 to-black" />
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="text-center mb-20">
@@ -561,8 +534,8 @@ const EnhancedStorytellingLanding = () => {
                                         </div>
                                         <div>
                                             <div className="font-bold text-lg">{testimonial.name}</div>
-                                            <div className="text-sm text-gray-400">{testimonial.role}</div>
-                                            <div className="text-xs text-gray-500">{testimonial.company}</div>
+                                            <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                                            <div className="text-xs text-muted-foreground/80">{testimonial.company}</div>
                                         </div>
                                     </div>
 
@@ -617,7 +590,7 @@ const EnhancedStorytellingLanding = () => {
                             </Link>
                         </div>
 
-                        <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-400">
+                        <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                                 <CheckCircle2 className="h-5 w-5 text-green-400" />
                                 <span>No credit card required</span>
@@ -636,22 +609,7 @@ const EnhancedStorytellingLanding = () => {
             </section>
 
             {/* Footer */}
-            <footer className="border-t border-white/10 py-12 bg-black/50 backdrop-blur-xl">
-                <div className="container mx-auto px-6">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-3">
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
-                                <Sparkles className="size-4 text-white" />
-                            </div>
-                            <span className="font-semibold text-lg">DataViz</span>
-                            <span className="text-gray-500">· Where data becomes story</span>
-                        </div>
-                        <p className="text-sm text-gray-500">
-                            © 2026 DataViz. Transforming data narratives worldwide.
-                        </p>
-                    </div>
-                </div>
-            </footer>
+            <LandingFooter variant="dark" />
 
             <style jsx>{`
                 @keyframes float {

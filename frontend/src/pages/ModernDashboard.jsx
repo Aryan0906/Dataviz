@@ -23,6 +23,7 @@ import {
     Star,
     History
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/AppLayout";
@@ -36,6 +37,122 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+/* ── Animation Variants ── */
+const fadeUp = {
+    hidden: { opacity: 0, y: 24 },
+    visible: (i = 0) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.08, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] },
+    }),
+};
+
+/* ── Luxury Stat Card ── */
+function StatCard({ icon: Icon, label, value, loading, accent = false }) {
+    return (
+        <div className={`relative border p-5 transition-all duration-300 hover:-translate-y-0.5 ${
+            accent
+                ? "bg-[#D4AF37]/10 border-[#D4AF37]/30"
+                : "bg-white/10 border-white/15"
+        }`}>
+            <div className="flex items-center gap-2 mb-3">
+                <Icon className={`h-4 w-4 ${accent ? "text-[#D4AF37]" : "text-white/60"}`} />
+                <span
+                    className={`text-xs uppercase tracking-widest ${accent ? "text-[#D4AF37]/80" : "text-white/50"}`}
+                    style={{ fontFamily: "'Raleway', sans-serif", fontSize: "0.6rem", letterSpacing: "0.2em" }}
+                >
+                    {label}
+                </span>
+            </div>
+            <p
+                className={`text-4xl font-bold ${accent ? "text-[#D4AF37]" : "text-white"}`}
+                style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+                {loading ? "—" : value}
+            </p>
+        </div>
+    );
+}
+
+/* ── Feature Card ── */
+const featureColors = [
+    { bg: "bg-[#0F172A]", accent: "bg-[#0B1120]", icon: "text-[#D4AF37]" },
+    { bg: "bg-[#0D1117]", accent: "bg-[#1A1A1A]", icon: "text-[#D4AF37]" },
+    { bg: "bg-[#0B1120]", accent: "bg-[#0F172A]", icon: "text-white/80" },
+    { bg: "bg-[#1A1A1A]", accent: "bg-[#0D1117]", icon: "text-[#D4AF37]" },
+    { bg: "bg-[#D4AF37]", accent: "bg-[#A8893A]", icon: "text-[#0D1117]" },
+    { bg: "bg-[#6B6B6B]", accent: "bg-[#4A4A4A]", icon: "text-white" },
+];
+
+function FeatureCard({ title, description, icon: Icon, href, badge, index }) {
+    const colors = featureColors[index % featureColors.length];
+    return (
+        <motion.div variants={fadeUp} custom={index}>
+            <Link to={href} className="block group">
+                <div className="bg-white border border-[#E8E4DC] luxury-card-hover h-full">
+                    {/* Colored top accent bar */}
+                    <div className={`h-1 w-full ${colors.bg}`} />
+                    <div className="p-7">
+                        <div className="flex items-start justify-between mb-5">
+                            <div className={`inline-flex p-3 ${colors.bg} group-hover:scale-105 transition-transform duration-300`}>
+                                <Icon className={`h-6 w-6 ${colors.icon}`} />
+                            </div>
+                            {badge && (
+                                <span
+                                    className="bg-[#D4AF37] text-[#0D1117] px-2 py-0.5 text-[10px] font-semibold"
+                                    style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}
+                                >
+                                    {badge}
+                                </span>
+                            )}
+                        </div>
+                        <h3
+                            className="text-lg font-semibold text-[#0D1117] mb-2 group-hover:text-[#0F172A] transition-colors duration-300"
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
+                            {title}
+                        </h3>
+                        <p className="text-sm text-[#6B6B6B] leading-relaxed mb-4" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                            {description}
+                        </p>
+                        <span className="luxury-link text-xs text-[#0F172A] font-medium uppercase tracking-wider">
+                            Explore <span className="ml-1">›</span>
+                        </span>
+                    </div>
+                </div>
+            </Link>
+        </motion.div>
+    );
+}
+
+/* ── Quick Action Card ── */
+function QuickActionCard({ title, description, icon: Icon, action, index }) {
+    return (
+        <motion.div variants={fadeUp} custom={index}>
+            <div
+                className="bg-white border border-[#E8E4DC] p-5 cursor-pointer group luxury-card-hover"
+                onClick={action}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 border border-[#0F172A]/20 bg-[#0F172A]/5 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-all duration-300">
+                        <Icon className="h-5 w-5 text-[#0F172A] group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            {title}
+                        </h3>
+                        <p className="text-xs text-[#6B6B6B]" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                            {description}
+                        </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0" />
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+/* ── Main Component ── */
 const ModernDashboard = () => {
     const { session, user } = useAuth();
     const navigate = useNavigate();
@@ -50,7 +167,6 @@ const ModernDashboard = () => {
         try {
             const items = await dataAPI.getAnalyses();
             setAnalyses(items);
-
             const { draft: draftData } = await dataAPI.getDraft();
             setDraft(draftData);
         } catch {
@@ -63,10 +179,7 @@ const ModernDashboard = () => {
     const fetchSessions = async () => {
         try {
             const sessions = await getUserSessions();
-            const sorted = sessions.sort((a, b) =>
-                new Date(b.updated_at) - new Date(a.updated_at)
-            );
-            setSavedSessions(sorted);
+            setSavedSessions(sessions.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)));
         } catch (error) {
             console.error('Failed to fetch sessions:', error);
         }
@@ -90,338 +203,276 @@ const ModernDashboard = () => {
     };
 
     const features = [
-        {
-            title: "Smart Analytics",
-            description: "Data health, cleaning, correlation & code export",
-            icon: Zap,
-            href: "/smart-analytics",
-            gradient: "from-purple-600 to-purple-800",
-            badge: "New"
-        },
-        {
-            title: "AI-Powered Analysis",
-            description: "Get intelligent insights from your data automatically",
-            icon: Brain,
-            href: "/ai",
-            gradient: "from-slate-600 to-slate-800",
-        },
-        {
-            title: "Data Analyzer",
-            description: "Advanced regression analysis and visualization",
-            icon: TrendingUp,
-            href: "/manual-plot",
-            gradient: "from-blue-600 to-blue-800",
-        },
-        {
-            title: "Mathematical Graphing",
-            description: "Interactive Desmos integration for curve plotting",
-            icon: Activity,
-            href: "/manual-plot?tab=curve",
-            gradient: "from-green-600 to-green-800",
-        },
-        {
-            title: "Categorical Analysis",
-            description: "Analyze and visualize categorical data patterns",
-            icon: BarChart3,
-            href: "/categorical",
-            gradient: "from-slate-500 to-slate-700",
-        },
-        {
-            title: "NLP Analytics",
-            description: "Text analysis and natural language processing",
-            icon: FileText,
-            href: "/categorical-nlp",
-            gradient: "from-gray-600 to-gray-800",
-        },
+        { title: "Smart Analytics", description: "Data health, cleaning, correlation & code export", icon: Zap, href: "/smart-analytics", badge: "New" },
+        { title: "AI-Powered Analysis", description: "Get intelligent insights from your data automatically", icon: Brain, href: "/ai" },
+        { title: "Data Analyzer", description: "Advanced regression analysis and visualization", icon: TrendingUp, href: "/manual-plot" },
+        { title: "Mathematical Graphing", description: "Interactive Desmos integration for curve plotting", icon: Activity, href: "/manual-plot?tab=curve" },
+        { title: "Categorical Analysis", description: "Analyze and visualize categorical data patterns", icon: BarChart3, href: "/categorical" },
+        { title: "NLP Analytics", description: "Text analysis and natural language processing", icon: FileText, href: "/categorical-nlp" },
     ];
 
     const quickActions = [
-        {
-            title: "Upload CSV",
-            description: "Import data from file",
-            icon: Upload,
-            action: () => navigate("/manual-plot")
-        },
-        {
-            title: "New Analysis",
-            description: "Start fresh",
-            icon: Plus,
-            action: () => navigate("/manual-plot")
-        },
-        {
-            title: "View History",
-            description: "Past analyses",
-            icon: History,
-            action: () => document.getElementById("recent-tab").click()
-        },
+        { title: "Upload CSV", description: "Import data from file", icon: Upload, action: () => navigate("/manual-plot") },
+        { title: "New Analysis", description: "Start fresh analysis", icon: Plus, action: () => navigate("/manual-plot") },
+        { title: "View History", description: "Past analyses", icon: History, action: () => document.getElementById("recent-tab")?.click() },
     ];
+
+    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there';
 
     return (
         <AppLayout>
-            <div className="space-y-8">
-                {/* Hero Section */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-8 md:p-12 text-white">
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-4">
-                            <Avatar className="h-12 w-12 border-2 border-white/30">
-                                <AvatarFallback className="bg-slate-600 text-white text-xl font-bold">
-                                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                                </AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <h1 className="text-3xl md:text-4xl font-bold">
-                                    Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ''}!
-                                </h1>
-                                <p className="text-slate-200 mt-1">
-                                    Choose a feature below to analyze your data and discover insights
-                                </p>
-                            </div>
-                        </div>
+            <div className="space-y-8" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Database className="h-5 w-5" />
-                                    <span className="text-sm font-medium">Total Analyses</span>
-                                </div>
-                                <p className="text-3xl font-bold">{analyses.length}</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <FolderOpen className="h-5 w-5" />
-                                    <span className="text-sm font-medium">Saved Charts</span>
-                                </div>
-                                <p className="text-3xl font-bold">{savedSessions.length}</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Star className="h-5 w-5" />
-                                    <span className="text-sm font-medium">Active Draft</span>
-                                </div>
-                                <p className="text-3xl font-bold">{draft ? '1' : '0'}</p>
-                            </div>
+                {/* ── Luxury Hero Banner ── */}
+                <div className="relative overflow-hidden bg-[#0F172A]">
+                    {/* Dot pattern overlay */}
+                    <div
+                        className="absolute inset-0 opacity-[0.04]"
+                        style={{
+                            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+                            backgroundSize: "28px 28px",
+                        }}
+                    />
+                    {/* Gold right accent */}
+                    <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-[#D4AF37]/30 to-transparent" />
+
+                    <div className="relative z-10 p-8 md:p-10">
+                        {/* Label */}
+                        <p
+                            className="text-[#D4AF37]/70 mb-2"
+                            style={{ fontSize: "0.6rem", letterSpacing: "0.3em", textTransform: "uppercase" }}
+                        >
+                            Analytics Platform
+                        </p>
+                        {/* Headline */}
+                        <h2
+                            className="text-3xl md:text-4xl font-bold text-white mb-1"
+                            style={{ fontFamily: "'Playfair Display', serif", lineHeight: 1.15 }}
+                        >
+                            Welcome back,{" "}
+                            <em className="text-[#E8C86A]" style={{ fontStyle: "italic" }}>
+                                {userName}
+                            </em>
+                        </h2>
+                        <p className="text-white/50 text-sm mb-8">
+                            Your data awaits. Choose a tool below to begin your analysis.
+                        </p>
+
+                        {/* Stats row */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <StatCard icon={Database} label="Total Analyses" value={analyses.length} loading={loading} />
+                            <StatCard icon={FolderOpen} label="Saved Charts" value={savedSessions.length} loading={loading} />
+                            <StatCard icon={Star} label="Active Draft" value={draft ? "1" : "0"} loading={loading} accent />
                         </div>
                     </div>
-
-                    {/* Decorative elements */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48" />
-                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mb-32" />
-                    <div className="absolute top-1/2 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24" />
                 </div>
 
-                {/* Quick Actions */}
+                {/* ── Quick Actions ── */}
                 <div>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-yellow-500" />
-                        Quick Actions
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-3 mb-4">
+                        <p
+                            className="text-[#0F172A]"
+                            style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
+                        >
+                            Quick Actions
+                        </p>
+                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                    </div>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                    >
                         {quickActions.map((action, index) => (
-                            <Card
-                                key={index}
-                                className="border-2 hover:border-slate-700 cursor-pointer transition-all hover:shadow-lg hover:scale-105"
-                                onClick={action.action}
-                            >
-                                <CardContent className="p-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-3 rounded-lg bg-slate-700 text-white">
-                                            <action.icon className="h-6 w-6" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold mb-1">{action.title}</h3>
-                                            <p className="text-sm text-muted-foreground">{action.description}</p>
-                                        </div>
-                                        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <QuickActionCard key={index} {...action} index={index} />
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
 
-                {/* Feature Cards */}
+                {/* ── Feature Grid ── */}
                 <div>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Rocket className="h-5 w-5 text-blue-500" />
-                        Explore Features
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <p
+                            className="text-[#0F172A]"
+                            style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
+                        >
+                            Explore Features
+                        </p>
+                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                    </div>
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+                    >
                         {features.map((feature, index) => (
-                            <Link key={index} to={feature.href}>
-                                <Card className="border-2 hover:border-slate-700 transition-all hover:shadow-xl hover:scale-102 group h-full">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
-                                            <div className={`p-4 rounded-xl bg-gradient-to-br ${feature.gradient} text-white shadow-lg group-hover:scale-110 transition-transform`}>
-                                                <feature.icon className="h-8 w-8" />
-                                            </div>
-                                            {feature.badge && (
-                                                <Badge className="bg-slate-700 text-white border-0">
-                                                    {feature.badge}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <CardTitle className="text-xl mt-4 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
-                                            {feature.title}
-                                        </CardTitle>
-                                        <CardDescription className="text-base">
-                                            {feature.description}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <Button variant="ghost" className="gap-2 group-hover:gap-4 transition-all">
-                                            Get Started <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </Link>
+                            <FeatureCard key={index} {...feature} index={index} />
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
 
-                {/* Recent Work Tabs */}
+                {/* ── Recent Work ── */}
                 <div>
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-green-500" />
-                        Recent Work
-                    </h2>
+                    <div className="flex items-center gap-3 mb-4">
+                        <p
+                            className="text-[#0F172A]"
+                            style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
+                        >
+                            Recent Work
+                        </p>
+                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                    </div>
+
                     <Tabs defaultValue="drafts" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="drafts">Drafts</TabsTrigger>
-                            <TabsTrigger value="recent" id="recent-tab">Saved Analyses</TabsTrigger>
-                            <TabsTrigger value="charts">Saved Charts</TabsTrigger>
+                        <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto">
+                            {[
+                                { value: "drafts", label: "Drafts" },
+                                { value: "recent", label: "Saved Analyses", id: "recent-tab" },
+                                { value: "charts", label: "Saved Charts" },
+                            ].map((tab) => (
+                                <TabsTrigger
+                                    key={tab.value}
+                                    value={tab.value}
+                                    id={tab.id}
+                                    className="rounded-none px-6 py-3 text-xs uppercase tracking-wider font-medium data-[state=active]:bg-[#0F172A] data-[state=active]:text-white data-[state=active]:shadow-none border-r border-[#E8E4DC] last:border-r-0"
+                                    style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.1em" }}
+                                >
+                                    {tab.label}
+                                </TabsTrigger>
+                            ))}
                         </TabsList>
 
-                        {/* Drafts Tab */}
-                        <TabsContent value="drafts" className="mt-6">
+                        {/* Drafts */}
+                        <TabsContent value="drafts" className="mt-5">
                             {draft ? (
-                                <Card className="border-2 border-slate-700">
-                                    <CardHeader>
-                                        <div className="flex items-start justify-between">
+                                <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
+                                    <div className="h-0.5 w-full bg-[#D4AF37]" />
+                                    <div className="p-7">
+                                        <div className="flex items-start justify-between mb-4">
                                             <div>
-                                                <CardTitle className="flex items-center gap-2">
-                                                    <Edit className="h-5 w-5" />
+                                                <h3
+                                                    className="text-lg font-semibold text-[#0D1117] mb-1"
+                                                    style={{ fontFamily: "'Playfair Display', serif" }}
+                                                >
                                                     Active Draft
-                                                </CardTitle>
-                                                <CardDescription>
+                                                </h3>
+                                                <p className="text-sm text-[#6B6B6B]">
                                                     {draft.tabType === 'regression' ? 'Regression Analysis' :
-                                                        draft.tabType === 'categorical' ? 'Categorical Data' :
-                                                            'Data Analysis'}
-                                                </CardDescription>
+                                                        draft.tabType === 'categorical' ? 'Categorical Data' : 'Data Analysis'}
+                                                </p>
                                             </div>
-                                            <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+                                            <span className="bg-[#D4AF37]/10 text-[#A8893A] border border-[#D4AF37]/30 px-3 py-1 text-xs"
+                                                style={{ letterSpacing: "0.05em" }}>
                                                 {draft.dataPoints?.length || 0} points
-                                            </Badge>
+                                            </span>
                                         </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                onClick={() => navigate('/manual-plot')}
-                                                className="gap-2"
-                                            >
-                                                <Play className="h-4 w-4" />
-                                                Continue Working
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                        <button
+                                            onClick={() => navigate('/manual-plot')}
+                                            className="flex items-center gap-2 bg-[#0F172A] text-white px-5 py-2.5 text-xs uppercase tracking-widest hover:bg-[#0B1120] transition-colors duration-300"
+                                        >
+                                            <Play className="h-3.5 w-3.5" />
+                                            Continue Working
+                                        </button>
+                                    </div>
+                                </div>
                             ) : (
-                                <Card className="border-2 border-dashed">
-                                    <CardContent className="flex flex-col items-center justify-center py-12">
-                                        <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                                        <p className="text-muted-foreground mb-4">No active drafts</p>
-                                        <Button onClick={() => navigate('/manual-plot')}>
-                                            Start New Analysis
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                    <FileText className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
+                                    <p className="text-[#6B6B6B] text-sm mb-4">No active drafts</p>
+                                    <button
+                                        onClick={() => navigate('/manual-plot')}
+                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                    >
+                                        Start New Analysis <span className="ml-1 text-base">›</span>
+                                    </button>
+                                </div>
                             )}
                         </TabsContent>
 
-                        {/* Saved Analyses Tab */}
-                        <TabsContent value="recent" className="mt-6 space-y-4">
+                        {/* Saved Analyses */}
+                        <TabsContent value="recent" className="mt-5">
                             {loading ? (
-                                <Card>
-                                    <CardContent className="p-8 text-center text-muted-foreground">
-                                        Loading...
-                                    </CardContent>
-                                </Card>
+                                <div className="bg-white border border-[#E8E4DC] p-8 text-center text-[#6B6B6B] text-sm">
+                                    Loading…
+                                </div>
                             ) : analyses.length === 0 ? (
-                                <Card className="border-2 border-dashed">
-                                    <CardContent className="flex flex-col items-center justify-center py-12">
-                                        <BarChart3 className="h-12 w-12 text-muted-foreground mb-4" />
-                                        <p className="text-muted-foreground mb-4">No saved analyses yet</p>
-                                        <Button onClick={() => navigate('/manual-plot')}>
-                                            Create Your First Analysis
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                    <BarChart3 className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
+                                    <p className="text-[#6B6B6B] text-sm mb-4">No saved analyses yet</p>
+                                    <button
+                                        onClick={() => navigate('/manual-plot')}
+                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                    >
+                                        Create Your First Analysis <span className="ml-1 text-base">›</span>
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {analyses.slice(0, 6).map((item) => (
-                                        <Card key={item.id} className="border hover:border-blue-500 transition-colors">
-                                            <CardHeader>
-                                                <CardTitle className="text-base flex items-center gap-2">
-                                                    <Activity className="h-4 w-4 text-blue-500" />
-                                                    {item.title || "Untitled Analysis"}
-                                                </CardTitle>
-                                                <CardDescription className="font-mono text-xs">
-                                                    {item.equation}
-                                                </CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                        <span>R² = {item.r2?.toFixed(4)}</span>
-                                                        <span>{new Date(item.created_at).toLocaleDateString()}</span>
-                                                    </div>
+                                        <div key={item.id} className="bg-white border border-[#E8E4DC] p-5 luxury-card-hover group">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <Activity className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                                <div className="min-w-0">
+                                                    <h4
+                                                        className="text-sm font-semibold text-[#0D1117] truncate"
+                                                        style={{ fontFamily: "'Playfair Display', serif" }}
+                                                    >
+                                                        {item.title || "Untitled Analysis"}
+                                                    </h4>
+                                                    <p className="text-xs font-mono text-[#6B6B6B] mt-0.5 truncate">{item.equation}</p>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-xs text-[#6B6B6B] border-t border-[#E8E4DC] pt-3">
+                                                <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
+                                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             )}
                         </TabsContent>
 
-                        {/* Saved Charts Tab */}
-                        <TabsContent value="charts" className="mt-6 space-y-4">
+                        {/* Saved Charts */}
+                        <TabsContent value="charts" className="mt-5">
                             {savedSessions.length === 0 ? (
-                                <Card className="border-2 border-dashed">
-                                    <CardContent className="flex flex-col items-center justify-center py-12">
-                                        <LineChart className="h-12 w-12 text-muted-foreground mb-4" />
-                                        <p className="text-muted-foreground mb-4">No saved charts</p>
-                                        <Button onClick={() => navigate('/manual-plot')}>
-                                            Create Your First Chart
-                                        </Button>
-                                    </CardContent>
-                                </Card>
+                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                    <LineChart className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
+                                    <p className="text-[#6B6B6B] text-sm mb-4">No saved charts</p>
+                                    <button
+                                        onClick={() => navigate('/manual-plot')}
+                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                    >
+                                        Create Your First Chart <span className="ml-1 text-base">›</span>
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {savedSessions.slice(0, 6).map((session) => (
-                                        <Card key={session.session_id} className="border hover:border-blue-500 transition-colors group">
-                                            <CardHeader>
-                                                <CardTitle className="text-base flex items-center gap-2">
-                                                    <LineChart className="h-4 w-4 text-purple-500" />
-                                                    {session.page_type.charAt(0).toUpperCase() + session.page_type.slice(1)} Chart
-                                                </CardTitle>
-                                                <CardDescription>
-                                                    Last updated: {new Date(session.updated_at).toLocaleDateString()}
-                                                </CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <div className="flex gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => handleDeleteSession(session.session_id)}
-                                                        className="gap-2 text-red-600 hover:text-red-700"
+                                        <div key={session.session_id} className="bg-white border border-[#E8E4DC] p-5 luxury-card-hover group">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <LineChart className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4
+                                                        className="text-sm font-semibold text-[#0D1117]"
+                                                        style={{ fontFamily: "'Playfair Display', serif" }}
                                                     >
-                                                        <Trash2 className="h-3 w-3" />
-                                                        Delete
-                                                    </Button>
+                                                        {session.page_type.charAt(0).toUpperCase() + session.page_type.slice(1)} Chart
+                                                    </h4>
+                                                    <p className="text-xs text-[#6B6B6B] mt-0.5">
+                                                        Last updated: {new Date(session.updated_at).toLocaleDateString()}
+                                                    </p>
                                                 </div>
-                                            </CardContent>
-                                        </Card>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteSession(session.session_id)}
+                                                className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 transition-colors border border-red-200 hover:border-red-400 px-3 py-1.5"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                                Delete
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             )}

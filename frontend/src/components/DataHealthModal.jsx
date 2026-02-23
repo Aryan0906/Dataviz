@@ -127,7 +127,7 @@ const DataHealthModal = ({
             </DialogTitle>
             {getStatusBadge()}
           </div>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-muted-foreground">
             Smart scan detected potential issues in your dataset
           </DialogDescription>
         </DialogHeader>
@@ -144,13 +144,13 @@ const DataHealthModal = ({
               {/* Summary Stats */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-                  <div className="text-sm text-slate-400">Total Rows</div>
+                  <div className="text-sm text-muted-foreground">Total Rows</div>
                   <div className="text-2xl font-bold text-white">
                     {healthReport.total_rows.toLocaleString()}
                   </div>
                 </div>
                 <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4">
-                  <div className="text-sm text-slate-400">Total Columns</div>
+                  <div className="text-sm text-muted-foreground">Total Columns</div>
                   <div className="text-2xl font-bold text-white">
                     {healthReport.total_columns}
                   </div>

@@ -404,7 +404,7 @@ const CategoricalChatNLP = () => {
                                             <Button
                                                 onClick={handleExportChart}
                                                 size="sm"
-                                                className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                                                className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                                             >
                                                 <Download className="h-4 w-4" />
                                                 Export
@@ -772,7 +772,7 @@ const CategoricalChatNLP = () => {
                         <Button
                             onClick={handleExportChart}
                             size="sm"
-                            className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                            className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                         >
                             <Download className="h-4 w-4" />
                             Export Chart

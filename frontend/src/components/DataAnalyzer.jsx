@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useStorytelling } from "@/context/StorytellingContext";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ import { cn } from "@/lib/utils";
 export const DataAnalyzer = () => {
     const [searchParams] = useSearchParams();
     const { session } = useAuth();
+    const { unlockAchievement } = useStorytelling();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
@@ -403,6 +405,9 @@ export const DataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
+            // Unlock achievements
+            unlockAchievement('first-save');
+            
             toast.success("Analysis saved successfully");
         } catch (_err) {
             toast.error("Failed to save analysis");
@@ -477,6 +482,13 @@ export const DataAnalyzer = () => {
                 filename,
                 regressionType: regressionResult?.type,
             });
+            
+            // Track exports for achievement
+            const exportCount = parseInt(localStorage.getItem('export_count') || '0') + 1;
+            localStorage.setItem('export_count', exportCount.toString());
+            if (exportCount >= 3) {
+                unlockAchievement('export-master');
+            }
         } catch (error) {
             console.error("Export failed:", error);
         }
@@ -678,7 +690,7 @@ export const DataAnalyzer = () => {
                             <Button
                                 onClick={handleExportChart}
                                 size="sm"
-                                className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                                className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                             >
                                 <Download className="h-4 w-4" />
                                 Export Chart

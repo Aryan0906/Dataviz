@@ -86,7 +86,7 @@ export const RecentActivityCard = ({ activities }) => {
             <div className="mt-4 space-y-3">
                 {activities.slice(0, 5).map((activity, index) => (
                     <div key={index} className="flex items-start gap-3 p-2 rounded hover:bg-muted transition">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500 mt-2" />
+                        <div className="h-2 w-2 rounded-full bg-slate-500 mt-2" />
                         <div className="flex-1">
                             <Text className="font-medium">{activity.title}</Text>
                             <Text className="text-sm text-muted-foreground">{activity.time}</Text>

@@ -95,21 +95,21 @@ const PlotlyChart = ({
             },
             xaxis: {
                 title: xLabel,
-                gridcolor: isDark ? '#374151' : '#e5e7eb',
-                color: isDark ? '#9ca3af' : '#6b7280',
+                gridcolor: isDark ? '#52525b' : '#e5e7eb',
+                color: isDark ? '#d4d4d8' : '#6b7280',
                 zeroline: false
             },
             yaxis: {
                 title: yLabel,
-                gridcolor: isDark ? '#374151' : '#e5e7eb',
-                color: isDark ? '#9ca3af' : '#6b7280',
+                gridcolor: isDark ? '#52525b' : '#e5e7eb',
+                color: isDark ? '#d4d4d8' : '#6b7280',
                 zeroline: false
             },
-            paper_bgcolor: isDark ? '#0f172a' : '#ffffff',
-            plot_bgcolor: isDark ? '#1e293b' : '#f9fafb',
+            paper_bgcolor: isDark ? '#1a1a1e' : '#ffffff',
+            plot_bgcolor: isDark ? '#27272b' : '#f9fafb',
             font: {
                 family: 'Inter, system-ui, sans-serif',
-                color: isDark ? '#e5e7eb' : '#111827'
+                color: isDark ? '#fafafa' : '#111827'
             },
             hovermode: 'closest',
             showlegend: true,
@@ -117,8 +117,8 @@ const PlotlyChart = ({
                 x: 1,
                 xanchor: 'right',
                 y: 1,
-                bgcolor: isDark ? '#1e293b' : '#ffffff',
-                bordercolor: isDark ? '#374151' : '#e5e7eb',
+                bgcolor: isDark ? '#27272b' : '#ffffff',
+                bordercolor: isDark ? '#52525b' : '#e5e7eb',
                 borderwidth: 1
             },
             margin: { l: 60, r: 40, t: 60, b: 60 }

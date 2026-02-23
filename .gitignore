@@ -135,3 +135,13 @@ redis-data/
 # Untitled files
 untitled:*
 Untitled-*
+
+# AI and Agent Files
+.planning/
+.gemini/
+.antigravityignore
+lint_output*.txt
+untracked.txt
+DESIGN_IMPROVEMENTS.md
+FRONTEND_ENHANCEMENTS.md
+STORYTELLING_*.md

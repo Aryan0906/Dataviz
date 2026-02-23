@@ -273,13 +273,13 @@ const DesmosPlot = () => {
 
         // Enhanced dark mode colors with better contrast
         const isDark = themeMode === "dark";
-        const bg = isDark ? "#09090b" : getColor("background", "#ffffff");
-        const panel = isDark ? "#18181b" : getColor("card", "#f9f9f9");
-        const border = isDark ? "#3f3f46" : getColor("border", "#e4e4e7");
+        const bg = isDark ? "#1a1a1e" : getColor("background", "#ffffff");
+        const panel = isDark ? "#27272b" : getColor("card", "#f9f9f9");
+        const border = isDark ? "#52525b" : getColor("border", "#e4e4e7");
         const text = isDark ? "#fafafa" : getColor("foreground", "#09090b");
-        const mutedText = isDark ? "#a1a1aa" : getColor("muted-foreground", "#71717a");
-        const graphBg = isDark ? "#0f0f12" : "#ffffff";
-        const hoverBg = isDark ? "#27272a" : "#f4f4f5";
+        const mutedText = isDark ? "#d4d4d8" : getColor("muted-foreground", "#71717a");
+        const graphBg = isDark ? "#1f1f23" : "#ffffff";
+        const hoverBg = isDark ? "#3f3f46" : "#f4f4f5";
 
         const containerId = containerRef.current?.id || "graph-container";
         let styleElement = document.getElementById(`${containerId}-theme-style`);
@@ -468,7 +468,7 @@ const DesmosPlot = () => {
         const rect = containerRef.current?.getBoundingClientRect();
         const width = Math.max(1, Math.floor(rect?.width || 800));
         const height = Math.max(1, Math.floor(rect?.height || 600));
-        const bg = themeChoice === "dark" ? "#09090b" : "#ffffff";
+        const bg = themeChoice === "dark" ? "#1a1a1e" : "#ffffff";
         return calculatorRef.current.screenshot({ width, height, backgroundColor: bg });
     };
 
@@ -496,7 +496,7 @@ const DesmosPlot = () => {
                 const rect = containerRef.current?.getBoundingClientRect();
                 const width = Math.max(1, Math.floor(rect?.width || 800));
                 const height = Math.max(1, Math.floor(rect?.height || 600));
-                const bg = exportTheme === "dark" ? "#09090b" : "#ffffff";
+                const bg = exportTheme === "dark" ? "#1a1a1e" : "#ffffff";
 
                 const rawSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="${bg}" />
@@ -637,7 +637,7 @@ const DesmosPlot = () => {
                     <Button
                         onClick={() => handleExportClick("png")}
                         size="sm"
-                        className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                        className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                         title="Export graph as image or PDF"
                     >
                         <Download className="h-4 w-4" />
@@ -723,7 +723,7 @@ const DesmosPlot = () => {
                         id="graph-container"
                         className="w-full h-[600px]"
                         style={{
-                            backgroundColor: currentTheme === "dark" ? "#09090b" : "#ffffff",
+                            backgroundColor: currentTheme === "dark" ? "#1a1a1e" : "#ffffff",
                             minHeight: "600px"
                         }}
                     />

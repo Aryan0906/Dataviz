@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import LandingNav from "@/components/LandingNav";
+import LandingFooter from "@/components/LandingFooter";
 import { ArrowRight, BarChart2, Brain, FileOutput, Shield, Upload, Zap } from "lucide-react";
 
 const LandingPage = () => {
@@ -9,20 +10,7 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen bg-background">
             {/* Navigation */}
-            <nav className="border-b bg-background/80 backdrop-blur sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center gap-2">
-                            <BarChart2 className="h-6 w-6 text-primary" />
-                            <span className="text-xl font-bold tracking-tight">dataViz</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <ThemeToggle />
-                            <Button onClick={() => navigate('/login')}>Sign In</Button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <LandingNav variant="light" />
 
             {/* Hero Section */}
             <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32 lg:pb-40">
@@ -62,7 +50,7 @@ const LandingPage = () => {
                         <p className="text-muted-foreground text-lg">Powerful features wrapped in a simple, intuitive interface.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div id="features" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 scroll-mt-20">
                         <FeatureCard
                             icon={<Brain className="h-8 w-8 text-purple-500" />}
                             title="AI-Powered Analysis"
@@ -111,11 +99,7 @@ const LandingPage = () => {
             </section>
 
             {/* Footer */}
-            <footer className="border-t py-12 bg-muted/20">
-                <div className="max-w-7xl mx-auto px-4 text-center text-muted-foreground">
-                    <p>© 2024 dataViz. All rights reserved.</p>
-                </div>
-            </footer>
+            <LandingFooter variant="light" />
         </div>
     );
 };

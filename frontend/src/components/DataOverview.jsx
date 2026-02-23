@@ -103,7 +103,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
       title: { text: 'Correlation', font: { color: '#e2e8f0' } },
       thickness: 20,
       len: 0.7,
-      tickfont: { color: '#94a3b8' },
+      tickfont: { color: '#d4d4d8' },
     },
     hovertemplate: '%{x} vs %{y}<br>Correlation: %{z:.3f}<extra></extra>',
   }];
@@ -111,22 +111,22 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
   const heatmapLayout = {
     title: {
       text: 'Correlation Heatmap - Click to Select Variables',
-      font: { size: 18, color: '#e2e8f0' },
+      font: { size: 18, color: '#fafafa' },
     },
     xaxis: {
       title: '',
       tickangle: -45,
-      color: '#94a3b8',
-      gridcolor: '#334155',
+      color: '#d4d4d8',
+      gridcolor: '#52525b',
     },
     yaxis: {
       title: '',
-      color: '#94a3b8',
-      gridcolor: '#334155',
+      color: '#d4d4d8',
+      gridcolor: '#52525b',
     },
-    plot_bgcolor: '#0f172a',
-    paper_bgcolor: '#0f172a',
-    font: { color: '#e2e8f0' },
+    plot_bgcolor: '#1a1a1e',
+    paper_bgcolor: '#1a1a1e',
+    font: { color: '#fafafa' },
     margin: { l: 120, r: 60, t: 80, b: 120 },
   };
 
@@ -148,7 +148,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
         {/* Total Rows */}
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Table2 className="h-4 w-4" />
               Total Rows
             </CardTitle>
@@ -157,7 +157,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
             <div className="text-3xl font-bold text-white">
               {healthData.total_rows.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Data points available
             </p>
           </CardContent>
@@ -166,7 +166,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
         {/* Total Columns */}
         <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Columns3 className="h-4 w-4" />
               Total Columns
             </CardTitle>
@@ -175,7 +175,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
             <div className="text-3xl font-bold text-white">
               {healthData.total_columns}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {correlationData.total_variables} numeric variables
             </p>
           </CardContent>
@@ -187,7 +187,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
           : 'from-green-500/10 to-green-600/5 border-green-500/20'
           }`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
               Missing Values
             </CardTitle>
@@ -197,7 +197,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
               }`}>
               {healthData.missing_rows}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {healthData.missing_rows > 0 ? 'Rows with nulls' : 'Clean data'}
             </p>
           </CardContent>
@@ -209,7 +209,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
           : 'from-green-500/10 to-green-600/5 border-green-500/20'
           }`}>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-400 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Copy className="h-4 w-4" />
               Duplicates
             </CardTitle>
@@ -219,7 +219,7 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
               }`}>
               {healthData.duplicates}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {healthData.duplicates > 0 ? 'Duplicate rows found' : 'No duplicates'}
             </p>
           </CardContent>
@@ -245,14 +245,14 @@ const DataOverview = ({ filePath, onVariableSelect }) => {
                       <span className="font-mono">{corr.var1}</span>
                       <TrendingUp className="inline h-3 w-3 mx-1" />
                       <span className="font-mono">{corr.var2}</span>
-                      <span className="text-slate-400 ml-2">
+                      <span className="text-muted-foreground ml-2">
                         ({corr.correlation > 0 ? '+' : ''}{corr.correlation.toFixed(3)})
                       </span>
                     </div>
                   ))}
                 </div>
                 {correlationData.strong_correlations.length > 3 && (
-                  <p className="text-xs text-slate-400 mt-2">
+                  <p className="text-xs text-muted-foreground mt-2">
                     +{correlationData.strong_correlations.length - 3} more correlations
                   </p>
                 )}

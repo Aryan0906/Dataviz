@@ -118,7 +118,7 @@ const CodeExportModal = ({
               Python 3.11+
             </Badge>
           </div>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-muted-foreground">
             Copy-pasteable Python code for {getModelName()}
           </DialogDescription>
         </DialogHeader>
@@ -169,7 +169,7 @@ const CodeExportModal = ({
                   customStyle={{
                     margin: 0,
                     padding: '1.5rem',
-                    background: '#0f172a',
+                    background: '#1a1a1e',
                     fontSize: '0.875rem',
                   }}
                   showLineNumbers
@@ -229,7 +229,7 @@ const CodeExportModal = ({
                   customStyle={{
                     margin: 0,
                     padding: '1.5rem',
-                    background: '#0f172a',
+                    background: '#1a1a1e',
                     fontSize: '0.875rem',
                   }}
                   showLineNumbers
@@ -288,7 +288,7 @@ const CodeExportModal = ({
                   customStyle={{
                     margin: 0,
                     padding: '1.5rem',
-                    background: '#0f172a',
+                    background: '#1a1a1e',
                     fontSize: '0.875rem',
                   }}
                   showLineNumbers

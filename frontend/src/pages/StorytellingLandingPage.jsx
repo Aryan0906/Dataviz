@@ -328,7 +328,7 @@ const StorytellingLandingPage = () => {
                             </Link>
                         </div>
 
-                        <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-400">
+                        <div className="flex flex-wrap justify-center gap-8 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                                 <CheckCircle2 className="h-5 w-5 text-green-400" />
                                 <span>Free forever plan</span>

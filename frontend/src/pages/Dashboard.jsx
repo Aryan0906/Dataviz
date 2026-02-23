@@ -21,7 +21,10 @@ import { toast } from "sonner";
 
 import AppLayout from "@/components/AppLayout";
 import InfoTooltip from "@/components/InfoTooltip";
+import ProgressTracker from "@/components/ProgressTracker";
+import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/context/AuthContext";
+import { useStorytelling } from "@/context/StorytellingContext";
 import { dataAPI } from "@/lib/api";
 import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
 
@@ -34,6 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const Dashboard = () => {
     const { session, user } = useAuth();
     const navigate = useNavigate();
+    const { unlockAchievement } = useStorytelling();
     const [loading, setLoading] = useState(true);
     const [analyses, setAnalyses] = useState([]);
     const [draft, setDraft] = useState(null);
@@ -77,8 +81,16 @@ const Dashboard = () => {
     useEffect(() => {
         fetchHistory();
         fetchSessions();
+        
+        // Check for achievements based on data
+        if (analyses.length >= 5) {
+            unlockAchievement('five-analyses');
+        }
+        if (analyses.length > 0) {
+            unlockAchievement('first-analysis');
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session]);
+    }, [session, analyses.length]);
 
     const handleDeleteSession = async (sessionId) => {
         if (!confirm("Delete this saved chart?")) return;
@@ -175,7 +187,8 @@ const Dashboard = () => {
 
     return (
         <AppLayout>
-            <div className="flex flex-col space-y-8 animate-in fade-in duration-500">
+            <PageTransition>
+            <div className="flex flex-col space-y-8">
                 {/* Animated Welcome Section */}
                 <div className="flex items-center justify-between space-y-2">
                     <div className="space-y-1">
@@ -214,7 +227,7 @@ const Dashboard = () => {
                     <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Saved Charts</CardTitle>
-                            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                            <div className="p-2 bg-slate-100 dark:bg-emerald-900/30 rounded-lg">
                                 <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                             </div>
                         </CardHeader>
@@ -430,6 +443,8 @@ const Dashboard = () => {
 
                     {/* Sidebar */}
                     <div className="col-span-3 space-y-6">
+                        {/* Progress Tracker */}
+                        <ProgressTracker />
                         {/* Draft Card if exists */}
                         {draft && (
                             <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
@@ -536,6 +551,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+            </PageTransition>
         </AppLayout>
     );
 };
