@@ -6,27 +6,28 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
+    /* Ethereal Minimalist - Light Theme */
+    --background: 210 17% 98%;      /* #F8F9FA Off-White/Bone */
+    --foreground: 0 0% 10%;         /* #1A1A1A Obsidian/Matte Black */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%;              /* #FFFFFF Pure White for elevation */
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 215 25% 27%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 215 25% 40%;
+    --primary: 0 0% 10%;            /* #1A1A1A Obsidian Active elements */
+    --primary-foreground: 210 17% 98%;
+    --primary-glow: 0 0% 20%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 20% 90%;       /* Soft gray for secondary surfaces */
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 20% 90%;
+    --muted-foreground: 215.3 16.3% 46.9%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 210 20% 90%;
+    --accent-foreground: 0 0% 10%;
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
@@ -34,80 +35,78 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 215 25% 27%;
+    --border: 214.3 31.8% 85%;
+    --input: 214.3 31.8% 85%;
+    --ring: 0 0% 10%;               /* Obsidian ring */
 
-    --chart-primary: 215 25% 27%;
-    --chart-secondary: 217 19% 38%;
-    --chart-tertiary: 210 14% 53%;
-    --chart-quaternary: 217 33% 17%;
+    /* Custom DataViz Chart Colors for Light Theme */
+    --chart-primary: 0 0% 10%;      /* Obsidian */
+    --chart-secondary: 215 16% 47%;
+    --chart-tertiary: 214 32% 85%;
+    --chart-quaternary: 210 40% 96%;
     --chart-grid: 214.3 31.8% 91.4%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(215 25% 27%), hsl(215 25% 40%));
-    --gradient-accent: linear-gradient(135deg, hsl(217 19% 38%), hsl(217 19% 50%));
-    --gradient-bg: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 30%));
+    --gradient-accent: linear-gradient(135deg, hsl(210 20% 90%), hsl(210 20% 80%));
+    --gradient-bg: linear-gradient(180deg, hsl(210 17% 98%), hsl(0 0% 100%));
 
-    --shadow-elegant: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
-    --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+    --shadow-elegant: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.04);
 
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar Variables */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 210 17% 98%;
+    --sidebar-accent: 210 20% 90%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 0 0% 10%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Midnight & Champagne - Dark Theme */
+    --background: 222.2 47.4% 11.2%;   /* #0F172A Midnight Navy */
+    --foreground: 210 17% 98%;         /* #F8F9FA Off-White text */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 217.2 32.6% 17.5%;         /* #1E293B Charcoal raised surfaces */
+    --card-foreground: 210 17% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 217.2 32.6% 17.5%;
+    --popover-foreground: 210 17% 98%;
 
-    --primary: 215 25% 27%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 46 65% 52%;             /* #D4AF37 Champagne Gold actions */
+    --primary-foreground: 222.2 47.4% 11.2%; /* Navy text on Gold buttons */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 25%;      /* Lighter Charcoal */
+    --secondary-foreground: 210 17% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217.2 32.6% 25%;
+    --muted-foreground: 215 20.2% 65.1%; /* Dim text */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 46 65% 52%;              /* Champagne gold hover states */
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 210 17% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 215 25% 40%;
-    --sidebar-background: 222.2 84% 4.9%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 215 25% 35%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 215 25% 40%;
+    --border: 217.2 32.6% 25%;         /* Charcoal border */
+    --input: 217.2 32.6% 25%;
+    --ring: 46 65% 52%;                /* Gold focus ring */
+    
+    /* Sidebar Variables */
+    --sidebar-background: 217.2 32.6% 17.5%;
+    --sidebar-foreground: 210 17% 98%;
+    --sidebar-primary: 46 65% 52%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 25%;
+    --sidebar-accent-foreground: 210 17% 98%;
+    --sidebar-border: 217.2 32.6% 25%;
+    --sidebar-ring: 46 65% 52%;
   }
 }
 
