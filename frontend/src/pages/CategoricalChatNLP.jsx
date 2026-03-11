@@ -346,6 +346,15 @@ const CategoricalChatNLP = () => {
     return (
         <AppLayout>
             <div className="space-y-6">
+                {/* Page Header */}
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">NLP Categorical Analysis</h2>
+                    <p className="text-muted-foreground">Upload CSV and ask natural language questions to generate visual insights</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        💡 Example: "Show count by category" or "Which region has the most sales?"
+                    </p>
+                </div>
+
                 {error && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -395,7 +404,7 @@ const CategoricalChatNLP = () => {
                                             <Button
                                                 onClick={handleExportChart}
                                                 size="sm"
-                                                className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                                                className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                                             >
                                                 <Download className="h-4 w-4" />
                                                 Export
@@ -440,6 +449,9 @@ const CategoricalChatNLP = () => {
                                 <Sparkles className="h-5 w-5" />
                                 Intelligence Hub
                             </CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                                Ask questions in plain English and see instant visualizations
+                            </p>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {/* Chat History */}
@@ -760,7 +772,7 @@ const CategoricalChatNLP = () => {
                         <Button
                             onClick={handleExportChart}
                             size="sm"
-                            className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+                            className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
                         >
                             <Download className="h-4 w-4" />
                             Export Chart

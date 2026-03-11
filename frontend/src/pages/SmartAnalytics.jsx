@@ -1,291 +1,239 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import AppLayout from "@/components/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import DataHealthModal from "@/components/DataHealthModal";
 import CodeExportModal from "@/components/CodeExportModal";
 import ResidualPlot from "@/components/ResidualPlot";
-import {
-  Sparkles,
-  Code2,
-  TrendingUp,
-  Database,
-  FileCheck,
-  Zap
-} from "lucide-react";
+import { FileCheck, Code2, TrendingUp, Database, ArrowRight } from "lucide-react";
 
+const fadeUp = {
+    hidden: { opacity: 0, y: 24 },
+    visible: (i = 0) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.09, duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94] },
+    }),
+};
+
+/* ── Luxury Feature Card ── */
+function FeatureCard({ step, icon: Icon, title, subtitle, items, accentColor = "#0F172A", cta, onCta, disabled, badge, index }) {
+    return (
+        <motion.div variants={fadeUp} custom={index} className="bg-white border border-[#E8E4DC] luxury-card-hover group flex flex-col">
+            <div className="h-0.5 w-full" style={{ backgroundColor: accentColor }} />
+            <div className="p-7 flex flex-col flex-1">
+                {/* Icon + Step Number */}
+                <div className="flex items-start justify-between mb-5">
+                    <div
+                        className="w-11 h-11 flex items-center justify-center border"
+                        style={{ borderColor: `${accentColor}30`, backgroundColor: `${accentColor}08` }}
+                    >
+                        <Icon className="h-5 w-5" style={{ color: accentColor }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {badge && (
+                            <span
+                                className="bg-[#D4AF37] text-[#0D1117] px-2 py-0.5 text-[10px] font-semibold"
+                                style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}
+                            >
+                                {badge}
+                            </span>
+                        )}
+                        <span
+                            className="font-bold opacity-10 group-hover:opacity-20 transition-opacity"
+                            style={{ fontFamily: "'Playfair Display', serif", fontSize: "3rem", lineHeight: 1, color: accentColor }}
+                        >
+                            {step}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Heading */}
+                <h3
+                    className="text-lg font-bold text-[#0D1117] mb-1 group-hover:text-[#0F172A] transition-colors duration-300"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                    {title}
+                </h3>
+                <p className="text-xs text-[#6B6B6B] mb-5" style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.05em" }}>
+                    {subtitle}
+                </p>
+
+                {/* Bullet list */}
+                <ul className="space-y-2.5 flex-1 mb-6">
+                    {items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                            <div className="w-1 h-1 rounded-full mt-[7px] flex-shrink-0" style={{ backgroundColor: accentColor }} />
+                            <span className="text-sm text-[#4A4A4A]" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                                {item}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+
+                {/* CTA */}
+                <button
+                    onClick={!disabled ? onCta : undefined}
+                    disabled={disabled}
+                    className={`flex items-center justify-center gap-2 w-full py-2.5 transition-colors duration-300 text-xs font-semibold ${
+                        disabled
+                            ? "bg-[#E8E4DC] text-[#6B6B6B] cursor-not-allowed"
+                            : "text-white hover:opacity-90"
+                    }`}
+                    style={
+                        !disabled
+                            ? { backgroundColor: accentColor, letterSpacing: "0.12em", textTransform: "uppercase" }
+                            : { letterSpacing: "0.12em", textTransform: "uppercase" }
+                    }
+                >
+                    {cta}
+                    {!disabled && <ArrowRight className="h-3.5 w-3.5" />}
+                </button>
+            </div>
+        </motion.div>
+    );
+}
+
+/* ── Main Page ── */
 const SmartAnalytics = () => {
-  const [healthModalOpen, setHealthModalOpen] = useState(false);
-  const [codeModalOpen, setCodeModalOpen] = useState(false);
+    const [healthModalOpen, setHealthModalOpen] = useState(false);
+    const [codeModalOpen, setCodeModalOpen] = useState(false);
 
-  // Sample data for residual plot demonstration
-  const sampleResiduals = {
-    actual: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-    predicted: [12, 18, 33, 38, 52, 58, 72, 78, 88, 102],
-    residuals: [-2, 2, -3, 2, -2, 2, -2, 2, 2, -2],
-    residualStats: {
-      mean: 0.1,
-      std: 2.1,
-      min: -3,
-      max: 2
-    }
-  };
+    const sampleResiduals = {
+        actual: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+        predicted: [12, 18, 33, 38, 52, 58, 72, 78, 88, 102],
+        residuals: [-2, 2, -3, 2, -2, 2, -2, 2, 2, -2],
+        residualStats: { mean: 0.1, std: 2.1, min: -3, max: 2 },
+    };
 
-  return (
-    <AppLayout>
-      <div className="container mx-auto py-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Sparkles className="h-8 w-8 text-purple-500" />
-              Smart Analytics Features
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Professional-grade data analysis tools powered by AI
-            </p>
-          </div>
-          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20">
-            🆕 New Features
-          </Badge>
-        </div>
+    const features = [
+        {
+            step: "01",
+            icon: FileCheck,
+            title: "Smart Data Cleaning",
+            subtitle: "Automated quality detection and correction",
+            accentColor: "#0F172A",
+            badge: "New",
+            items: [
+                "Detects missing values per column",
+                "Identifies duplicate rows",
+                "Flags data type mismatches",
+                "6 cleaning methods — drop, mean, median & more",
+            ],
+            cta: "Try Demo",
+            onCta: () => setHealthModalOpen(true),
+        },
+        {
+            step: "02",
+            icon: Database,
+            title: "Correlation Heatmap",
+            subtitle: "Interactive correlation matrix with drill-down",
+            accentColor: "#D4AF37",
+            badge: "API Ready",
+            items: [
+                "Plotly.js interactive heatmap",
+                "Click cells to select variable pairs",
+                "Auto-identifies strong correlations",
+                "One-click PNG export",
+            ],
+            cta: "Coming Soon",
+            disabled: true,
+        },
+        {
+            step: "03",
+            icon: Code2,
+            title: "Code Export",
+            subtitle: "Generate production-ready Python scripts",
+            accentColor: "#0D1117",
+            items: [
+                "Regression, EDA, and Cleaning scripts",
+                "Syntax highlighting with VS Code theme",
+                "Copy to clipboard or download as .py",
+                "Complete with imports and usage guide",
+            ],
+            cta: "Try Demo",
+            onCta: () => setCodeModalOpen(true),
+        },
+    ];
 
-        {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Smart Data Cleaning */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer border-blue-500/20 hover:border-blue-500/40">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <FileCheck className="h-8 w-8 text-blue-500" />
-                <Badge variant="outline" className="border-blue-500/30">Backend + Frontend</Badge>
-              </div>
-              <CardTitle className="mt-4">Smart Data Cleaning</CardTitle>
-              <CardDescription>
-                Automatically detect and fix data quality issues
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ul className="text-sm space-y-2 text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  Detects missing values per column
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  Identifies duplicate rows
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  Flags data type mismatches
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">•</span>
-                  6 cleaning methods (drop, mean, median, etc.)
-                </li>
-              </ul>
-              <Button
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => setHealthModalOpen(true)}
-              >
-                Try Demo
-              </Button>
-            </CardContent>
-          </Card>
+    return (
+        <AppLayout>
+            <div className="space-y-10" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
-          {/* Correlation Heatmap */}
-          <Card className="hover:shadow-lg transition-shadow border-green-500/20 hover:border-green-500/40">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <Database className="h-8 w-8 text-green-500" />
-                <Badge variant="outline" className="border-green-500/30">API Ready</Badge>
-              </div>
-              <CardTitle className="mt-4">Correlation Heatmap</CardTitle>
-              <CardDescription>
-                Interactive correlation matrix with click-to-select
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ul className="text-sm space-y-2 text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
-                  Plotly.js interactive heatmap
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
-                  Click cells to select variables
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
-                  Auto-identifies strong correlations
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
-                  Export as PNG
-                </li>
-              </ul>
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700"
-                variant="secondary"
-                disabled
-              >
-                Coming to Dashboard
-              </Button>
-            </CardContent>
-          </Card>
+                {/* ── Feature Cards ── */}
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={{ visible: { transition: { staggerChildren: 0.09 } } }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-5"
+                >
+                    {features.map((feature, index) => (
+                        <FeatureCard key={index} {...feature} index={index} />
+                    ))}
+                </motion.div>
 
-          {/* Code Export */}
-          <Card className="hover:shadow-lg transition-shadow border-purple-500/20 hover:border-purple-500/40">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <Code2 className="h-8 w-8 text-purple-500" />
-                <Badge variant="outline" className="border-purple-500/30">Ready</Badge>
-              </div>
-              <CardTitle className="mt-4">Code Export</CardTitle>
-              <CardDescription>
-                Generate Python code for any model
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ul className="text-sm space-y-2 text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
-                  Regression, EDA, and Cleaning scripts
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
-                  Syntax highlighting (VS Code theme)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
-                  Copy to clipboard or download .py
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-500 mt-0.5">•</span>
-                  Complete with imports & usage guide
-                </li>
-              </ul>
-              <Button
-                className="w-full bg-purple-600 hover:bg-purple-700"
-                onClick={() => setCodeModalOpen(true)}
-              >
-                Try Demo
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                {/* ── Residual Plot Demo ── */}
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={fadeUp}
+                    custom={3}
+                >
+                    <div className="flex items-center gap-3 mb-5">
+                        <p
+                            className="text-[#0F172A]"
+                            style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
+                        >
+                            Live Demo
+                        </p>
+                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                    </div>
 
-        {/* API Endpoints Section */}
-        <Card className="border-orange-500/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-orange-500" />
-              New API Endpoints
-            </CardTitle>
-            <CardDescription>
-              4 production-ready backend endpoints
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-orange-400">POST /api/data/check-health</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Detects nulls, duplicates, and type issues
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-green-400">POST /api/data/clean</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Applies cleaning operations to CSV
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-blue-400">POST /api/data/correlation</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Calculates correlation matrix
-                </p>
-              </div>
-              <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-                <code className="text-sm text-purple-400">POST /api/data/generate-code</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Generates Python code snippets
-                </p>
-              </div>
+                    <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
+                        <div className="h-0.5 w-full bg-[#0F172A]" />
+                        <div className="p-7">
+                            <div className="flex items-start justify-between mb-5">
+                                <div className="w-11 h-11 flex items-center justify-center border border-[#0F172A]/30 bg-[#0F172A]/5">
+                                    <TrendingUp className="h-5 w-5 text-[#0F172A]" />
+                                </div>
+                                <span
+                                    className="font-bold opacity-10"
+                                    style={{ fontFamily: "'Playfair Display', serif", fontSize: "3rem", lineHeight: 1, color: "#0F172A" }}
+                                >
+                                    04
+                                </span>
+                            </div>
+                            <h3
+                                className="text-lg font-bold text-[#0D1117] mb-1"
+                                style={{ fontFamily: "'Playfair Display', serif" }}
+                            >
+                                Residual Plot
+                            </h3>
+                            <p className="text-xs text-[#6B6B6B] mb-6" style={{ letterSpacing: "0.05em" }}>
+                                Scientific validation of regression model fit
+                            </p>
+                            <ResidualPlot {...sampleResiduals} />
+                        </div>
+                    </div>
+                </motion.div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Live Demo Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-pink-500" />
-              Residual Plot (Live Demo)
-            </CardTitle>
-            <CardDescription>
-              Scientific validation of regression model fit
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResidualPlot {...sampleResiduals} />
-          </CardContent>
-        </Card>
-
-        {/* File Locations */}
-        <Card className="border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-lg">📁 Component Locations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm font-mono">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/DataHealthModal.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/CodeExportModal.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/ResidualPlot.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Frontend</Badge>
-                <code className="text-blue-400">frontend/src/components/DataOverview.jsx</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Backend</Badge>
-                <code className="text-green-400">backend_django/api/utils/data_cleaning.py</code>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Backend</Badge>
-                <code className="text-green-400">backend_django/api/utils/code_generator.py</code>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Modals */}
-      <DataHealthModal
-        isOpen={healthModalOpen}
-        onClose={() => setHealthModalOpen(false)}
-        filePath="sample_categorical_data.csv"
-        autoCheck={false}
-      />
-
-      <CodeExportModal
-        isOpen={codeModalOpen}
-        onClose={() => setCodeModalOpen(false)}
-        modelType="random_forest"
-        features={["feature1", "feature2", "feature3"]}
-        target="target_variable"
-        hyperparameters={{ n_estimators: 100 }}
-      />
-    </AppLayout>
-  );
+            {/* Modals */}
+            <DataHealthModal
+                isOpen={healthModalOpen}
+                onClose={() => setHealthModalOpen(false)}
+                filePath="sample_categorical_data.csv"
+                autoCheck={false}
+            />
+            <CodeExportModal
+                isOpen={codeModalOpen}
+                onClose={() => setCodeModalOpen(false)}
+                modelType="random_forest"
+                features={["feature1", "feature2", "feature3"]}
+                target="target_variable"
+                hyperparameters={{ n_estimators: 100 }}
+            />
+        </AppLayout>
+    );
 };
 
 export default SmartAnalytics;

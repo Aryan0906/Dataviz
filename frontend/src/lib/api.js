@@ -200,6 +200,47 @@ export const dataAPI = {
         if (!res.ok) throw new Error('Failed to save visualization to history');
         return res.json();
     },
+
+    // Data health and cleaning endpoints
+    async checkDataHealth(filePath) {
+        const res = await fetch(`${API_BASE_URL}/data/check-health`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: filePath }),
+        });
+        if (!res.ok) throw new Error('Failed to check data health');
+        return res.json();
+    },
+
+    async cleanData(filePath, operations) {
+        const res = await fetch(`${API_BASE_URL}/data/clean`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: filePath, operations }),
+        });
+        if (!res.ok) throw new Error('Failed to clean data');
+        return res.json();
+    },
+
+    async getCorrelationMatrix(filePath) {
+        const res = await fetch(`${API_BASE_URL}/data/correlation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file_path: filePath }),
+        });
+        if (!res.ok) throw new Error('Failed to get correlation matrix');
+        return res.json();
+    },
+
+    async generateCode(dataPoints, codeType, options = {}) {
+        const res = await fetch(`${API_BASE_URL}/data/generate-code`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data_points: dataPoints, code_type: codeType, ...options }),
+        });
+        if (!res.ok) throw new Error('Failed to generate code');
+        return res.json();
+    },
 };
 
 // Custom error class for AI timeout errors

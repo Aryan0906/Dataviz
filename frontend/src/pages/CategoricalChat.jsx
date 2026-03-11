@@ -287,7 +287,7 @@ export const CategoricalChatPanel = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState("light");
-    
+
     // New states for NLP features
     const [columns, setColumns] = useState([]);
     const [activeColumns, setActiveColumns] = useState([]);
@@ -325,7 +325,7 @@ export const CategoricalChatPanel = () => {
 
     // Enable auto-save and restoration
     const { saveNow } = usePageSession('categorical', sessionState, restoreState);
-    
+
     // Enable history tracking
     const { logCreate, logUpdate, logExport } = useHistoryLogger('categorical');
 
@@ -336,7 +336,7 @@ export const CategoricalChatPanel = () => {
     const getThemeColors = useCallback(() => {
         const root = document.documentElement;
         const isDark = theme === 'dark' || (theme === 'system' && root.classList.contains('dark'));
-        
+
         return {
             foreground: isDark ? 'hsl(210 40% 98%)' : 'hsl(222.2 84% 4.9%)',
             background: isDark ? 'hsl(222.2 84% 4.9%)' : 'hsl(0 0% 100%)',
@@ -350,20 +350,20 @@ export const CategoricalChatPanel = () => {
     // Enhanced insights
     const insights = useMemo(() => {
         if (data.length === 0) return null;
-        
+
         const sorted = [...data].sort((a, b) => b.value - a.value);
         const topPerformer = sorted[0];
         const bottomPerformer = sorted[sorted.length - 1];
         const total = data.reduce((sum, d) => sum + d.value, 0);
         const cardinality = new Set(data.map(d => d.label)).size;
         const missingData = 0; // Can be calculated from CSV parsing
-        
+
         // Generate narrative summary
         const topPercent = total > 0 ? ((topPerformer.value / total) * 100).toFixed(1) : 0;
         const avgValue = total / data.length;
         const multiplier = (topPerformer.value / avgValue).toFixed(1);
         const narrative = `${topPerformer.label} is the dominant category with a value of ${topPerformer.value}, accounting for ${topPercent}% of the total. This is ${multiplier}x higher than the average (${avgValue.toFixed(1)}).`;
-        
+
         return {
             topPerformer,
             bottomPerformer,
@@ -379,18 +379,18 @@ export const CategoricalChatPanel = () => {
     // Filtered and paginated data for table
     const filteredData = useMemo(() => {
         let filtered = data;
-        
+
         // Filter by selected category (drill-down)
         if (selectedCategory) {
             filtered = filtered.filter((d) => normalizeLabel(d.label) === normalizeLabel(selectedCategory));
         }
-        
+
         // Filter by search
         if (tableSearch) {
             const search = tableSearch.toLowerCase();
             filtered = filtered.filter((d) => d.label.toLowerCase().includes(search));
         }
-        
+
         return filtered;
     }, [data, tableSearch, selectedCategory]);
 
@@ -490,14 +490,14 @@ export const CategoricalChatPanel = () => {
                 });
 
                 setColumns(detectedColumns);
-                
+
                 // Try to auto-detect label and value columns
                 const categoryCol = detectedColumns.find((c) => c.type === "categorical");
                 const numericCol = detectedColumns.find((c) => c.type === "numerical");
 
                 if (categoryCol && numericCol) {
                     setActiveColumns([categoryCol.name, numericCol.name]);
-                    
+
                     const parsed = rows
                         .map((row) => ({
                             label: String(row[categoryCol.name] || "").trim(),
@@ -520,7 +520,7 @@ export const CategoricalChatPanel = () => {
                                 text: `Successfully imported ${parsed.length} categories from "${file.name}". Using "${categoryCol.name}" as labels and "${numericCol.name}" as values.`,
                             },
                         ]);
-                        
+
                         // Log CSV upload to history
                         logCreate(`CSV Import: ${file.name}`, parsed, {
                             filename: file.name,
@@ -539,7 +539,7 @@ export const CategoricalChatPanel = () => {
                         const row = rows[i];
                         const firstVal = Object.values(row)[0];
                         const secondVal = Object.values(row)[1];
-                        
+
                         if (firstVal && secondVal) {
                             const label = String(firstVal).trim();
                             const value = parseFloat(secondVal);
@@ -621,7 +621,7 @@ export const CategoricalChatPanel = () => {
             } else {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
-            
+
             // Log export to history
             logExport(chartTitle, { chartType, data, timestamp }, {
                 format: exportFormat,
@@ -667,7 +667,7 @@ export const CategoricalChatPanel = () => {
     const chartArea = () => {
         if (!data.length) {
             return (
-                <div 
+                <div
                     className={cn(
                         "flex flex-col items-center justify-center h-72 border-2 border-dashed rounded-lg transition-colors",
                         dragActive ? "border-primary bg-primary/10" : "border-muted-foreground/30"
@@ -708,7 +708,7 @@ export const CategoricalChatPanel = () => {
         }
 
         const themeColors = getThemeColors();
-        
+
         const baseChartConfig = {
             chart: {
                 backgroundColor: "transparent",
@@ -1144,21 +1144,29 @@ export const CategoricalChatPanel = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                        NLP + Categorical Plotting
-                    </div>
-                    <h1 className="text-2xl font-bold">Chat-driven categorical analysis</h1>
-                    <p className="text-muted-foreground text-sm">
-                        Describe what you want to see; the assistant will update categories, switch chart types, and surface stats.
+        <div className="space-y-6" style={{ fontFamily: "'Raleway', sans-serif" }}>
+            {/* ── Luxury Panel Header ── */}
+            <div className="flex items-start justify-between gap-4 flex-wrap pb-5 border-b border-[#E8E4DC]">
+                <div>
+                    <p className="text-[#0F172A] mb-1" style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase" }}>
+                        NLP + Categorical Analysis
                     </p>
+                    <h1 className="text-2xl font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        Chat-Driven Data Visualization
+                    </h1>
+                    <p className="text-sm text-[#6B6B6B]">
+                        Describe what you want to see — the assistant updates categories, switches chart types, and surfaces stats.
+                    </p>
+                    <p className="text-xs text-[#D4AF37]/80 mt-1">
+                        Try: "add Sales 150", "set chart to heatmap", "show stats", or import CSV
+                    </p>
+                    <div className="mt-4 w-10 h-0.5 bg-[#D4AF37]" />
                 </div>
-                <div className="flex items-center gap-2 bg-muted/60 rounded-lg px-3 py-2 text-sm">
-                    <MessageSquare className="h-4 w-4" />
-                    Natural language controls
+                <div className="flex items-center gap-2 border border-[#0F172A]/20 bg-[#0F172A]/5 px-3 py-2">
+                    <MessageSquare className="h-3.5 w-3.5 text-[#0F172A]" />
+                    <span className="text-xs text-[#0F172A]" style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                        Natural Language Controls
+                    </span>
                 </div>
             </div>
 
@@ -1185,7 +1193,7 @@ export const CategoricalChatPanel = () => {
                                     <RefreshCcw className="h-3.5 w-3.5" />
                                     <span className="hidden sm:inline">Save</span>
                                 </Button>
-                                
+
                                 {/* All Chart Types Dropdown */}
                                 <select
                                     value={chartType}
@@ -1198,7 +1206,7 @@ export const CategoricalChatPanel = () => {
                                         </option>
                                     ))}
                                 </select>
-                                
+
                                 {data.length > 0 && (
                                     <>
                                         <ExportCodeButton
@@ -1223,7 +1231,7 @@ export const CategoricalChatPanel = () => {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                        <div ref={chartContainerRef} className="rounded-lg border bg-muted/30 p-1 min-h-[480px]">{chartArea()}</div>
+                        <div ref={chartContainerRef} className="border border-[#E8E4DC] bg-white p-1 min-h-[480px]">{chartArea()}</div>
                         {pendingEdit && (
                             <div className="relative z-[100] rounded-lg border-2 border-primary bg-background p-4 shadow-2xl">
                                 <div className="flex items-center gap-2 font-semibold mb-3">
@@ -1272,8 +1280,8 @@ export const CategoricalChatPanel = () => {
                                     placeholder="Ask a question: 'Which category has the highest value?' or 'Show top 5'"
                                     className="min-h-[80px] pr-10"
                                 />
-                                <Button 
-                                    onClick={sendMessage} 
+                                <Button
+                                    onClick={sendMessage}
                                     size="sm"
                                     disabled={processing}
                                     className="absolute bottom-2 right-2 h-7 w-7 p-0"
@@ -1285,7 +1293,7 @@ export const CategoricalChatPanel = () => {
                                     )}
                                 </Button>
                             </div>
-                            
+
                             {/* Suggestion Chips */}
                             {data.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
@@ -1327,7 +1335,7 @@ export const CategoricalChatPanel = () => {
                                     </Button>
                                 </div>
                             )}
-                            
+
                             <div className="text-xs text-muted-foreground">
                                 Press Ctrl+Enter to send • Try: "add Apple 25", "switch to pie", or "stats"
                             </div>
@@ -1388,6 +1396,7 @@ export const CategoricalChatPanel = () => {
                                 variant="outline"
                                 className="flex-1 gap-2"
                                 onClick={() => fileInputRef.current?.click()}
+                                title="Import CSV with label and value columns"
                             >
                                 <Upload className="h-4 w-4" />
                                 Import CSV
@@ -1427,8 +1436,8 @@ export const CategoricalChatPanel = () => {
                     <CardContent className="space-y-4">
                         {/* NLP Narrative Summary */}
                         {insights && (
-                            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                                <p className="text-sm leading-relaxed">{insights.narrative}</p>
+                            <div className="p-4 bg-[#FAFAF7] border-l-2 border-[#0F172A]">
+                                <p className="text-sm leading-relaxed text-[#4A4A4A]">{insights.narrative}</p>
                             </div>
                         )}
 
@@ -1455,33 +1464,33 @@ export const CategoricalChatPanel = () => {
                         {/* Top/Bottom Performers */}
                         {insights && (
                             <div className="space-y-2 border-t pt-3">
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingUp className="h-4 w-4 text-green-600" />
-                                        <div>
-                                            <div className="font-semibold text-sm">{insights.topPerformer.label}</div>
-                                            <div className="text-xs text-muted-foreground">Top Performer</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-semibold">{insights.topPerformer.value}</div>
-                                        <div className="text-xs text-muted-foreground">{insights.topPerformerPercent}%</div>
-                                    </div>
-                                </div>
+                                <div className="flex items-center justify-between p-3 border border-[#0F172A]/20 bg-[#0F172A]/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <TrendingUp className="h-4 w-4 text-[#0F172A]" />
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.topPerformer.label}</div>
+                                                            <div className="text-xs text-[#6B6B6B]" style={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.6rem" }}>Top Performer</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-semibold text-[#0F172A]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.topPerformer.value}</div>
+                                                        <div className="text-xs text-[#6B6B6B]">{insights.topPerformerPercent}%</div>
+                                                    </div>
+                                                </div>
 
-                                <div className="flex items-center justify-between p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
-                                    <div className="flex items-center gap-2">
-                                        <TrendingDown className="h-4 w-4 text-orange-600" />
-                                        <div>
-                                            <div className="font-semibold text-sm">{insights.bottomPerformer.label}</div>
-                                            <div className="text-xs text-muted-foreground">Bottom Performer</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-semibold">{insights.bottomPerformer.value}</div>
-                                        <div className="text-xs text-muted-foreground">{insights.bottomPerformerPercent}%</div>
-                                    </div>
-                                </div>
+                                                <div className="flex items-center justify-between p-3 border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+                                                    <div className="flex items-center gap-2">
+                                                        <TrendingDown className="h-4 w-4 text-[#A8893A]" />
+                                                        <div>
+                                                            <div className="font-semibold text-sm text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.bottomPerformer.label}</div>
+                                                            <div className="text-xs text-[#6B6B6B]" style={{ letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.6rem" }}>Bottom Performer</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-semibold text-[#A8893A]" style={{ fontFamily: "'Playfair Display', serif" }}>{insights.bottomPerformer.value}</div>
+                                                        <div className="text-xs text-[#6B6B6B]">{insights.bottomPerformerPercent}%</div>
+                                                    </div>
+                                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -1502,9 +1511,9 @@ export const CategoricalChatPanel = () => {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                             {selectedCategory && (
-                                <Button 
-                                    size="sm" 
-                                    variant="outline" 
+                                <Button
+                                    size="sm"
+                                    variant="outline"
                                     onClick={() => {
                                         setSelectedCategory(null);
                                         toast.success("Filter cleared");
@@ -1526,7 +1535,7 @@ export const CategoricalChatPanel = () => {
                                 <AlertDescription>No categories yet. Use chat, Quick Add, or import CSV.</AlertDescription>
                             </Alert>
                         )}
-                        
+
                         {data.length > 0 && (
                             <>
                                 {/* Search */}
