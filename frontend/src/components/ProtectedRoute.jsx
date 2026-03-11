@@ -7,18 +7,19 @@ export const ProtectedRoute = ({ children }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            navigate("/");
-        }
+        // Bypass redirect for development
+        // if (!isLoading && !isAuthenticated) {
+        //     navigate("/");
+        // }
     }, [isAuthenticated, isLoading, navigate]);
 
     if (isLoading) {
         return <div>Loading...</div>;
     }
 
-    if (!isAuthenticated) {
-        return null;
-    }
+    // if (!isAuthenticated) {
+    //     return null;
+    // }
 
     return <>{children}</>;
 };

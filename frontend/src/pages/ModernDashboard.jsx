@@ -50,11 +50,10 @@ const fadeUp = {
 /* ── Luxury Stat Card ── */
 function StatCard({ icon: Icon, label, value, loading, accent = false }) {
     return (
-        <div className={`relative border p-5 transition-all duration-300 hover:-translate-y-0.5 ${
-            accent
-                ? "bg-[#D4AF37]/10 border-[#D4AF37]/30"
-                : "bg-white/10 border-white/15"
-        }`}>
+        <div className={`relative border p-5 transition-all duration-300 hover:-translate-y-0.5 ${accent
+            ? "bg-[#D4AF37]/10 border-[#D4AF37]/30"
+            : "bg-white/10 border-white/15"
+            }`}>
             <div className="flex items-center gap-2 mb-3">
                 <Icon className={`h-4 w-4 ${accent ? "text-[#D4AF37]" : "text-white/60"}`} />
                 <span

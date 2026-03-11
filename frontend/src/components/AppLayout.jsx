@@ -212,18 +212,16 @@ const AppLayout = ({ children }) => {
                                                     asChild
                                                     isActive={active}
                                                     tooltip={item.description || item.title}
-                                                    className={`group relative rounded-none transition-all duration-200 ${
-                                                        active
+                                                    className={`group relative rounded-none transition-all duration-200 ${active
                                                             ? "bg-[#0F172A] text-white hover:bg-[#0F172A] hover:text-white border-l-2 border-[#D4AF37]"
                                                             : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-[#0F172A]/10 border-l-2 border-transparent"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <Link to={item.url} className="flex items-center justify-between w-full">
                                                         <div className="flex items-center gap-2.5">
                                                             <item.icon
-                                                                className={`size-4 transition-transform group-hover:scale-105 ${
-                                                                    active ? "text-[#D4AF37]" : "text-sidebar-foreground/50"
-                                                                }`}
+                                                                className={`size-4 transition-transform group-hover:scale-105 ${active ? "text-[#D4AF37]" : "text-sidebar-foreground/50"
+                                                                    }`}
                                                             />
                                                             <div className="flex flex-col">
                                                                 <span
@@ -274,11 +272,10 @@ const AppLayout = ({ children }) => {
                                                 <SidebarMenuButton
                                                     asChild
                                                     tooltip={item.title}
-                                                    className={`rounded-none transition-all duration-200 border-l-2 ${
-                                                        active
+                                                    className={`rounded-none transition-all duration-200 border-l-2 ${active
                                                             ? "bg-[#0F172A] text-white hover:bg-[#0F172A] border-[#D4AF37]"
                                                             : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-[#0F172A]/10 border-transparent"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     <Link to={item.url} className="flex items-center gap-2.5">
                                                         <item.icon className={`size-4 ${active ? "text-[#D4AF37]" : "text-sidebar-foreground/40"}`} />
@@ -371,11 +368,10 @@ const AppLayout = ({ children }) => {
                                         {index > 0 && <ChevronRight className="h-3 w-3 text-[#D4AF37]" />}
                                         <Link
                                             to={crumb.url}
-                                            className={`transition-colors uppercase tracking-wider ${
-                                                index === pageInfo.breadcrumbs.length - 1
+                                            className={`transition-colors uppercase tracking-wider ${index === pageInfo.breadcrumbs.length - 1
                                                     ? 'text-[#0F172A] font-semibold'
                                                     : 'text-[#6B6B6B] hover:text-[#0D1117]'
-                                            }`}
+                                                }`}
                                             style={{ fontSize: "0.65rem" }}
                                         >
                                             {crumb.name}
@@ -394,11 +390,10 @@ const AppLayout = ({ children }) => {
                                 variant={helpMode ? "default" : "ghost"}
                                 size="sm"
                                 onClick={() => setHelpMode(!helpMode)}
-                                className={`gap-2 rounded-none text-xs ${
-                                    helpMode
+                                className={`gap-2 rounded-none text-xs ${helpMode
                                         ? "bg-[#0F172A] text-white hover:bg-[#0B1120]"
                                         : "text-[#6B6B6B] hover:text-[#0F172A] hover:bg-[#0F172A]/5"
-                                }`}
+                                    }`}
                                 style={{ letterSpacing: "0.05em" }}
                             >
                                 <HelpCircle className="h-3.5 w-3.5" />
