@@ -1,12 +1,10 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import LandingNav from "@/components/LandingNav";
 import LandingFooter from "@/components/LandingFooter";
 import {
     Brain,
-    Database,
-    Zap,
     ShieldCheck,
     LineChart,
     TrendingUp,
@@ -15,11 +13,7 @@ import {
     Upload,
     Target,
     ChevronDown,
-    ArrowRight,
     CheckCircle2,
-    BarChart3,
-    Sparkles,
-    Play,
 } from "lucide-react";
 
 /* ─── Animation Variants ─── */
@@ -36,7 +30,7 @@ const stagger = {
     visible: { transition: { staggerChildren: 0.12 } },
 };
 
-const fadeIn = {
+const _fadeIn = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.7 } },
 };
@@ -112,7 +106,7 @@ function AnimatedNumber({ target, suffix = "", decimals = 0 }) {
 }
 
 /* ─── Feature Card (Carousel item) ─── */
-function FeatureCard({ icon: Icon, title, description, color, index }) {
+function FeatureCard({ icon: Icon, title, description, color, _index }) {
     return (
         <motion.div
             variants={fadeUp}
@@ -611,11 +605,10 @@ const ProfessionalLanding = () => {
                             <motion.div
                                 key={idx}
                                 variants={fadeUp}
-                                className={`p-8 border luxury-card-hover ${
-                                    idx === 0
+                                className={`p-8 border luxury-card-hover ${idx === 0
                                         ? "bg-[#0F172A] border-[#0F172A] md:col-span-1"
                                         : "bg-white border-[#E8E4DC]"
-                                }`}
+                                    }`}
                             >
                                 <p
                                     className={`text-3xl mb-4 ${idx === 0 ? "text-[#D4AF37]" : "text-[#D4AF37]"}`}

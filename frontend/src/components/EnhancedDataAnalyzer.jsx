@@ -11,16 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import {
     Upload,
     Plus,
-    Zap,
     Save,
     AlertCircle,
     FileUp,
-    ArrowRight,
     RefreshCw,
     Download,
     FileImage,
     FileText,
-    Code2,
     TrendingUp,
     Database,
     Sparkles,
@@ -47,14 +44,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 
 export const EnhancedDataAnalyzer = () => {
-    const [searchParams] = useSearchParams();
+    const [_searchParams] = useSearchParams();
     const { session } = useAuth();
-    const navigate = useNavigate();
+    const _navigate = useNavigate();
     const fileInputRef = useRef(null);
 
     // State initialization
@@ -93,10 +89,10 @@ export const EnhancedDataAnalyzer = () => {
     }, []);
 
     // Enable auto-save and restoration
-    const { saveNow } = usePageSession('regression', sessionState, restoreState);
+    const { saveNow: _saveNow } = usePageSession('regression', sessionState, restoreState);
 
     // Enable history tracking
-    const { logCreate, logUpdate, logExport } = useHistoryLogger('regression');
+    const { logCreate: _logCreate, logUpdate: _logUpdate, logExport } = useHistoryLogger('regression');
 
     // Load draft from Supabase on mount
     useEffect(() => {
@@ -119,8 +115,8 @@ export const EnhancedDataAnalyzer = () => {
     }, [session]);
 
     // Auto-save to Supabase with debounce
-    const debouncedSave = useCallback(
-        debounce(async (draftData) => {
+    const debouncedSave = useMemo(
+        () => debounce(async (draftData) => {
             if (!session) return;
 
             try {

@@ -16,9 +16,7 @@ import {
     Users,
     Zap,
     Search,
-    LineChart,
     PartyPopper,
-    Star,
     Globe,
     Target,
     Award,
@@ -28,13 +26,12 @@ import {
     ChevronDown,
     Code2,
     Database,
-    Upload,
     Activity
 } from "lucide-react";
 
 const EnhancedStorytellingLanding = () => {
     const [scrollY, setScrollY] = useState(0);
-    const [isVisible, setIsVisible] = useState({});
+    const [_isVisible, _setIsVisible] = useState({});
     const statsRef = useRef(null);
 
     useEffect(() => {
@@ -611,6 +608,7 @@ const EnhancedStorytellingLanding = () => {
             {/* Footer */}
             <LandingFooter variant="dark" />
 
+            {/* eslint-disable-next-line react/no-unknown-property */}
             <style jsx>{`
                 @keyframes float {
                     0%, 100% {

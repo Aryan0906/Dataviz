@@ -2,13 +2,9 @@ import React, { useState, createContext, useContext } from 'react';
 import { useLocation, Link, Outlet } from 'react-router-dom';
 import {
     LayoutDashboard,
-    LineChart,
-    Table2,
-    PenTool,
     LogOut,
     HelpCircle,
     User,
-    PanelLeft,
     Sparkles,
     BarChart3,
     Database,
@@ -17,7 +13,6 @@ import {
     Zap,
     TrendingUp,
     ChevronRight,
-    Home
 } from 'lucide-react';
 import { useStorytelling } from '@/context/StorytellingContext';
 import NavigationGuide from './NavigationGuide';
@@ -45,11 +40,10 @@ import {
     AvatarImage,
 } from "@/components/ui/avatar"
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useAuth } from '@/context/AuthContext';
-import InfoTooltip from '@/components/InfoTooltip';
-import { Badge } from '@/components/ui/badge';
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -67,7 +61,7 @@ const AppLayout = ({ children }) => {
     const location = useLocation();
     const { user, signOut } = useAuth();
     const [helpMode, setHelpMode] = useState(false);
-    const { journeyProgress, userPreferences } = useStorytelling();
+    const { _journeyProgress, userPreferences } = useStorytelling();
 
     const navItems = [
         {

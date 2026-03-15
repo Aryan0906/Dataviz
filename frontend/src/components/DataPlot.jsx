@@ -43,8 +43,8 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                     if (isFinite(y)) {
                         regressionPoints.push({ x, regressionY: y });
                     }
-                } catch (error) {
-                    // Skip invalid points
+                } catch (_error) {
+                    // Ignore non-finite prediction values
                 }
             }
         }

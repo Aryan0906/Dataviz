@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Menu, BarChart3, ChevronRight } from "lucide-react";
 
-const LandingNav = ({ variant = "dark" }) => {
+const LandingNav = ({ variant: _variant = "dark" }) => {
     const [scrollY, setScrollY] = useState(0);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -26,11 +26,10 @@ const LandingNav = ({ variant = "dark" }) => {
         <>
             {/* ── Main Navbar ── */}
             <nav
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
-                    isScrolled
+                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${isScrolled
                         ? "bg-[#0F172A]/95 backdrop-blur-xl shadow-lg shadow-black/20"
                         : "bg-[#0F172A]"
-                }`}
+                    }`}
                 style={{ height: "72px" }}
             >
                 <div className="relative h-full flex items-center px-6 lg:px-12">

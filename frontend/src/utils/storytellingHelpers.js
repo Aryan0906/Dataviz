@@ -194,7 +194,7 @@ export const celebrationTriggers = {
         return value >= (thresholds[metric] || 0);
     },
 
-    getCelebrationData: (metric, value) => {
+    getCelebrationData: (metric, _value) => {
         const celebrations = {
             r_squared: {
                 type: "insight",

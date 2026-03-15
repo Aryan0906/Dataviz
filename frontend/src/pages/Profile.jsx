@@ -3,9 +3,7 @@ import PageTransition from "@/components/PageTransition";
 import ProgressTracker from "@/components/ProgressTracker";
 import { useAuth } from "@/context/AuthContext";
 import { useStorytelling } from "@/context/StorytellingContext";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { dataAPI } from "@/lib/api";
@@ -78,7 +76,7 @@ function StatItem({ label, value, loading, badgeText, icon: Icon, highlight = fa
 
 const Profile = () => {
     const { user } = useAuth();
-    const { unlockAchievement, achievements, journeyProgress } = useStorytelling();
+    const { _unlockAchievement, achievements, journeyProgress } = useStorytelling();
     const [analysisCount, setAnalysisCount] = useState(0);
     const [draft, setDraft] = useState(null);
     const [loading, setLoading] = useState(true);

@@ -1,11 +1,9 @@
 import AppLayout from "@/components/AppLayout";
 import PageTransition from "@/components/PageTransition";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useStorytelling } from "@/context/StorytellingContext";
 import { motion } from "framer-motion";
 import {
-    CheckCircle2,
     Download,
     Upload,
     ArrowRight,
@@ -84,7 +82,7 @@ function DocCard({ step, icon: Icon, title, subtitle, items, accentColor = "#0F1
 }
 
 /* ── Quick Link ── */
-function QuickLink({ href, icon: Icon, label, isExternal = false }) {
+function QuickLink({ href, icon: Icon, label, _isExternal = false }) {
     return (
         <Link
             to={href}

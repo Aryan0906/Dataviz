@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-    Sparkles,
     Upload,
     Brain,
     PartyPopper,
@@ -145,8 +144,8 @@ const OnboardingWizard = ({ onComplete }) => {
                         {steps.map((step, index) => (
                             <div key={step.id} className="flex items-center gap-2">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${index <= currentStep
-                                        ? `bg-gradient-to-br ${step.gradient} text-white shadow-lg`
-                                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                                    ? `bg-gradient-to-br ${step.gradient} text-white shadow-lg`
+                                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
                                     }`}>
                                     {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
                                 </div>

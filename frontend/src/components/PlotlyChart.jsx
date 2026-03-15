@@ -125,14 +125,14 @@ const PlotlyChart = ({
         });
     }, [data, regressionResult, chartType, title, xLabel, yLabel, theme]);
 
-    const handleExportPNG = () => {
+    const handleExportPNG = async () => {
         const plotEl = plotRef.current?.el;
         if (!plotEl) return;
 
-        const Plotly = window.Plotly || require('plotly.js');
+        const Plotly = window.Plotly || await import('plotly.js');
         const filename = generateFilename(title.replace(/\s+/g, '_'));
 
-        Plotly.downloadImage(plotEl, {
+        await Plotly.downloadImage(plotEl, {
             format: 'png',
             filename: filename,
             height: 800,
@@ -149,7 +149,7 @@ const PlotlyChart = ({
                 return;
             }
 
-            const Plotly = window.Plotly || require('plotly.js');
+            const Plotly = window.Plotly || await import('plotly.js');
             const filename = generateFilename(title.replace(/\s+/g, '_'));
 
             // Use Plotly's toImage to generate SVG string

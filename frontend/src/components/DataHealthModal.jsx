@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,13 +34,7 @@ const DataHealthModal = ({
   const [loading, setLoading] = useState(false);
   const [cleaning, setCleaning] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && filePath && autoCheck) {
-      checkHealth();
-    }
-  }, [isOpen, filePath, autoCheck]);
-
-  const checkHealth = async () => {
+  const checkHealth = useCallback(async () => {
     setLoading(true);
     try {
       const data = await dataAPI.checkDataHealth(filePath);
@@ -51,7 +45,13 @@ const DataHealthModal = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filePath]);
+
+  useEffect(() => {
+    if (isOpen && filePath && autoCheck) {
+      checkHealth();
+    }
+  }, [isOpen, filePath, autoCheck, checkHealth]);
 
   const handleClean = async (method) => {
     setCleaning(true);

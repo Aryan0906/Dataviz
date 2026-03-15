@@ -30,7 +30,7 @@ const ChartCodeExportModal = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('matplotlib');
-  const { theme } = useTheme();
+  const { _theme } = useTheme();
 
   // Safety check - don't render if critical data is missing
   if (!isOpen) return null;
@@ -419,7 +419,7 @@ print("Treemap saved as 'treemap.png'")
     return generateTreemapCode('plotly', data); // Default to plotly
   };
 
-  const generateScatterCode = (library, data) => {
+  const generateScatterCode = (_library, _data) => {
     return `"""
 Scatter Plot - ${chartTitle}
 Generated from DataViz Analytics Platform
@@ -2587,7 +2587,7 @@ print("Chart saved as 'heatmap.png' and 'heatmap.html'")
     return tabs;
   };
 
-  const currentCode = generateCode(activeTab);
+  const _currentCode = generateCode(activeTab);
   console.log('Current activeTab:', activeTab, 'Available tabs:', getLibraryTabs());
 
   return (
