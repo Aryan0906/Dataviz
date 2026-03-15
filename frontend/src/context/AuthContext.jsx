@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const AuthContext = createContext({
     session: null,
@@ -15,10 +15,25 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (!isSupabaseConfigured) {
+            setLoading(false);
+            return;
+        }
+
         // Check active sessions and subscribe to auth changes
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session }, error }) => {
+            if (error) {
+                console.error('Failed to retrieve session:', error.message);
+                setSession(null);
+                setUser(null);
+                setLoading(false);
+                return;
+            }
             setSession(session);
             setUser(session?.user ?? null);
+            setLoading(false);
+        }).catch((err) => {
+            console.error('Failed to connect to authentication service:', err.message);
             setLoading(false);
         });
 
@@ -33,6 +48,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const signOut = async () => {
+        if (!isSupabaseConfigured) return;
         await supabase.auth.signOut();
     };
 
