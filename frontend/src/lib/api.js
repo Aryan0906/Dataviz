@@ -20,14 +20,23 @@ const getAuthHeaders = async () => {
     }
 
     // Fetch new session and cache it
-    const { data: { session } } = await supabase.auth.getSession();
-    cachedSession = session;
-    sessionExpiry = now + 60000; // Cache for 1 minute
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        cachedSession = session;
+        sessionExpiry = now + 60000; // Cache for 1 minute
 
-    return {
-        'Authorization': `Bearer ${session?.access_token || ''}`,
-        'Content-Type': 'application/json',
-    };
+        return {
+            'Authorization': `Bearer ${session?.access_token || ''}`,
+            'Content-Type': 'application/json',
+        };
+    } catch (error) {
+        console.error('Failed to get auth session:', error.message);
+        cachedSession = null;
+        sessionExpiry = 0;
+        return {
+            'Content-Type': 'application/json',
+        };
+    }
 };
 
 // Data API calls

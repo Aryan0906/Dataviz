@@ -20,6 +20,11 @@ export const AuthProvider = ({ children }) => {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+        }).catch((error) => {
+            console.error('Failed to get Supabase session:', error.message);
+            setSession(null);
+            setUser(null);
+            setLoading(false);
         });
 
         const {
@@ -33,7 +38,11 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error('Failed to sign out:', error.message);
+        }
     };
 
     return (
