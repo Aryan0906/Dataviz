@@ -30,6 +30,26 @@ def health(request):
     return JsonResponse({"status": "ok", "message": "Backend is running"})
 
 
+def showcase_status(request):
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+
+    from todos.models import Todo
+
+    return JsonResponse({
+        "status": "ok",
+        "service": "dataviz-backend",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "database": {
+            "analysis_results": AnalysisResult.objects.count(),
+            "visualizations": Visualization.objects.count(),
+            "draft_analyses": DraftAnalysis.objects.count(),
+            "todos": Todo.objects.count(),
+        },
+        "message": "Frontend and backend are connected successfully",
+    })
+
+
 def _issue_token(user):
     payload = {
         "userId": user.id,
@@ -274,7 +294,7 @@ def analyze(request):
             "rmse": result['rmse'],
             "mae": result['mae'],
             "predictions": predictions,
-            "all_models_tested": result['all_models'][:5]  # Top 5 models
+            "all_models_tested": result['all_models'][:10]  # Top 10 models (configurable)
         }
         print(f"Returning response: {response_data}")
         return JsonResponse(response_data)

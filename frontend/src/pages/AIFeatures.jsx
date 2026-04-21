@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { dataAPI, AITimeoutError } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
     Upload, FileText, Sparkles, TrendingUp, AlertCircle,
@@ -68,6 +69,8 @@ const AIFeatures = () => {
     useEffect(() => {
         const loadDraft = async () => {
             try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
                 const { visualization } = await dataAPI.getLatestVisualization();
                 if (visualization) {
                     setVisualizationId(visualization.id);
@@ -270,9 +273,8 @@ const AIFeatures = () => {
 
                             {/* Drop zone */}
                             <div
-                                className={`border-2 border-dashed p-10 text-center transition-all duration-300 mb-4 ${
-                                    dragActive ? "border-[#0F172A] bg-[#0F172A]/5" : "border-[#E8E4DC]"
-                                }`}
+                                className={`border-2 border-dashed p-10 text-center transition-all duration-300 mb-4 ${dragActive ? "border-[#0F172A] bg-[#0F172A]/5" : "border-[#E8E4DC]"
+                                    }`}
                                 onDragEnter={handleDrag}
                                 onDragLeave={handleDrag}
                                 onDragOver={handleDrag}

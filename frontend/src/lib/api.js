@@ -250,3 +250,33 @@ export class AITimeoutError extends Error {
         this.name = 'AITimeoutError';
     }
 }
+
+export const systemAPI = {
+    async getHealth() {
+        const res = await fetch(`${API_BASE_URL}/health`);
+        if (!res.ok) throw new Error('Failed to fetch backend health');
+        return res.json();
+    },
+
+    async getShowcaseStatus() {
+        const res = await fetch(`${API_BASE_URL}/showcase/status`);
+        if (!res.ok) throw new Error('Failed to fetch showcase status');
+        return res.json();
+    },
+
+    async getTodosPreview(limit = 5) {
+        const res = await fetch(`${API_BASE_URL}/todos/?ordering=-created_at`);
+        if (!res.ok) throw new Error('Failed to fetch todos preview');
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+            return data.slice(0, limit);
+        }
+
+        if (Array.isArray(data?.results)) {
+            return data.results.slice(0, limit);
+        }
+
+        return [];
+    },
+};

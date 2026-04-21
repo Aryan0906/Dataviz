@@ -26,43 +26,43 @@ except ImportError:
     print("Warning: scikit-learn not available. Install with: pip install scikit-learn scipy")
 
 
-def compute_r2(y_true, y_pred):
-    """Calculate R-squared score."""
-    ss_res = np.sum((y_true - y_pred) ** 2)
-    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
-    return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
-
-
-def compute_adjusted_r2(r2, n, p):
-    """Calculate adjusted R-squared."""
-    if n <= p + 1:
-        return r2
-    return 1 - (1 - r2) * (n - 1) / (n - p - 1)
-
-
-def compute_metrics(y_true, y_pred, n_params):
-    """Calculate comprehensive metrics for a model."""
-    n = len(y_true)
-    r2 = compute_r2(y_true, y_pred)
-    adjusted_r2 = compute_adjusted_r2(r2, n, n_params)
-    
-    mse = np.mean((y_true - y_pred) ** 2)
-    rmse = np.sqrt(mse)
-    mae = np.mean(np.abs(y_true - y_pred))
-    
-    return {
-        'r2': r2,
-        'adjusted_r2': adjusted_r2,
-        'rmse': rmse,
-        'mae': mae,
-        'mse': mse
-    }
-
-
 class RegressionModelSelector:
     """
     Automatically selects the best regression model from a comprehensive set.
     """
+    
+    @staticmethod
+    def compute_r2(y_true, y_pred):
+        """Calculate R-squared score."""
+        ss_res = np.sum((y_true - y_pred) ** 2)
+        ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+        return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+
+    @staticmethod
+    def compute_adjusted_r2(r2, n, p):
+        """Calculate adjusted R-squared."""
+        if n <= p + 1:
+            return r2
+        return 1 - (1 - r2) * (n - 1) / (n - p - 1)
+
+    @classmethod
+    def compute_metrics(cls, y_true, y_pred, n_params):
+        """Calculate comprehensive metrics for a model."""
+        n = len(y_true)
+        r2 = cls.compute_r2(y_true, y_pred)
+        adjusted_r2 = cls.compute_adjusted_r2(r2, n, n_params)
+        
+        mse = np.mean((y_true - y_pred) ** 2)
+        rmse = np.sqrt(mse)
+        mae = np.mean(np.abs(y_true - y_pred))
+        
+        return {
+            'r2': r2,
+            'adjusted_r2': adjusted_r2,
+            'rmse': rmse,
+            'mae': mae,
+            'mse': mse
+        }
     
     def __init__(self, data_points: List[Dict]):
         """
@@ -106,7 +106,7 @@ class RegressionModelSelector:
             intercept = y_mean - slope * x_mean
             
             y_pred = slope * self.X.flatten() + intercept
-            metrics = compute_metrics(self.y, y_pred, 2)  # 2 parameters: slope, intercept
+            metrics = self.compute_metrics(self.y, y_pred, 2)  # 2 parameters: slope, intercept
             
             return {
                 'name': 'Linear Regression',
@@ -127,7 +127,7 @@ class RegressionModelSelector:
             poly = np.poly1d(coeffs)
             
             y_pred = poly(self.X.flatten())
-            metrics = compute_metrics(self.y, y_pred, degree + 1)
+            metrics = self.compute_metrics(self.y, y_pred, degree + 1)
             
             # Generate equation string
             terms = []
@@ -175,7 +175,7 @@ class RegressionModelSelector:
             b = y_mean - a * x_mean
             
             y_pred = a * X_log.flatten() + b
-            metrics = compute_metrics(self.y, y_pred, 2)
+            metrics = self.compute_metrics(self.y, y_pred, 2)
             
             return {
                 'name': 'Logarithmic Regression',
@@ -212,7 +212,7 @@ class RegressionModelSelector:
             a = np.exp(ln_a)
             
             y_pred = a * np.exp(b * self.X.flatten())
-            metrics = compute_metrics(self.y, y_pred, 2)
+            metrics = self.compute_metrics(self.y, y_pred, 2)
             
             return {
                 'name': 'Exponential Regression',
@@ -250,7 +250,7 @@ class RegressionModelSelector:
             a = np.exp(ln_a)
             
             y_pred = a * np.power(self.X.flatten(), b)
-            metrics = compute_metrics(self.y, y_pred, 2)
+            metrics = self.compute_metrics(self.y, y_pred, 2)
             
             return {
                 'name': 'Power Regression',
@@ -281,7 +281,7 @@ class RegressionModelSelector:
                 model.fit(self.X, self.y)
                 y_pred = self._safe_predict(model, self.X)
                 if y_pred is not None:
-                    metrics = compute_metrics(self.y, y_pred, 2)
+                    metrics = self.compute_metrics(self.y, y_pred, 2)
                     results.append({
                         'name': f'Ridge Regression (α={alpha})',
                         'type': 'ridge',
@@ -300,7 +300,7 @@ class RegressionModelSelector:
                 model.fit(self.X, self.y)
                 y_pred = self._safe_predict(model, self.X)
                 if y_pred is not None:
-                    metrics = compute_metrics(self.y, y_pred, 2)
+                    metrics = self.compute_metrics(self.y, y_pred, 2)
                     results.append({
                         'name': f'Lasso Regression (α={alpha})',
                         'type': 'lasso',
@@ -318,7 +318,7 @@ class RegressionModelSelector:
             model.fit(self.X, self.y)
             y_pred = self._safe_predict(model, self.X)
             if y_pred is not None:
-                metrics = compute_metrics(self.y, y_pred, 2)
+                metrics = self.compute_metrics(self.y, y_pred, 2)
                 results.append({
                     'name': 'Elastic Net Regression',
                     'type': 'elasticnet',
@@ -337,7 +337,7 @@ class RegressionModelSelector:
                 model.fit(X_scaled, self.y)
                 y_pred = self._safe_predict(model, X_scaled)
                 if y_pred is not None:
-                    metrics = compute_metrics(self.y, y_pred, 3)
+                    metrics = self.compute_metrics(self.y, y_pred, 3)
                     results.append({
                         'name': f'Support Vector Regression ({kernel})',
                         'type': 'svr',
@@ -355,7 +355,7 @@ class RegressionModelSelector:
             model.fit(self.X, self.y)
             y_pred = self._safe_predict(model, self.X)
             if y_pred is not None:
-                metrics = compute_metrics(self.y, y_pred, 5)
+                metrics = self.compute_metrics(self.y, y_pred, 5)
                 results.append({
                     'name': 'Decision Tree Regression',
                     'type': 'decision_tree',
@@ -373,7 +373,7 @@ class RegressionModelSelector:
             model.fit(self.X, self.y)
             y_pred = self._safe_predict(model, self.X)
             if y_pred is not None:
-                metrics = compute_metrics(self.y, y_pred, 10)
+                metrics = self.compute_metrics(self.y, y_pred, 10)
                 results.append({
                     'name': 'Random Forest Regression',
                     'type': 'random_forest',
@@ -391,7 +391,7 @@ class RegressionModelSelector:
             model.fit(self.X, self.y)
             y_pred = self._safe_predict(model, self.X)
             if y_pred is not None:
-                metrics = compute_metrics(self.y, y_pred, 2)
+                metrics = self.compute_metrics(self.y, y_pred, 2)
                 results.append({
                     'name': 'Quantile Regression (Median)',
                     'type': 'quantile',
@@ -502,21 +502,11 @@ def find_best_regression(data_points: List[Dict]) -> Optional[Dict]:
     X = np.array([p['x'] for p in data_points])
     y_actual = np.array([p['y'] for p in data_points])
     
-    # Get predictions from the model
-    if 'model' in best_model and best_model['model'] is not None:
-        # For sklearn models
-        try:
-            X_input = X.reshape(-1, 1)
-            if best_model.get('scaler'):
-                X_input = best_model['scaler'].transform(X_input)
-            if best_model.get('poly_features'):
-                X_input = best_model['poly_features'].transform(X_input)
-            y_predicted = best_model['model'].predict(X_input)
-        except:
-            y_predicted = np.array([best_model['predict'](x) for x in X])
-    else:
-        # For custom models with predict function
+    # Get predictions using the predict function (all models have this)
+    try:
         y_predicted = np.array([best_model['predict'](x) for x in X])
+    except Exception:
+        return None
     
     # Calculate residuals
     residuals = y_actual - y_predicted

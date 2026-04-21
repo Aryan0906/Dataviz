@@ -5,6 +5,7 @@ from api import views as api
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/health", api.health),
+    path("api/showcase/status", api.showcase_status),
     path("api/auth/signup", api.signup),
     path("api/auth/login", api.login),
     path("api/auth/verify", api.verify),
