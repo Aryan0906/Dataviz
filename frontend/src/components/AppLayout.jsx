@@ -146,7 +146,7 @@ const AppLayout = ({ children }) => {
                     url: location.pathname
                 });
             }
-        } else if (activeItem) {
+        } else if (activeItem && activeItem.url !== '/dashboard') {
             breadcrumbs.push({ name: activeItem.title, url: activeItem.url });
         } else {
             const secItem = secondaryItems.find(i => i.url === location.pathname);
@@ -428,12 +428,7 @@ const AppLayout = ({ children }) => {
                         </div>
 
                         {/* Content */}
-                        {React.Children.map(children, child => {
-                            if (React.isValidElement(child)) {
-                                return React.cloneElement(child, { helpMode });
-                            }
-                            return child;
-                        }) || <Outlet context={{ helpMode }} />}
+                        {children || <Outlet />}
                     </main>
                 </SidebarInset>
             </SidebarProvider>

@@ -789,7 +789,8 @@ def get_page_session(request):
             'last_accessed': session.last_accessed.isoformat(),
         })
     except PageSession.DoesNotExist:
-        return JsonResponse({'error': 'Session not found'}, status=404)
+        # Instead of 404 which triggers browser console errors, return 200 with empty state
+        return JsonResponse({'error': 'Session not found', 'not_found': True}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

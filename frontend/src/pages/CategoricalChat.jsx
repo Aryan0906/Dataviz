@@ -3,6 +3,7 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HCHeatmap from "highcharts/modules/heatmap";
 import HCExporting from "highcharts/modules/exporting";
+import HCAccessibility from "highcharts/modules/accessibility";
 import AppLayout from "@/components/AppLayout";
 import { useTheme } from "@/components/theme-provider";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
@@ -54,6 +55,7 @@ import {
 
 HCHeatmap(Highcharts);
 HCExporting(Highcharts);
+HCAccessibility(Highcharts);
 
 const INITIAL_DATA = [
     { label: "Apples", value: 32 },
