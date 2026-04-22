@@ -70,8 +70,16 @@ else:
         }
     }
 
-CORS_ALLOWED_ORIGINS = os.getenv("FRONTEND_URL", "http://localhost:5173").split(",") if not DEBUG else []
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+_frontend_url = os.getenv("FRONTEND_URL", "")
+if not DEBUG:
+    if not _frontend_url:
+        raise RuntimeError("FRONTEND_URL must be set in production (DEBUG=False)")
+    CORS_ALLOWED_ORIGINS = [u.strip() for u in _frontend_url.split(",")]
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',

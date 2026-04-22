@@ -3,23 +3,22 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 
 export const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Bypass redirect for development
-        // if (!isLoading && !isAuthenticated) {
-        //     navigate("/");
-        // }
-    }, [isAuthenticated, isLoading, navigate]);
+        if (!loading && !isAuthenticated) {
+            navigate("/login");
+        }
+    }, [isAuthenticated, loading, navigate]);
 
-    if (isLoading) {
+    if (loading) {
         return <div>Loading...</div>;
     }
 
-    // if (!isAuthenticated) {
-    //     return null;
-    // }
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return <>{children}</>;
 };

@@ -61,7 +61,7 @@ const AppLayout = ({ children }) => {
     const location = useLocation();
     const { user, signOut } = useAuth();
     const [helpMode, setHelpMode] = useState(false);
-    const { _journeyProgress, userPreferences } = useStorytelling();
+    const { journeyProgress, userPreferences } = useStorytelling();
 
     const navItems = [
         {

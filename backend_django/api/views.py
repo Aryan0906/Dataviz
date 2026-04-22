@@ -21,7 +21,9 @@ from .utils.ai_helpers import (
 )
 from .utils.regression_models import find_best_regression
 
-JWT_SECRET = os.getenv("JWT_SECRET", "secret")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET environment variable is required and not set.")
 SUPABASE_JWT_SECRET = settings.SUPABASE_JWT_SECRET
 JWT_EXP_HOURS = 24
 
@@ -82,15 +84,10 @@ def login(request):
 
 
 def verify(request):
-    auth = request.headers.get("Authorization", "")
-    token = auth.split(" ")[1] if auth.startswith("Bearer ") else None
-    if not token:
-        return JsonResponse({"error": "Token required"}, status=401)
-    try:
-        decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        return JsonResponse({"valid": True, "userId": decoded["userId"], "email": decoded["email"]})
-    except Exception:
-        return JsonResponse({"error": "Invalid or expired token"}, status=403)
+    user_id, err = _require_auth(request)
+    if err:
+        return err
+    return JsonResponse({"valid": True, "userId": user_id})
 
 
 def _require_auth(request):
@@ -105,27 +102,18 @@ def _require_auth(request):
     try:
         # Verify using Supabase JWT Secret
         if SUPABASE_JWT_SECRET:
-            # Use Supabase authentication - try both HS256 and RS256 algorithms
-            print(f"DEBUG: Attempting to decode token with Supabase JWT secret")
             try:
-                # First try with HS256
                 decoded = jwt.decode(
                     token, 
                     SUPABASE_JWT_SECRET, 
-                    algorithms=['HS256', 'HS384', 'HS512'],
-                    audience="authenticated",
-                    options={"verify_aud": False}  # Supabase might not always include aud
+                    algorithms=['HS256'],
+                    audience="authenticated"
                 )
-            except jwt.InvalidAlgorithmError:
-                # If HS256 fails, the token might be signed with RS256 (asymmetric)
-                # In this case, we need to skip verification or get the public key
-                print("DEBUG: HS256 failed, decoding without verification (development only)")
-                decoded = jwt.decode(
-                    token,
-                    options={"verify_signature": False}  # Skip signature verification for now
-                )
+            except Exception as e:
+                print(f"DEBUG: Token decoding failed: {str(e)}")
+                return (None, JsonResponse({"error": "Invalid token signature"}, status=401))
             
-            user_id = decoded.get('sub') or decoded.get('user_id')  # Supabase UUID from 'sub' claim
+            user_id = decoded.get('sub')
             print(f"DEBUG: Successfully authenticated user: {user_id}")
         else:
             # Fallback to custom JWT for backward compatibility
