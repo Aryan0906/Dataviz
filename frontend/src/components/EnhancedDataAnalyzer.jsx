@@ -8,248 +8,203 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import {
-    Upload,
-    Plus,
-    Zap,
-    Save,
-    AlertCircle,
-    FileUp,
-    ArrowRight,
-    RefreshCw,
-    Download,
-    FileImage,
-    FileText,
-    Code2,
-    TrendingUp,
-    Database,
-    Sparkles,
-    BarChart3,
-    Grid3x3,
-    Trash2,
-    PlayCircle,
-    CheckCircle2
-} from "lucide-react";
 import { toast } from "sonner";
-import { DataTable } from "./DataTable";
-import { dataAPI } from "@/lib/api";
-import { debounce } from "@/utils/debounce";
-import Papa from "papaparse";
-import { UniversalChart } from "./UniversalChart";
-import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
-import ExportCodeButton from "./ExportCodeButton";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 
-export const EnhancedDataAnalyzer = () => {
-    const [searchParams] = useSearchParams();
-    const { session } = useAuth();
-    const navigate = useNavigate();
-    const fileInputRef = useRef(null);
+const EnhancedDataAnalyzer = () => {
+    const inverseRegressionPredictor = useMemo(() => {
+        if (sortedPredictions.length === 0) {
+            return null;
+        }
 
-    // State initialization
-    const [data, setData] = useState([]);
-    const [regressionResult, setRegressionResult] = useState(null);
-    const [xValue, setXValue] = useState("");
-    const [yValue, setYValue] = useState("");
-    const [csvText, setCsvText] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [regressionType, setRegressionType] = useState("linear");
-    const [polynomialDegree, setPolynomialDegree] = useState(2);
-    const [activeTab, setActiveTab] = useState("input");
+        return (targetY) => {
+            const candidates = [];
 
-    const chartContainerRef = useRef(null);
+            for (let index = 0; index < sortedPredictions.length - 1; index += 1) {
+                const [x1, y1] = sortedPredictions[index];
+                const [x2, y2] = sortedPredictions[index + 1];
 
-    // Export theme dialog state
-    const [showExportDialog, setShowExportDialog] = useState(false);
-    const [exportFormat, setExportFormat] = useState("png");
-    const [exportTheme, setExportTheme] = useState("light");
-
-    // Prepare state for session persistence
-    const sessionState = useMemo(() => ({
-        data,
-        regressionResult,
-        regressionType,
-        polynomialDegree,
-    }), [data, regressionResult, regressionType, polynomialDegree]);
-
-    // Restore state callback
-    const restoreState = useCallback((savedState) => {
-        if (savedState.data) setData(savedState.data);
-        if (savedState.regressionResult) setRegressionResult(savedState.regressionResult);
-        if (savedState.regressionType) setRegressionType(savedState.regressionType);
-        if (savedState.polynomialDegree) setPolynomialDegree(savedState.polynomialDegree);
-    }, []);
-
-    // Enable auto-save and restoration
-    const { saveNow } = usePageSession('regression', sessionState, restoreState);
-
-    // Enable history tracking
-    const { logCreate, logUpdate, logExport } = useHistoryLogger('regression');
-
-    // Load draft from Supabase on mount
-    useEffect(() => {
-        const loadDraft = async () => {
-            if (!session) return;
-
-            try {
-                const { draft } = await dataAPI.getDraft();
-                if (draft) {
-                    setData(draft.dataPoints || []);
-                    setRegressionType(draft.regressionType || "linear");
-                    setPolynomialDegree(draft.polynomialDegree || 2);
+                if (Math.abs(y2 - y1) < 0.0001) {
+                    if (Math.abs(targetY - y1) < 0.0001) {
+                        candidates.push(x1);
+                    }
+                    continue;
                 }
-            } catch (error) {
-                console.error("Failed to load draft:", error);
+
+                const isBetween = targetY >= Math.min(y1, y2) && targetY <= Math.max(y1, y2);
+                if (!isBetween) {
+                    continue;
+                }
+
+                const ratio = (targetY - y1) / (y2 - y1);
+                const x = x1 + ratio * (x2 - x1);
+                if (Number.isFinite(x)) {
+                    candidates.push(x);
+                }
             }
+
+            if (candidates.length > 0) {
+                return candidates[0];
+            }
+
+            let nearest = sortedPredictions[0][0];
+            let bestDistance = Math.abs(sortedPredictions[0][1] - targetY);
+
+            sortedPredictions.forEach(([x, y]) => {
+                const distance = Math.abs(y - targetY);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    nearest = x;
+                }
+            });
+
+            return nearest;
         };
+    }, [sortedPredictions]);
 
-        loadDraft();
-    }, [session]);
+    const handlePrediction = useCallback(() => {
+        if (!regressionResult) {
+            setPredictionResult(null);
+            return;
+        }
 
-    // Auto-save to Supabase with debounce
-    const debouncedSave = useCallback(
-        debounce(async (draftData) => {
-            if (!session) return;
+        const numericInput = parseFloat(predictionInput);
+        if (Number.isNaN(numericInput)) {
+            setPredictionResult({ error: "Enter a valid number to predict." });
+            return;
+        }
 
-            try {
-                await dataAPI.saveDraft(draftData);
-            } catch (error) {
-                console.error("Failed to auto-save draft:", error);
+        const runId = Date.now();
+
+        if (sortedPredictions.length === 0) {
+            setPredictionResult({ error: "Prediction curve is not available yet." });
+            return;
+        }
+
+        if (predictionMode === "x-to-y") {
+            const exactMatch = sortedPredictions.find((point) => Math.abs(point[0] - numericInput) < 0.0001);
+            let predictedY = exactMatch?.[1];
+            let method = "exact";
+            let lowerPoint = exactMatch || null;
+            let upperPoint = exactMatch || null;
+            let ratio = 0;
+
+            if (!exactMatch) {
+                for (let index = 0; index < sortedPredictions.length - 1; index += 1) {
+                    const current = sortedPredictions[index];
+                    const next = sortedPredictions[index + 1];
+
+                    if (numericInput >= current[0] && numericInput <= next[0]) {
+                        lowerPoint = current;
+                        upperPoint = next;
+                        ratio = (numericInput - current[0]) / (next[0] - current[0]);
+                        predictedY = current[1] + ratio * (next[1] - current[1]);
+                        method = "interpolated";
+                        break;
+                    }
+                }
+
+                if (!Number.isFinite(predictedY)) {
+                    if (numericInput < sortedPredictions[0][0]) {
+                        lowerPoint = sortedPredictions[0];
+                        upperPoint = sortedPredictions[1] || sortedPredictions[0];
+                        predictedY = sortedPredictions[0][1];
+                        method = "clamped-low";
+                    } else {
+                        lowerPoint = sortedPredictions[sortedPredictions.length - 2] || sortedPredictions[0];
+                        upperPoint = sortedPredictions[sortedPredictions.length - 1];
+                        predictedY = sortedPredictions[sortedPredictions.length - 1][1];
+                        method = "clamped-high";
+                    }
+                }
             }
-        }, 2000),
-        [session]
-    );
 
-    // Trigger auto-save when data changes
-    useEffect(() => {
-        if (!session) return;
-        if (data.length === 0) return;
-
-        debouncedSave({
-            dataPoints: data,
-            categories: [],
-            tabType: "regression",
-            regressionType: regressionType,
-            polynomialDegree: polynomialDegree,
-        });
-    }, [data, regressionType, polynomialDegree, session, debouncedSave]);
-
-    const addPoint = () => {
-        setError("");
-        const x = parseFloat(xValue);
-        const y = parseFloat(yValue);
-
-        if (isNaN(x) || isNaN(y)) {
-            setError("Please enter valid numbers for X and Y");
-            return;
-        }
-
-        const newData = [...data, { x, y }];
-        newData.sort((a, b) => a.x - b.x);
-        setData(newData);
-        setXValue("");
-        setYValue("");
-        toast.success("Data point added", {
-            icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
-        });
-    };
-
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            addPoint();
-        }
-    };
-
-    const analyzeData = useCallback(async () => {
-        setError("");
-        if (data.length < 2) {
-            setError("Need at least 2 data points to analyze");
-            return;
-        }
-
-        setLoading(true);
-        setActiveTab("results");
-
-        try {
-            const result = await dataAPI.analyze(data);
-
-            if (!result) {
-                setError("Failed to analyze data");
+            if (!Number.isFinite(predictedY)) {
+                setPredictionResult({ error: "Could not calculate a prediction for that X value." });
                 return;
             }
 
-            const modelType = result.model_type;
-            if (modelType.startsWith('polynomial-')) {
-                const degree = parseInt(modelType.split('-')[1]);
-                setRegressionType('polynomial');
-                setPolynomialDegree(degree);
-            } else {
-                setRegressionType(modelType);
-            }
+            const nextResult = {
+                runId,
+                inputLabel: "X",
+                outputLabel: "Predicted Y",
+                inputValue: numericInput,
+                outputValue: predictedY,
+                mode: "x-to-y",
+                method,
+                lowerPoint,
+                upperPoint,
+                ratio,
+                equation: method === "interpolated" && lowerPoint && upperPoint
+                    ? `y = ${lowerPoint[1].toFixed(4)} + ${ratio.toFixed(4)} × (${upperPoint[1].toFixed(4)} - ${lowerPoint[1].toFixed(4)})`
+                    : method === "exact"
+                        ? `y = ${predictedY.toFixed(4)} at x = ${numericInput.toFixed(4)}`
+                        : `y is clamped to the nearest fitted point`,
+                steps: method === "interpolated" && lowerPoint && upperPoint
+                    ? [
+                        `Find bracketing points: (${lowerPoint[0].toFixed(4)}, ${lowerPoint[1].toFixed(4)}) and (${upperPoint[0].toFixed(4)}, ${upperPoint[1].toFixed(4)})`,
+                        `Interpolation ratio t = (${numericInput.toFixed(4)} - ${lowerPoint[0].toFixed(4)}) / (${upperPoint[0].toFixed(4)} - ${lowerPoint[0].toFixed(4)}) = ${ratio.toFixed(6)}`,
+                        `Predicted Y = ${lowerPoint[1].toFixed(4)} + t × (${upperPoint[1].toFixed(4)} - ${lowerPoint[1].toFixed(4)}) = ${predictedY.toFixed(4)}`,
+                    ]
+                    : method === "exact"
+                        ? [
+                            `Exact prediction found at x = ${numericInput.toFixed(4)}`,
+                            `Predicted Y = ${predictedY.toFixed(4)}`,
+                        ]
+                        : [
+                            `Value lies outside the fitted range, so the nearest fitted point was used.`,
+                            `Predicted Y = ${predictedY.toFixed(4)}`,
+                        ],
+                computedAt: new Date().toISOString(),
+            };
 
-            const n = data.length;
-            const ys = data.map(d => d.y);
-            const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
-            const varianceY = n > 1
-                ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1)
-                : 0;
-            const stdDevY = Math.sqrt(varianceY);
-
-            setRegressionResult({
-                r2: result.r2,
-                predict: (x) => {
-                    const predictions = result.predictions || [];
-                    if (predictions.length === 0) return null;
-
-                    const sorted = predictions.sort((a, b) => a[0] - b[0]);
-                    const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
-                    if (exact) return exact[1];
-
-                    for (let i = 0; i < sorted.length - 1; i++) {
-                        if (x >= sorted[i][0] && x <= sorted[i + 1][0]) {
-                            const t = (x - sorted[i][0]) / (sorted[i + 1][0] - sorted[i][0]);
-                            return sorted[i][1] + t * (sorted[i + 1][1] - sorted[i][1]);
-                        }
-                    }
-
-                    if (x < sorted[0][0]) return sorted[0][1];
-                    return sorted[sorted.length - 1][1];
-                },
-                type: modelType,
-                equation: result.equation || '',
-                meanY,
-                varianceY,
-                stdDevY,
-                rmse: result.rmse,
-                mae: result.mae,
-                adjustedR2: result.adjusted_r2,
-                modelName: result.model_name
-            });
-
-            toast.success(`Analysis complete! Best model: ${result.model_name}`, {
-                icon: <Sparkles className="h-4 w-4 text-blue-500" />
-            });
-        } catch (error) {
-            console.error("Analysis error:", error);
-            setError(`Failed to analyze data: ${error.message || error}`);
-            toast.error(`Failed to analyze data: ${error.message || error}`);
-        } finally {
-            setLoading(false);
+            setPredictionResult(nextResult);
+            setPredictionHistory((prev) => [nextResult, ...prev].slice(0, 5));
+            setPredictionInput("");
+            return;
         }
-    }, [data]);
 
+        const predictedX = inverseRegressionPredictor?.(numericInput);
+        if (!Number.isFinite(predictedX)) {
+            setPredictionResult({ error: "Could not calculate a matching X value for that Y value." });
+            return;
+        }
+
+        const exactMatch = sortedPredictions.find((point) => Math.abs(point[1] - numericInput) < 0.0001);
+        const method = exactMatch ? "exact" : "nearest";
+        const lowerPoint = exactMatch || null;
+        const upperPoint = exactMatch || null;
+        const ratio = 0;
+
+        const nextResult = {
+            runId,
+            inputLabel: "Y",
+            outputLabel: "Estimated X",
+            inputValue: numericInput,
+            outputValue: predictedX,
+            mode: "y-to-x",
+            method,
+            lowerPoint,
+            upperPoint,
+            ratio,
+            equation: method === "exact"
+                ? `x = ${predictedX.toFixed(4)} at y = ${numericInput.toFixed(4)}`
+                : `x is selected from the nearest fitted point`,
+            steps: method === "exact"
+                ? [
+                    `Exact prediction found at y = ${numericInput.toFixed(4)}`,
+                    `Estimated X = ${predictedX.toFixed(4)}`,
+                ]
+                : [
+                    `No bracketing segment matched, so the nearest fitted point was used.`,
+                    `Estimated X = ${predictedX.toFixed(4)}`,
+                ],
+            computedAt: new Date().toISOString(),
+        };
+
+        setPredictionResult(nextResult);
+        setPredictionHistory((prev) => [nextResult, ...prev].slice(0, 5));
+        setPredictionInput("");
+    }, [predictionInput, predictionMode, sortedPredictions, regressionResult, inverseRegressionPredictor]);
     const importCSV = () => {
         setError("");
         if (!csvText.trim()) {
@@ -344,21 +299,24 @@ export const EnhancedDataAnalyzer = () => {
 
     const clearData = async () => {
         if (window.confirm("Clear all data? This will delete your draft from the database.")) {
+            setData([]);
+            setRegressionResult(null);
+            setCsvText("");
+            setError("");
+            setPredictionInput("");
+            setPredictionResult(null);
+                setPredictionHistory([]);
+            setActiveTab("input");
+
             try {
                 if (session) {
                     await dataAPI.deleteDraft();
                 }
 
-                setData([]);
-                setRegressionResult(null);
-                setCsvText("");
-                setError("");
-                setActiveTab("input");
-
                 toast.success("Data cleared");
             } catch (error) {
                 console.error("Failed to clear draft:", error);
-                toast.error("Failed to clear data");
+                toast.warning("Data cleared locally, but the saved draft could not be removed.");
             }
         }
     };
@@ -692,11 +650,101 @@ export const EnhancedDataAnalyzer = () => {
                                 <CardContent>
                                     <div ref={chartContainerRef}>
                                         <UniversalChart
+                                            type="regression"
                                             data={data}
-                                            regressionResult={regressionResult}
+                                            regression={regressionResult}
                                             title={`${regressionResult.modelName} Analysis`}
                                         />
                                     </div>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-2">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Zap className="h-5 w-5" />
+                                        Prediction
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            type="button"
+                                            variant={predictionMode === "x-to-y" ? "default" : "outline"}
+                                            onClick={() => setPredictionMode("x-to-y")}
+                                        >
+                                            X to Y
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={predictionMode === "y-to-x" ? "default" : "outline"}
+                                            onClick={() => setPredictionMode("y-to-x")}
+                                        >
+                                            Y to X
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                                        <Input
+                                            type="number"
+                                            placeholder={predictionMode === "x-to-y" ? "Enter X value" : "Enter Y value"}
+                                            value={predictionInput}
+                                            onChange={(e) => setPredictionInput(e.target.value)}
+                                        />
+                                        <Button onClick={handlePrediction} className="gap-2">
+                                            <Zap className="h-4 w-4" />
+                                            Predict
+                                        </Button>
+                                    </div>
+
+                                    {predictionResult && (
+                                        <div className="space-y-4">
+                                            <div className="rounded-lg border bg-muted/40 p-4 space-y-2">
+                                                {predictionResult.error ? (
+                                                    <p className="text-sm text-destructive">{predictionResult.error}</p>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                                                            {predictionResult.inputLabel} = {predictionResult.inputValue.toFixed(4)}
+                                                        </p>
+                                                        <p className="text-lg font-semibold">
+                                                            {predictionResult.outputLabel}: {predictionResult.outputValue.toFixed(4)}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Method: {predictionResult.method === "interpolated" ? "Interpolated along fitted curve" : predictionResult.method === "exact" ? "Exact fitted value" : "Nearest fitted point"}
+                                                        </p>
+                                                        <p className="text-sm font-medium text-foreground">
+                                                            {predictionResult.equation}
+                                                        </p>
+                                                        <div className="space-y-1 pt-2">
+                                                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Calculation Steps</p>
+                                                            {predictionResult.steps?.map((step, index) => (
+                                                                <p key={`${predictionResult.runId}-step-${index}`} className="text-sm text-muted-foreground">
+                                                                    {index + 1}. {step}
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+
+                                            {predictionHistory.length > 0 && (
+                                                <div className="rounded-lg border p-4 space-y-3">
+                                                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Recent Predictions</p>
+                                                    <div className="space-y-3">
+                                                        {predictionHistory.map((item) => (
+                                                            <div key={item.runId} className="rounded-md bg-muted/30 p-3 space-y-1">
+                                                                <p className="text-sm font-medium">
+                                                                    {item.inputLabel} {item.inputValue.toFixed(4)} → {item.outputLabel} {item.outputValue.toFixed(4)}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">{item.equation}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </>

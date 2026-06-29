@@ -11,6 +11,37 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
     const chartContainerRef = useRef(null);
     const { theme } = useTheme();
 
+    const regressionPredictor = useMemo(() => {
+        if (typeof regression?.predict === 'function') {
+            return regression.predict;
+        }
+
+        const predictions = Array.isArray(regression?.predictions) ? regression.predictions : [];
+        if (predictions.length === 0) {
+            return null;
+        }
+
+        const sortedPredictions = [...predictions].sort((a, b) => a[0] - b[0]);
+
+        return (x) => {
+            const exact = sortedPredictions.find((point) => Math.abs(point[0] - x) < 0.0001);
+            if (exact) return exact[1];
+
+            for (let index = 0; index < sortedPredictions.length - 1; index += 1) {
+                const current = sortedPredictions[index];
+                const next = sortedPredictions[index + 1];
+
+                if (x >= current[0] && x <= next[0]) {
+                    const ratio = (x - current[0]) / (next[0] - current[0]);
+                    return current[1] + ratio * (next[1] - current[1]);
+                }
+            }
+
+            if (x < sortedPredictions[0][0]) return sortedPredictions[0][1];
+            return sortedPredictions[sortedPredictions.length - 1][1];
+        };
+    }, [regression]);
+
     const handleExportSVG = useCallback(() => {
         const el = chartContainerRef.current;
         if (!el) return;
@@ -31,15 +62,16 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         const sortedData = [...data].sort((a, b) => a.x - b.x);
         const minX = Math.min(...sortedData.map(d => d.x));
         const maxX = Math.max(...sortedData.map(d => d.x));
+        const rangeX = maxX - minX || 1;
+        const plotMinX = minX - rangeX * 0.1;
+        const plotMaxX = maxX + rangeX * 0.1;
 
         const regressionPoints = [];
-        if (regression) {
-            // Reduced from 100 to 50 points for better performance
-            const step = (maxX - minX) / 50;
-            for (let x = minX; x <= maxX; x += step) {
+        if (regressionPredictor) {
+            const step = (plotMaxX - plotMinX) / 200;
+            for (let x = plotMinX; x <= plotMaxX; x += step) {
                 try {
-                    // Assuming regression object has predict method
-                    const y = regression.predict(x);
+                    const y = regressionPredictor(x);
                     if (isFinite(y)) {
                         regressionPoints.push({ x, regressionY: y });
                     }
@@ -62,7 +94,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
             combined.push({
                 x: point.x,
                 y: point.y,
-                regressionY: regression ? regression.predict(point.x) : undefined
+                regressionY: regressionPredictor ? regressionPredictor(point.x) : undefined
             });
         });
 
@@ -78,7 +110,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         });
 
         return combined.sort((a, b) => a.x - b.x);
-    }, [data, regression]);
+    }, [data, regressionPredictor]);
 
     const formatTooltip = (value, name) => {
         if (typeof value === 'number') {
@@ -153,19 +185,20 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                             <Line
                                 type="monotone"
                                 dataKey="y"
-                                stroke="hsl(var(--chart-primary))"
-                                strokeWidth={2}
-                                dot={{ fill: 'hsl(var(--chart-primary))', r: 4 }}
-                                name="Data"
+                                stroke="transparent"
+                                strokeWidth={0}
+                                dot={{ fill: 'hsl(var(--chart-primary))', r: 5 }}
+                                activeDot={{ r: 6 }}
+                                name="Data Points"
                                 connectNulls={false}
                             />
 
-                            {regression && (
+                            {regressionPredictor && (
                                 <Line
                                     type="monotone"
                                     dataKey="regressionY"
                                     stroke="hsl(var(--chart-secondary))"
-                                    strokeWidth={2}
+                                    strokeWidth={3}
                                     dot={false}
                                     name="Fit"
                                     connectNulls={true}
