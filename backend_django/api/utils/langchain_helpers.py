@@ -3,7 +3,6 @@ LangChain Integration - Structured LLM interactions for data queries
 """
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains import LLMChain
 import os
 import pandas as pd
 from typing import Dict, Any
