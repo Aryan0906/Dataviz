@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { StorytellingProvider } from "@/context/StorytellingContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { lazy, Suspense } from "react";
 import { Loader } from "lucide-react";
@@ -40,8 +41,9 @@ const LoadingFallback = () => (
 const App = () => (
     <AuthProvider>
         <BrowserRouter>
-            <StorytellingProvider>
-                <TooltipProvider>
+            <ThemeProvider>
+                <StorytellingProvider>
+                    <TooltipProvider>
                     <Toaster />
                     <Sonner />
                     <Suspense fallback={<LoadingFallback />}>
