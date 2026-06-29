@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useCallback } from "react";
+import ChartSuggestionChip from "@/components/ChartSuggestionChip";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HCHeatmap from "highcharts/modules/heatmap";
@@ -279,6 +280,27 @@ export const CategoricalChatPanel = () => {
 
     // Manual entry state
     const [newLabel, setNewLabel] = useState("");
+    const [chartRecommendation, setChartRecommendation] = useState(null);
+
+    const requestChartRecommendation = async (file) => {
+        const form = new FormData();
+        form.append('file', file);
+        try {
+            const response = await fetch('/api/upload_csv', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: form,
+            });
+            const data = await response.json();
+            if (data.chart_recommendation) {
+                setChartRecommendation(data.chart_recommendation);
+            }
+        } catch (err) {
+            console.error('Chart recommendation error:', err);
+        }
+    };
     const [newValue, setNewValue] = useState("");
     const fileInputRef = useRef(null);
     const chartContainerRef = useRef(null);

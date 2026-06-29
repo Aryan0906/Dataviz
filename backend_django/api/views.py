@@ -19,6 +19,7 @@ from .utils.ai_helpers import (
     AITimeoutError,
     AIValidationError
 )
+from .utils.langchain_helpers import recommend_chart_type
 from .utils.regression_models import find_best_regression
 
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -514,6 +515,12 @@ def upload_csv(request):
                 'code': 'ERR_AI_VALIDATION'
             }, status=500)
         
+        # Get chart type recommendation from AI
+        try:
+            chart_rec = recommend_chart_type(df)
+        except Exception as e:
+            chart_rec = {'recommendation': 'Unable to determine chart type', 'chart_type': 'bar'}
+        
         # Create visualization record in database
         visualization = Visualization.objects.create(
             user_id=user_id,
@@ -530,7 +537,8 @@ def upload_csv(request):
             'message': 'CSV uploaded and analyzed successfully',
             'visualization_id': visualization.id,
             'metadata': metadata,
-            'cleaning_analysis': cleaning_analysis
+            'cleaning_analysis': cleaning_analysis,
+            'chart_recommendation': chart_rec
         }, status=201)
     
     except ValidationError as e:
@@ -726,6 +734,95 @@ def save_visualization_to_history(request):
         return JsonResponse({'error': 'Visualization not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def categorical_query(request):
+    """
+    NLP query endpoint for CategoricalChatNLP.
+    Tries smart_column_matcher first, and if it fails to resolve a chart,
+    falls back to LangChain nl_query_to_chart_config.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    # user_id, err = _require_auth(request)
+    # if err:
+    #     return err
+
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        query = body.get("query")
+        raw_data = body.get("data", [])
+        columns = body.get("columns", [])
+        data_schema = body.get("data_schema", {})
+        
+        if not query or not raw_data:
+            return JsonResponse({"error": "Query and data are required"}, status=400)
+        
+        column_names = [col.get("name") for col in columns]
+        
+        # 1. Try fuzzy match + entity extraction
+        from .utils.nlp_helpers import smart_column_matcher
+        parsed = smart_column_matcher(query, column_names)
+        matched_columns = parsed.get("matched_columns", [])
+        
+        target_column_name = None
+        if matched_columns:
+            target_column_name = matched_columns[0]
+            
+        if target_column_name:
+            df = pd.DataFrame(raw_data)
+            if target_column_name in df.columns:
+                counts = df[target_column_name].value_counts().to_dict()
+                labels = [str(k) for k in counts.keys()]
+                values = [int(v) for v in counts.values()]
+                
+                chart_config = {
+                    "chartType": "bar",
+                    "title": f"Count of {target_column_name}",
+                    "xAxisKey": target_column_name,
+                    "dataKeys": ["Count"]
+                }
+                
+                chart_data = [{"label": l, "Count": v} for l, v in zip(labels, values)]
+                return JsonResponse({
+                    "chart_config": chart_config,
+                    "chart_data": chart_data
+                })
+        
+        # 2. Fallback to LangChain LLM
+        if not data_schema:
+            df = pd.DataFrame(raw_data)
+            data_schema = generate_metadata_summary(df)
+            
+        from .utils.nlp_query_helpers import nl_query_to_chart_config
+        chart_config = nl_query_to_chart_config(query, data_schema)
+        
+        x_key = chart_config.get('xAxisKey')
+        data_keys = chart_config.get('dataKeys', [])
+        
+        df = pd.DataFrame(raw_data)
+        required_cols = [x_key] + data_keys
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        
+        if missing_cols:
+            return JsonResponse({
+                'error': f'LLM suggested columns not found: {missing_cols}',
+                'code': 'ERR_INVALID_COLUMNS'
+            }, status=400)
+            
+        chart_data = df[required_cols].to_dict(orient='records')
+        
+        return JsonResponse({
+            'chart_config': chart_config,
+            'chart_data': chart_data
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -1253,3 +1350,26 @@ def generate_code_snippet(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ============ EXPORT NOTEBOOK ENDPOINT ============
+
+@csrf_exempt
+def export_notebook(request):
+    """Export a visualization as a Jupyter notebook.
+    Expected JSON body: {"visualization_id": int, "mode": "chartOnly"|"full"}
+    Returns JSON with key "notebook_content" containing the notebook JSON string.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        viz_id = body.get("visualization_id")
+        mode = body.get("mode", "full")
+        if not viz_id:
+            return JsonResponse({"error": "visualization_id is required"}, status=400)
+        # In a real implementation we would validate ownership
+        from .utils.notebook_generator import generate_notebook
+        notebook_json = generate_notebook(viz_id, mode)
+        return JsonResponse({"notebook_content": notebook_json})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

@@ -83,12 +83,27 @@ const CategoricalChatNLP = () => {
         setChatHistory(prev => [...prev, { type: 'user', message: chatInput }]);
 
         try {
-            const response = await dataAPI.nlpQuery(chatInput, categoricalData, columns);
+            // Using the new categoricalQuery endpoint with LLM fallback
+            const response = await dataAPI.categoricalQuery(
+                chatInput, 
+                categoricalData, 
+                columns
+            );
 
             // Update visualization
-            setChartData(response.chart);
-            setChartTitle(response.chart.title || chatInput);
-            setInsights(response.insights);
+            setChartData(response.chart_data || response.chart); // Handling both new and old format if any
+            if (response.chart_config) {
+                setChartType(response.chart_config.chartType || "bar");
+                setChartTitle(response.chart_config.title || chatInput);
+            } else if (response.chart) {
+                setChartTitle(response.chart.title || chatInput);
+            }
+            
+            // New endpoint might not return full insights yet, handle gracefully
+            if (response.insights) {
+                setInsights(response.insights);
+            }
+
             setFilteredData(response.table_data || categoricalData);
 
             // Add system response to chat
@@ -96,19 +111,20 @@ const CategoricalChatNLP = () => {
                 ...prev,
                 {
                     type: 'system',
-                    message: response.insights.summary || "Chart generated successfully"
+                    message: response.insights?.summary || "Chart generated successfully based on your query."
                 }
             ]);
 
             setChatInput("");
             toast.success("Query processed successfully");
         } catch (_err) {
+            console.error(_err);
             toast.error("Failed to process query");
             setChatHistory(prev => [
                 ...prev,
                 {
                     type: 'error',
-                    message: "I couldn't understand that query. Try asking 'Show count by [Column Name]'"
+                    message: "I couldn't understand that query or generate a valid chart. Try asking 'Show count by [Column Name]'"
                 }
             ]);
         } finally {
