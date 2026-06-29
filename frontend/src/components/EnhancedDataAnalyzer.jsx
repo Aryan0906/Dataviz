@@ -8,7 +8,96 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import {
+    Upload,
+    Plus,
+    Save,
+    AlertCircle,
+    FileUp,
+    RefreshCw,
+    Download,
+    FileImage,
+    FileText,
+    TrendingUp,
+    Database,
+    Sparkles,
+    BarChart3,
+    Grid3x3,
+    Trash2,
+    PlayCircle,
+    CheckCircle2
+} from "lucide-react";
 import { toast } from "sonner";
+import { DataTable } from "./DataTable";
+import { dataAPI } from "@/lib/api";
+import { debounce } from "@/utils/debounce";
+import Papa from "papaparse";
+import { UniversalChart } from "./UniversalChart";
+import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ExportCodeButton from "./ExportCodeButton";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+
+export const EnhancedDataAnalyzer = () => {
+    const [_searchParams] = useSearchParams();
+    const { session } = useAuth();
+    const _navigate = useNavigate();
+    const fileInputRef = useRef(null);
+
+    // State initialization
+    const [data, setData] = useState([]);
+    const [regressionResult, setRegressionResult] = useState(null);
+    const [xValue, setXValue] = useState("");
+    const [yValue, setYValue] = useState("");
+    const [csvText, setCsvText] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [regressionType, setRegressionType] = useState("linear");
+    const [polynomialDegree, setPolynomialDegree] = useState(2);
+    const [activeTab, setActiveTab] = useState("input");
+
+    const chartContainerRef = useRef(null);
+
+    // Export theme dialog state
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [exportFormat, setExportFormat] = useState("png");
+    const [exportTheme, setExportTheme] = useState("light");
+
+    // Prepare state for session persistence
+    const sessionState = useMemo(() => ({
+        data,
+        regressionResult,
+        regressionType,
+        polynomialDegree,
+    }), [data, regressionResult, regressionType, polynomialDegree]);
+
+    // Restore state callback
+    const restoreState = useCallback((savedState) => {
+        if (savedState.data) setData(savedState.data);
+        if (savedState.regressionResult) setRegressionResult(savedState.regressionResult);
+        if (savedState.regressionType) setRegressionType(savedState.regressionType);
+        if (savedState.polynomialDegree) setPolynomialDegree(savedState.polynomialDegree);
+    }, []);
+
+    // Enable auto-save and restoration
+    const { saveNow: _saveNow } = usePageSession('regression', sessionState, restoreState);
+
+    // Enable history tracking
+    const { logCreate: _logCreate, logUpdate: _logUpdate, logExport } = useHistoryLogger('regression');
+
+    // Load draft from Supabase on mount
+    useEffect(() => {
+        const loadDraft = async () => {
+            if (!session) return;
 
 const EnhancedDataAnalyzer = () => {
     const inverseRegressionPredictor = useMemo(() => {
@@ -35,12 +124,10 @@ const EnhancedDataAnalyzer = () => {
                     continue;
                 }
 
-                const ratio = (targetY - y1) / (y2 - y1);
-                const x = x1 + ratio * (x2 - x1);
-                if (Number.isFinite(x)) {
-                    candidates.push(x);
-                }
-            }
+    // Auto-save to Supabase with debounce
+    const debouncedSave = useMemo(
+        () => debounce(async (draftData) => {
+            if (!session) return;
 
             if (candidates.length > 0) {
                 return candidates[0];

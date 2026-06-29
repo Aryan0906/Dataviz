@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
     Plus,
-    Trash2,
     BookOpen,
     TrendingUp,
     Trophy,
@@ -12,10 +11,7 @@ import {
     ArrowRight,
     Sparkles,
     Target,
-    Award,
     Brain,
-    BarChart3,
-    FileText,
     Play,
     Edit,
     ChevronRight

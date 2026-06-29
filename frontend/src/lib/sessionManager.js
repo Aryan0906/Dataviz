@@ -93,6 +93,11 @@ export const restorePageSession = async (pageType) => {
         }
         
         const data = await response.json();
+        if (data.not_found || data.error === 'Session not found') {
+            console.log('[SessionManager] No saved session found');
+            return null;
+        }
+        
         console.log('[SessionManager] Restore successful:', data);
         return data.state_data;
     } catch (error) {

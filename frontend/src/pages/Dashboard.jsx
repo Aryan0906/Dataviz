@@ -20,7 +20,6 @@ import {
 import { toast } from "sonner";
 
 import AppLayout from "@/components/AppLayout";
-import InfoTooltip from "@/components/InfoTooltip";
 import ProgressTracker from "@/components/ProgressTracker";
 import PageTransition from "@/components/PageTransition";
 import { useAuth } from "@/context/AuthContext";
@@ -38,7 +37,7 @@ const Dashboard = () => {
     const { session, user } = useAuth();
     const navigate = useNavigate();
     const { unlockAchievement } = useStorytelling();
-    const [loading, setLoading] = useState(true);
+    const [_loading, setLoading] = useState(true);
     const [analyses, setAnalyses] = useState([]);
     const [draft, setDraft] = useState(null);
     const [savedSessions, setSavedSessions] = useState([]);

@@ -3,21 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import {
     Plus,
     Trash2,
-    Edit,
     LineChart,
     Activity,
-    Sparkles,
     TrendingUp,
     Upload,
-    Clock,
     BarChart3,
     Zap,
-    Rocket,
     ArrowRight,
     Database,
     FileText,
     Brain,
-    ChevronRight,
     Play,
     FolderOpen,
     Star,
@@ -31,10 +26,6 @@ import { useAuth } from "@/context/AuthContext";
 import { dataAPI } from "@/lib/api";
 import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
 
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /* ── Animation Variants ── */

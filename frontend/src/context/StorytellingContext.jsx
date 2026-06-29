@@ -10,12 +10,12 @@ const StorytellingContext = createContext({
     achievements: [],
     visitedPages: [],
     userPreferences: {},
-    markPageVisited: () => {},
-    unlockAchievement: () => {},
+    markPageVisited: () => { },
+    unlockAchievement: () => { },
     getNextSuggestedPage: () => null,
     getContextualHint: () => null,
-    updatePreference: () => {},
-    resetJourney: () => {},
+    updatePreference: () => { },
+    resetJourney: () => { },
 });
 
 // Define the ideal user journey flow
@@ -79,33 +79,33 @@ const getPageHints = (pathname, visitedPages, achievements) => {
     };
 
     const pageHints = hints[pathname] || { general: "Explore and discover new insights!" };
-    
+
     // Determine which hint to show
     const isFirstVisit = !visitedPages.includes(pathname);
     if (isFirstVisit && pageHints.firstVisit) return pageHints.firstVisit;
-    
+
     // Context-specific hints based on achievements
     if (pageHints.noData && achievements.length === 0) return pageHints.noData;
     if (pageHints.hasData && achievements.some(a => a.id === 'first-analysis')) return pageHints.hasData;
-    
+
     return pageHints.general;
 };
 
 export const StorytellingProvider = ({ children }) => {
     const location = useLocation();
-    const navigate = useNavigate();
-    
+    const _navigate = useNavigate();
+
     // Load state from localStorage
     const [visitedPages, setVisitedPages] = useState(() => {
         const saved = localStorage.getItem('storytelling_visited_pages');
         return saved ? JSON.parse(saved) : [];
     });
-    
+
     const [achievements, setAchievements] = useState(() => {
         const saved = localStorage.getItem('storytelling_achievements');
         return saved ? JSON.parse(saved) : [];
     });
-    
+
     const [userPreferences, setUserPreferences] = useState(() => {
         const saved = localStorage.getItem('storytelling_preferences');
         return saved ? JSON.parse(saved) : {
@@ -119,39 +119,23 @@ export const StorytellingProvider = ({ children }) => {
 
     // Calculate journey progress
     const journeyProgress = (visitedPages.length / JOURNEY_FLOW.length) * 100;
-    
+
     // Find current step in journey
-    const currentStepIndex = JOURNEY_FLOW.findIndex(step => 
+    const currentStepIndex = JOURNEY_FLOW.findIndex(step =>
         location.pathname.startsWith(step.path)
     );
-    
-    // Mark page as visited
-    const markPageVisited = useCallback((path) => {
-        setVisitedPages(prev => {
-            if (prev.includes(path)) return prev;
-            const updated = [...prev, path];
-            localStorage.setItem('storytelling_visited_pages', JSON.stringify(updated));
-            
-            // Check for explorer achievement
-            if (updated.length >= JOURNEY_FLOW.length - 2) {
-                unlockAchievement('explorer');
-            }
-            
-            return updated;
-        });
-    }, []);
 
     // Unlock achievement
     const unlockAchievement = useCallback((achievementId) => {
         setAchievements(prev => {
             if (prev.some(a => a.id === achievementId)) return prev;
-            
+
             const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
             if (!achievement) return prev;
-            
+
             const updated = [...prev, { ...achievement, unlockedAt: new Date().toISOString() }];
             localStorage.setItem('storytelling_achievements', JSON.stringify(updated));
-            
+
             // Celebrate achievement
             if (userPreferences.celebrateAchievements) {
                 toast.success(
@@ -165,7 +149,7 @@ export const StorytellingProvider = ({ children }) => {
                     </div>,
                     { duration: 4000 }
                 );
-                
+
                 // Confetti for major achievements
                 if (achievement.points >= 40) {
                     confetti({
@@ -175,20 +159,36 @@ export const StorytellingProvider = ({ children }) => {
                     });
                 }
             }
-            
+
             return updated;
         });
     }, [userPreferences.celebrateAchievements]);
 
+    // Mark page as visited
+    const markPageVisited = useCallback((path) => {
+        setVisitedPages(prev => {
+            if (prev.includes(path)) return prev;
+            const updated = [...prev, path];
+            localStorage.setItem('storytelling_visited_pages', JSON.stringify(updated));
+
+            // Check for explorer achievement
+            if (updated.length >= JOURNEY_FLOW.length - 2) {
+                unlockAchievement('explorer');
+            }
+
+            return updated;
+        });
+    }, [unlockAchievement]);
+
     // Get next suggested page based on user journey
     const getNextSuggestedPage = useCallback(() => {
         const unvisitedPages = JOURNEY_FLOW.filter(step => !visitedPages.includes(step.path));
-        
+
         if (unvisitedPages.length === 0) {
             // All pages visited, suggest most relevant
             return JOURNEY_FLOW.find(step => step.category === 'analysis');
         }
-        
+
         // Suggest next in the flow
         const currentIndex = JOURNEY_FLOW.findIndex(step => location.pathname.startsWith(step.path));
         if (currentIndex !== -1 && currentIndex < JOURNEY_FLOW.length - 1) {
@@ -197,7 +197,7 @@ export const StorytellingProvider = ({ children }) => {
                 return nextStep;
             }
         }
-        
+
         // Return first unvisited
         return unvisitedPages[0];
     }, [visitedPages, location.pathname]);
@@ -230,7 +230,7 @@ export const StorytellingProvider = ({ children }) => {
     useEffect(() => {
         const currentPath = location.pathname;
         markPageVisited(currentPath);
-        
+
         // First visit to dashboard after auth
         if (currentPath === '/dashboard' && firstVisit) {
             setFirstVisit(false);

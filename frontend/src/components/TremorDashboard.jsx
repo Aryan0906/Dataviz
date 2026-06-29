@@ -1,5 +1,5 @@
 import { Card, Metric, Text, Flex, ProgressBar, BadgeDelta, DonutChart, BarList } from '@tremor/react';
-import { Activity, TrendingUp, Database, Clock } from 'lucide-react';
+import { Activity, Clock } from 'lucide-react';
 
 /**
  * Tremor Dashboard Components
@@ -46,7 +46,7 @@ export const DataQualityCard = ({ dataPoints, missingValues, validationScore }) 
 
 export const ChartTypeDistribution = ({ data }) => {
     // data = [{ name: 'Bar Chart', value: 45 }, { name: 'Line Chart', value: 30 }, ...]
-    
+
     return (
         <Card>
             <Text>Chart Type Usage</Text>
@@ -64,7 +64,7 @@ export const ChartTypeDistribution = ({ data }) => {
 
 export const TopAnalysesCard = ({ analyses }) => {
     // analyses = [{ name: 'Sales Analysis', value: 1200 }, ...]
-    
+
     return (
         <Card>
             <Text>Most Viewed Analyses</Text>

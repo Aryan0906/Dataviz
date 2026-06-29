@@ -7,10 +7,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Card, CardContent } from "@/components/ui/card";
 import {
-    PartyPopper,
     TrendingUp,
     Sparkles,
     Star,

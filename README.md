@@ -26,13 +26,6 @@ A full-stack data visualization and analysis platform built with React, Django, 
 - **Interactive Visualizations**: Hover tooltips, zoom, pan, and drill-down capabilities
 - **Code Generation**: Export analysis as Python scripts for reproducibility
 
-### Technical Features
-- **Session Persistence**: Auto-save functionality with real-time state management
-- **Theme Support**: Complete dark/light mode with theme-aware exports
-- **Responsive Design**: Mobile, tablet, and desktop optimized UI
-- **Fast Processing**: Efficient data handling and visualization rendering
-- **Reusable Components**: Standardized export buttons and modals across all pages
-
 ## Technology Stack
 
 ### Backend
@@ -63,10 +56,6 @@ A full-stack data visualization and analysis platform built with React, Django, 
 | Git | 2.30.0 | `git --version` |
 | pip | 23.0.0 | `pip --version` |
 
-### Optional
-- PostgreSQL 15+ (for production deployment)
-- Docker (for containerized deployment)
-
 ## Quick Start
 
 ### Windows
@@ -79,31 +68,6 @@ start-dev.bat
 chmod +x start-dev.sh
 ./start-dev.sh
 ```
-
-The startup script will automatically:
-- Create Python virtual environment
-- Install backend dependencies
-- Run database migrations
-- Start Django server on port 8000
-- Install frontend dependencies
-- Start Vite dev server on port 5173
-- Open browser to application
-
-First-time setup takes approximately 3-5 minutes. Subsequent starts take ~10 seconds.
-
-## Manual Setup
-
-### Backend (Django)
-
-```bash
-# Create and activate virtual environment
-python -m venv venv
-
-# Windows
-.\venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
 
 # Install dependencies
 pip install -r backend_django/requirements.txt
@@ -136,32 +100,14 @@ Frontend will be available at: `http://localhost:5173`
 
 ### Backend Environment Variables
 
-Create `backend_django/.env`:
 
 ```env
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/db
 
-# Django
-DJANGO_SECRET_KEY=your-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# JWT
-JWT_SECRET=your-jwt-secret
-JWT_EXP_HOURS=24
-
-# Supabase
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_KEY=your-supabase-key
-SUPABASE_JWT_SECRET=your-jwt-secret
-
 # Frontend
 FRONTEND_URL=http://localhost:5173
 
-# OpenAI (Optional)
-OPENAI_API_KEY=sk-...
-```
 
 ### Frontend Environment Variables
 
@@ -171,14 +117,7 @@ Create `frontend/.env`:
 # Backend API
 VITE_API_URL=http://localhost:8000/api
 
-# Supabase
-VITE_SUPABASE_URL=https://xxx.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
 
-# Feature Flags
-VITE_ENABLE_AI=true
-VITE_ENABLE_EXPORT=true
-```
 
 ## Regression Models
 
@@ -312,71 +251,7 @@ Dataviz/
 ├── start-dev.sh
 ├── .gitignore
 └── README.md
-```
 
-## Testing
-
-```bash
-# Backend tests
-cd backend_django
-python manage.py test
-
-# Frontend tests
-cd frontend
-npm run test
-
-# Linting
-npm run lint
-```
-
-## Deployment
-
-### Docker Deployment
-
-```bash
-# Build and run
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
-### Production Checklist
-
-- [ ] Set `DEBUG=False` in Django settings
-- [ ] Configure `ALLOWED_HOSTS` with production domain
-- [ ] Update `CSRF_TRUSTED_ORIGINS` with production URLs
-- [ ] Set environment variables securely
-- [ ] Enable HTTPS/SSL (`SECURE_SSL_REDIRECT=True`)
-- [ ] Update `VITE_API_URL` to production backend
-- [ ] Configure CORS with specific origins
-- [ ] Set up database backups
-- [ ] Configure error monitoring
-- [ ] Run security audits (`pip-audit`, `npm audit`)
-- [ ] Generate strong `SECRET_KEY` and `JWT_SECRET`
-- [ ] Run `collectstatic` for Django static files
-- [ ] Set up CDN for media files
-- [ ] Enable rate limiting on API endpoints
-
-## Troubleshooting
-
-### Port Already in Use
-
-```bash
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-
-# macOS/Linux
-lsof -ti:8000 | xargs kill -9
-```
-
-### Module Not Found Errors
-
-```bash
 # Backend
 pip install -r backend_django/requirements.txt
 
@@ -384,33 +259,12 @@ pip install -r backend_django/requirements.txt
 cd frontend && npm install
 ```
 
-### Database Migration Errors
-
-```bash
-# Reset database (development only)
-rm backend_django/db.sqlite3
-python backend_django/manage.py migrate
-```
-
-## Contributing
-
-Contributions are welcome. Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -m 'Add YourFeature'`)
-4. Push to the branch (`git push origin feature/YourFeature`)
-5. Open a Pull Request
-
 ### Code Style
 
 - JavaScript/TypeScript: Follow ESLint configuration
 - Python: Follow PEP 8 guidelines
 - CSS: Use Tailwind utility classes
 
-## License
-
-Distributed under the MIT License. See LICENSE for more information.
 
 ## Support
 

@@ -1,8 +1,9 @@
-import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HCHeatmap from "highcharts/modules/heatmap";
 import HCExporting from "highcharts/modules/exporting";
+import HCAccessibility from "highcharts/modules/accessibility";
 import AppLayout from "@/components/AppLayout";
 import { useTheme } from "@/components/theme-provider";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
@@ -33,10 +34,9 @@ import {
     Database,
     TrendingUp,
     TrendingDown,
-    AlertTriangle,
     Search,
     Send,
-    Code2,
+    Edit3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -55,6 +55,7 @@ import {
 
 HCHeatmap(Highcharts);
 HCExporting(Highcharts);
+HCAccessibility(Highcharts);
 
 const INITIAL_DATA = [
     { label: "Apples", value: 32 },
@@ -327,7 +328,7 @@ export const CategoricalChatPanel = () => {
     const { saveNow } = usePageSession('categorical', sessionState, restoreState);
 
     // Enable history tracking
-    const { logCreate, logUpdate, logExport } = useHistoryLogger('categorical');
+    const { logCreate, _logUpdate, logExport } = useHistoryLogger('categorical');
 
     const stats = useMemo(() => computeStats(data), [data]);
     const histogram = useMemo(() => buildHistogram(data), [data]);
@@ -572,7 +573,7 @@ export const CategoricalChatPanel = () => {
         }
     };
 
-    const handleManualAdd = () => {
+    const _handleManualAdd = () => {
         const trimmedLabel = newLabel.trim();
         const numeric = parseFloat(newValue);
 

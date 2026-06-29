@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BarChart3, Github, Twitter, Linkedin, Mail } from "lucide-react";
 
-const LandingFooter = ({ variant = "dark" }) => {
+const LandingFooter = ({ variant: _variant = "dark" }) => {
     const footerSections = [
         {
             title: "Product",

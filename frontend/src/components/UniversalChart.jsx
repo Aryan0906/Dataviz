@@ -25,10 +25,6 @@ export const UniversalChart = forwardRef(
             });
         }, [theme, type]);
 
-        if (type === 'regression') {
-            return <DataPlot ref={ref} data={data} regression={regression} />;
-        }
-
         // Support both old format (categories array) and new format (data object with labels/datasets)
         const barData = useMemo(() => {
             if (data?.labels && data?.datasets) {
@@ -64,6 +60,10 @@ export const UniversalChart = forwardRef(
             }
             return categories.map(c => ({ name: c.label, size: c.value }));
         }, [data, categories]);
+
+        if (type === 'regression') {
+            return <DataPlot ref={ref} data={data} regression={regression} />;
+        }
 
         const COLORS = [
             '#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a4de6c',

@@ -8,28 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-    Upload, 
-    Plus, 
-    Zap, 
-    Save, 
-    AlertCircle, 
-    FileUp, 
-    ArrowRight, 
-    Moon, 
-    Sun, 
+import {
+    Upload,
+    Plus,
+    Zap,
+    Save,
+    AlertCircle,
+    FileUp,
+    Moon,
+    Sun,
     RefreshCw,
-    Download, 
-    FileImage, 
-    FileText,
-    Code2
+    Download,
+    FileImage,
+    FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
-import regression from "regression";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ExportCodeButton from "./ExportCodeButton";
@@ -48,7 +45,7 @@ export const DataAnalyzer = () => {
     const [searchParams] = useSearchParams();
     const { session } = useAuth();
     const { unlockAchievement } = useStorytelling();
-    const navigate = useNavigate();
+    const _navigate = useNavigate();
     const fileInputRef = useRef(null);
 
     // State initialization - will be loaded from Supabase
@@ -87,9 +84,9 @@ export const DataAnalyzer = () => {
 
     // Enable auto-save and restoration
     const { saveNow } = usePageSession('regression', sessionState, restoreState);
-    
+
     // Enable history tracking
-    const { logCreate, logUpdate, logExport } = useHistoryLogger('regression');
+    const { logCreate: _logCreate, logUpdate: _logUpdate, logExport } = useHistoryLogger('regression');
 
     // Load draft from Supabase on mount
     useEffect(() => {
@@ -112,8 +109,8 @@ export const DataAnalyzer = () => {
     }, [session]);
 
     // Auto-save to Supabase with debounce (2 seconds after last change)
-    const debouncedSave = useCallback(
-        debounce(async (draftData) => {
+    const debouncedSave = useMemo(
+        () => debounce(async (draftData) => {
             if (!session) return;
 
             try {
@@ -171,13 +168,13 @@ export const DataAnalyzer = () => {
         }
 
         setLoading(true);
-        
+
         // Auto-scroll to chart after analysis
         setTimeout(() => {
             if (chartContainerRef.current) {
-                chartContainerRef.current.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
+                chartContainerRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
             }
         }, 100);
@@ -185,7 +182,7 @@ export const DataAnalyzer = () => {
         try {
             // Call backend API for comprehensive regression analysis
             const result = await dataAPI.analyze(data);
-            
+
             if (!result) {
                 setError("Failed to analyze data");
                 return;
@@ -216,14 +213,14 @@ export const DataAnalyzer = () => {
                     // Linear interpolation from predictions
                     const predictions = result.predictions || [];
                     if (predictions.length === 0) return null;
-                    
+
                     // Find closest prediction or interpolate
                     const sorted = predictions.sort((a, b) => a[0] - b[0]);
-                    
+
                     // Exact match
                     const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
                     if (exact) return exact[1];
-                    
+
                     // Interpolate
                     for (let i = 0; i < sorted.length - 1; i++) {
                         if (x >= sorted[i][0] && x <= sorted[i + 1][0]) {
@@ -231,7 +228,7 @@ export const DataAnalyzer = () => {
                             return sorted[i][1] + t * (sorted[i + 1][1] - sorted[i][1]);
                         }
                     }
-                    
+
                     // Extrapolate
                     if (x < sorted[0][0]) return sorted[0][1];
                     return sorted[sorted.length - 1][1];
@@ -246,7 +243,7 @@ export const DataAnalyzer = () => {
                 adjustedR2: result.adjusted_r2,
                 modelName: result.model_name
             });
-            
+
             toast.success(`Analysis complete! Best model: ${result.model_name}`);
         } catch (error) {
             console.error("Analysis error:", error);
@@ -407,7 +404,7 @@ export const DataAnalyzer = () => {
 
             // Unlock achievements
             unlockAchievement('first-save');
-            
+
             toast.success("Analysis saved successfully");
         } catch (_err) {
             toast.error("Failed to save analysis");
@@ -416,7 +413,7 @@ export const DataAnalyzer = () => {
         }
     };
 
-    const clearData = async () => {
+    const _clearData = async () => {
         if (window.confirm("Clear all data? This will delete your draft from the database.")) {
             try {
                 // Delete draft from Supabase
@@ -474,7 +471,7 @@ export const DataAnalyzer = () => {
             } else {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
-            
+
             // Log export to history
             logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
                 format: exportFormat,
@@ -482,7 +479,7 @@ export const DataAnalyzer = () => {
                 filename,
                 regressionType: regressionResult?.type,
             });
-            
+
             // Track exports for achievement
             const exportCount = parseInt(localStorage.getItem('export_count') || '0') + 1;
             localStorage.setItem('export_count', exportCount.toString());
@@ -684,7 +681,7 @@ export const DataAnalyzer = () => {
                         <RefreshCw className="h-4 w-4" />
                         Save Session
                     </Button>
-                    
+
                     {data.length >= 2 && (
                         <>
                             <Button
@@ -707,7 +704,7 @@ export const DataAnalyzer = () => {
                             />
                         </>
                     )}
-                    
+
                     <Button onClick={clearAll} variant="outline" size="sm" className="gap-2 ml-auto">
                         <RefreshCw className="h-4 w-4" />
                         Clear All

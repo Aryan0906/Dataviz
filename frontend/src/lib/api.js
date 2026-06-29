@@ -3,26 +3,9 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-// Session cache to avoid repeated getSession() calls
-let cachedSession = null;
-let sessionExpiry = 0;
-
 // Helper to get auth headers with Supabase access token
 const getAuthHeaders = async () => {
-    const now = Date.now();
-
-    // Return cached session if still valid (cached for 1 minute)
-    if (cachedSession && now < sessionExpiry) {
-        return {
-            'Authorization': `Bearer ${cachedSession.access_token}`,
-            'Content-Type': 'application/json',
-        };
-    }
-
-    // Fetch new session and cache it
     const { data: { session } } = await supabase.auth.getSession();
-    cachedSession = session;
-    sessionExpiry = now + 60000; // Cache for 1 minute
 
     return {
         'Authorization': `Bearer ${session?.access_token || ''}`,
@@ -65,10 +48,11 @@ export const dataAPI = {
             headers
         });
         if (!response.ok) {
+            if (response.status === 401 || response.status === 404) return [];
             throw new Error('Failed to fetch analyses');
         }
         const data = await response.json();
-        return data.analyses;
+        return data.analyses || [];
     },
 
     getAnalysis: async (id) => {
@@ -109,7 +93,10 @@ export const dataAPI = {
     async getDraft() {
         const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE_URL}/data/draft/get`, { headers });
-        if (!res.ok) throw new Error(`Failed to get draft: ${res.statusText}`);
+        if (!res.ok) {
+           if (res.status === 401 || res.status === 404) return { draft: null };
+           throw new Error(`Failed to get draft: ${res.statusText}`);
+        }
         return res.json();
     },
 
@@ -186,7 +173,10 @@ export const dataAPI = {
     async getLatestVisualization() {
         const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE_URL}/ai/latest`, { headers });
-        if (!res.ok) throw new Error('Failed to fetch latest visualization');
+        if (!res.ok) {
+            if (res.status === 401 || res.status === 404) return { visualization: null };
+            throw new Error('Failed to fetch latest visualization');
+        }
         return res.json();
     },
 

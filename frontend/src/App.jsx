@@ -97,7 +97,7 @@ const App = () => (
                                     </ProtectedRoute>
                                 }
                             >
-                                <Route index element={<Navigate to="/manual-plot" replace />} />
+                                <Route index element={<Navigate to="curve" replace />} />
                                 <Route path="curve" element={<ManualPlotCurve />} />
                                 <Route path="regression" element={<ManualPlotRegression />} />
                                 <Route path="categorical" element={<ManualPlotCategorical />} />

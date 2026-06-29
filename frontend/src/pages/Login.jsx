@@ -19,7 +19,7 @@ import {
     Zap,
 } from "lucide-react";
 
-const fadeUp = {
+const _fadeUp = {
     hidden: { opacity: 0, y: 24 },
     visible: (delay = 0) => ({
         opacity: 1,
@@ -217,11 +217,10 @@ const Login = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 pb-3 pr-6 transition-all duration-300 luxury-label ${
-                                    activeTab === tab.id
+                                className={`flex items-center gap-2 pb-3 pr-6 transition-all duration-300 luxury-label ${activeTab === tab.id
                                         ? "border-b-2 border-[#0F172A] text-[#0F172A] -mb-px"
                                         : "text-[#6B6B6B] hover:text-[#0D1117]"
-                                }`}
+                                    }`}
                             >
                                 <tab.icon className="w-3.5 h-3.5" />
                                 {tab.label}

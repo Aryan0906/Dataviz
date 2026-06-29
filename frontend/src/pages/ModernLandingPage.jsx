@@ -8,14 +8,11 @@ import {
     BarChart3,
     Brain,
     Database,
-    Zap,
-    Shield,
     Rocket,
     ArrowRight,
     CheckCircle2,
     LineChart,
     FileText,
-    GitBranch,
     Cloud
 } from "lucide-react";
 

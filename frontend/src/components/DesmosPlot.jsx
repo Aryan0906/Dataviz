@@ -95,7 +95,7 @@ const loadCdnGraph = () =>
 const DesmosPlot = () => {
     const containerRef = useRef(null);
     const calculatorRef = useRef(null);
-    const expressionsRef = useRef([]);
+    const _expressionsRef = useRef([]);
     const { theme } = useTheme();
 
     // Detect initial theme properly
@@ -115,7 +115,7 @@ const DesmosPlot = () => {
     const [exportTheme, setExportTheme] = useState(getInitialTheme());
 
     // Function to extract expressions from calculator
-    const extractExpressionsFromCalculator = () => {
+    const _extractExpressionsFromCalculator = () => {
         if (!calculatorRef.current) {
             console.warn('[DesmosPlot] Calculator not initialized');
             return [];

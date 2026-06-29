@@ -23,52 +23,52 @@ const CodeExportModal = ({
   features = [],
   target = 'target',
   hyperparameters = {},
-  includeEDA = true,
-  includeCleaning = true
+  _includeEDA = true,
+  _includeCleaning = true
 }) => {
   const [copied, setCopied] = useState(false);
   const [codeSnippets, setCodeSnippets] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   React.useEffect(() => {
+    const fetchCodeSnippets = async () => {
+      setLoading(true);
+      try {
+        // Fetch regression code using centralized API
+        const regressionData = await dataAPI.generateCode([], 'regression', {
+          model_type: modelType,
+          features: features,
+          target: target,
+          hyperparameters: hyperparameters,
+        });
+
+        // Fetch EDA code using centralized API
+        const edaData = await dataAPI.generateCode([], 'eda', {
+          columns: [...features, target],
+        });
+
+        // Fetch cleaning code using centralized API
+        const cleaningData = await dataAPI.generateCode([], 'cleaning', {
+          method: 'drop',
+        });
+
+        setCodeSnippets({
+          regression: regressionData.code,
+          eda: edaData.code,
+          cleaning: cleaningData.code,
+        });
+      } catch (error) {
+        console.error('Failed to fetch code snippets:', error);
+        toast.error('Failed to generate code');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen && features.length > 0) {
       fetchCodeSnippets();
     }
-  }, [isOpen, modelType, features, target]);
-
-  const fetchCodeSnippets = async () => {
-    setLoading(true);
-    try {
-      // Fetch regression code using centralized API
-      const regressionData = await dataAPI.generateCode([], 'regression', {
-        model_type: modelType,
-        features: features,
-        target: target,
-        hyperparameters: hyperparameters,
-      });
-
-      // Fetch EDA code using centralized API
-      const edaData = await dataAPI.generateCode([], 'eda', {
-        columns: [...features, target],
-      });
-
-      // Fetch cleaning code using centralized API
-      const cleaningData = await dataAPI.generateCode([], 'cleaning', {
-        method: 'drop',
-      });
-
-      setCodeSnippets({
-        regression: regressionData.code,
-        eda: edaData.code,
-        cleaning: cleaningData.code,
-      });
-    } catch (error) {
-      console.error('Failed to fetch code snippets:', error);
-      toast.error('Failed to generate code');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, modelType, features, target, hyperparameters]);
 
   const copyToClipboard = (code) => {
     navigator.clipboard.writeText(code).then(() => {
