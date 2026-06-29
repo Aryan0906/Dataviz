@@ -37,6 +37,7 @@ urlpatterns = [
     path("api/data/clean", api.clean_data),
     path("api/data/correlation", api.get_correlation_matrix),
     path("api/data/generate-code", api.generate_code_snippet),
+    path("api/data/nlp-query", api.nlp_query),
     # Todos API
     path("api/", include("todos.urls")),
 ]

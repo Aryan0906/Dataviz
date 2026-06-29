@@ -200,7 +200,6 @@ def get_analysis(request, pk: int):
 
 
 @csrf_exempt
-@csrf_exempt
 def analyze(request):
     """
     Comprehensive regression analysis using multiple models.
@@ -234,7 +233,8 @@ def analyze(request):
     try:
         # Use comprehensive regression model selector
         print("Calling find_best_regression...")
-        result = find_best_regression(data_points)
+        model_type = body.get("modelType")
+        result = find_best_regression(data_points, model_type)
         print(f"Result: {result}")
         
         if not result:
@@ -262,7 +262,7 @@ def analyze(request):
             "rmse": result['rmse'],
             "mae": result['mae'],
             "predictions": predictions,
-            "all_models_tested": result['all_models'][:5]  # Top 5 models
+            "all_models_tested": result['all_models']  # Return all tested models
         }
         print(f"Returning response: {response_data}")
         return JsonResponse(response_data)
@@ -726,6 +726,115 @@ def save_visualization_to_history(request):
         return JsonResponse({'error': 'Visualization not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def nlp_query(request):
+    """
+    Intelligent NLP querying view that fuzzy matches column names
+    and returns aggregated chart data and textual insights.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        query = body.get("query")
+        raw_data = body.get("data", [])
+        columns = body.get("columns", [])
+        
+        if not query or not raw_data:
+            return JsonResponse({"error": "Query and data are required"}, status=400)
+        
+        # Extract column names from columns list
+        column_names = [col.get("name") for col in columns]
+        
+        # Import smart_column_matcher
+        from .utils.nlp_helpers import smart_column_matcher
+        
+        parsed = smart_column_matcher(query, column_names)
+        matched_columns = parsed.get("matched_columns", [])
+        
+        # Fallback to the first categorical column if no columns are matched
+        target_column_name = None
+        if matched_columns:
+            target_column_name = matched_columns[0]
+        else:
+            for col in columns:
+                if col.get("type") == "categorical":
+                    target_column_name = col.get("name")
+                    break
+        
+        if not target_column_name:
+            # Fallback to any first column
+            if column_names:
+                target_column_name = column_names[0]
+        
+        if not target_column_name:
+            return JsonResponse({"error": "No valid column found for analysis"}, status=400)
+        
+        # Aggregate data using pandas
+        df = pd.DataFrame(raw_data)
+        if target_column_name not in df.columns:
+            return JsonResponse({"error": f"Column '{target_column_name}' not found in data"}, status=400)
+        
+        counts = df[target_column_name].value_counts().to_dict()
+        labels = [str(k) for k in counts.keys()]
+        values = [int(v) for v in counts.values()]
+        
+        if not labels:
+            return JsonResponse({"error": "No data found for the target column"}, status=400)
+        
+        # Calculate insights
+        max_val = max(values)
+        min_val = min(values)
+        max_label = labels[values.index(max_val)]
+        min_label = labels[values.index(min_val)]
+        ratio = (max_val / min_val) if min_val > 0 else max_val
+        
+        summary = f"{max_label} leads with {max_val} items, which is {ratio:.1f}x higher than {min_label}."
+        
+        # Calculate missing data
+        total_non_null = sum(values)
+        missing_data = len(raw_data) - total_non_null
+        
+        # Helper to generate distinct RGB colors
+        colors = [
+            'rgba(59, 130, 246, 0.8)',   # blue
+            'rgba(16, 185, 129, 0.8)',   # green
+            'rgba(251, 146, 60, 0.8)',   # orange
+            'rgba(239, 68, 68, 0.8)',    # red
+            'rgba(168, 85, 247, 0.8)',   # purple
+            'rgba(236, 72, 153, 0.8)',   # pink
+            'rgba(14, 165, 233, 0.8)',   # sky
+            'rgba(251, 191, 36, 0.8)',   # amber
+        ]
+        
+        bg_colors = [colors[i % len(colors)] for i in range(len(labels))]
+        
+        return JsonResponse({
+            "chart": {
+                "title": f"Count by {target_column_name}",
+                "type": "bar",
+                "labels": labels,
+                "datasets": [{
+                    "label": "Count",
+                    "data": values,
+                    "backgroundColor": bg_colors
+                }]
+            },
+            "insights": {
+                "summary": summary,
+                "cardinality": len(labels),
+                "topPerformer": {"label": max_label, "value": max_val},
+                "bottomPerformer": {"label": min_label, "value": min_val},
+                "missingData": int(missing_data),
+                "totalCount": len(raw_data)
+            },
+            "table_data": raw_data
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 # ============================================================================

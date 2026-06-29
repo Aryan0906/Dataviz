@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { UniversalChart } from "@/components/UniversalChart";
+import { dataAPI } from "@/lib/api";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ChartCodeExportModal from "@/components/ChartCodeExportModal";
 import {
@@ -82,9 +83,7 @@ const CategoricalChatNLP = () => {
         setChatHistory(prev => [...prev, { type: 'user', message: chatInput }]);
 
         try {
-            // TODO: Replace with actual backend API call
-            // For now, simulate NLP processing
-            const response = await simulateNLPProcessing(chatInput, categoricalData, columns);
+            const response = await dataAPI.nlpQuery(chatInput, categoricalData, columns);
 
             // Update visualization
             setChartData(response.chart);

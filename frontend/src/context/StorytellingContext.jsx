@@ -116,6 +116,9 @@ export const StorytellingProvider = ({ children }) => {
     });
 
     const [firstVisit, setFirstVisit] = useState(true);
+    // Celebration modal control state
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationData, setCelebrationData] = useState({ type: 'insight', data: {} });
 
     // Calculate journey progress
     const journeyProgress = (visitedPages.length / JOURNEY_FLOW.length) * 100;

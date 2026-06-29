@@ -15,11 +15,11 @@ const getAuthHeaders = async () => {
 
 // Data API calls
 export const dataAPI = {
-    analyze: async (dataPoints) => {
+    analyze: async (dataPoints, modelType) => {
         const response = await fetch(`${API_BASE_URL}/data/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dataPoints })
+            body: JSON.stringify({ dataPoints, modelType })
         });
         if (!response.ok) {
             const error = await response.json();
@@ -229,6 +229,19 @@ export const dataAPI = {
             body: JSON.stringify({ data_points: dataPoints, code_type: codeType, ...options }),
         });
         if (!res.ok) throw new Error('Failed to generate code');
+        return res.json();
+    },
+
+    async nlpQuery(query, data, columns) {
+        const res = await fetch(`${API_BASE_URL}/data/nlp-query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, data, columns }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'NLP query failed');
+        }
         return res.json();
     },
 };

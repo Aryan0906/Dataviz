@@ -10,10 +10,6 @@ import { Loader } from "lucide-react";
 
 // Lazy load route components for code splitting
 const Login = lazy(() => import("./pages/Login"));
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const ModernLandingPage = lazy(() => import("./pages/ModernLandingPage"));
-const StorytellingLandingPage = lazy(() => import("./pages/StorytellingLandingPage"));
-const EnhancedStorytellingLanding = lazy(() => import("./pages/EnhancedStorytellingLanding"));
 const ProfessionalLanding = lazy(() => import("./pages/ProfessionalLanding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const ModernDashboard = lazy(() => import("./pages/ModernDashboard"));
@@ -52,10 +48,6 @@ const App = () => (
                         <Routes>
                             {/* Landing Pages */}
                             <Route path="/" element={<ProfessionalLanding />} />
-                            <Route path="/landing-enhanced" element={<EnhancedStorytellingLanding />} />
-                            <Route path="/story" element={<StorytellingLandingPage />} />
-                            <Route path="/modern" element={<ModernLandingPage />} />
-                            <Route path="/landing-classic" element={<LandingPage />} />
 
                             {/* Authentication */}
                             <Route path="/login" element={<Login />} />
@@ -97,7 +89,7 @@ const App = () => (
                                     </ProtectedRoute>
                                 }
                             >
-                                <Route index element={<Navigate to="curve" replace />} />
+                                <Route index element={<Navigate to="regression" replace />} />
                                 <Route path="curve" element={<ManualPlotCurve />} />
                                 <Route path="regression" element={<ManualPlotRegression />} />
                                 <Route path="categorical" element={<ManualPlotCategorical />} />
