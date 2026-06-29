@@ -65,6 +65,12 @@ export const EnhancedDataAnalyzer = () => {
     const [polynomialDegree, setPolynomialDegree] = useState(2);
     const [activeTab, setActiveTab] = useState("input");
 
+    // Prediction feature state
+    const [predictionInput, setPredictionInput] = useState("");
+    const [predictionMode, setPredictionMode] = useState("x-to-y");
+    const [predictionResult, setPredictionResult] = useState(null);
+    const [predictionHistory, setPredictionHistory] = useState([]);
+
     const chartContainerRef = useRef(null);
 
     // Export theme dialog state
@@ -99,7 +105,161 @@ export const EnhancedDataAnalyzer = () => {
         const loadDraft = async () => {
             if (!session) return;
 
-const EnhancedDataAnalyzer = () => {
+            try {
+                const { draft } = await dataAPI.getDraft();
+                if (draft) {
+                    setData(draft.dataPoints || []);
+                    setRegressionType(draft.regressionType || "linear");
+                    setPolynomialDegree(draft.polynomialDegree || 2);
+                }
+            } catch (error) {
+                console.error("Failed to load draft:", error);
+            }
+        };
+
+        loadDraft();
+    }, [session]);
+
+    // Auto-save to Supabase with debounce
+    const debouncedSave = useMemo(
+        () => debounce(async (draftData) => {
+            if (!session) return;
+
+            try {
+                await dataAPI.saveDraft(draftData);
+            } catch (error) {
+                console.error("Failed to auto-save draft:", error);
+            }
+        }, 2000),
+        [session]
+    );
+
+    // Trigger auto-save when data changes
+    useEffect(() => {
+        if (!session) return;
+        if (data.length === 0) return;
+
+        debouncedSave({
+            dataPoints: data,
+            categories: [],
+            tabType: "regression",
+            regressionType: regressionType,
+            polynomialDegree: polynomialDegree,
+        });
+    }, [data, regressionType, polynomialDegree, session, debouncedSave]);
+
+    const addPoint = () => {
+        setError("");
+        const x = parseFloat(xValue);
+        const y = parseFloat(yValue);
+
+        if (isNaN(x) || isNaN(y)) {
+            setError("Please enter valid numbers for X and Y");
+            return;
+        }
+
+        const newData = [...data, { x, y }];
+        newData.sort((a, b) => a.x - b.x);
+        setData(newData);
+        setXValue("");
+        setYValue("");
+        toast.success("Data point added", {
+            icon: <CheckCircle2 className="h-4 w-4 text-green-500" />
+        });
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            addPoint();
+        }
+    };
+
+    const analyzeData = useCallback(async () => {
+        setError("");
+        if (data.length < 2) {
+            setError("Need at least 2 data points to analyze");
+            return;
+        }
+
+        setLoading(true);
+        setActiveTab("results");
+
+        try {
+            const result = await dataAPI.analyze(data);
+
+            if (!result) {
+                setError("Failed to analyze data");
+                return;
+            }
+
+            const modelType = result.model_type;
+            if (modelType.startsWith('polynomial-')) {
+                const degree = parseInt(modelType.split('-')[1]);
+                setRegressionType('polynomial');
+                setPolynomialDegree(degree);
+            } else {
+                setRegressionType(modelType);
+            }
+
+            const n = data.length;
+            const ys = data.map(d => d.y);
+            const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
+            const varianceY = n > 1
+                ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1)
+                : 0;
+            const stdDevY = Math.sqrt(varianceY);
+
+            setRegressionResult({
+                r2: result.r2,
+                predict: (x) => {
+                    const predictions = result.predictions || [];
+                    if (predictions.length === 0) return null;
+
+                    const sorted = predictions.sort((a, b) => a[0] - b[0]);
+                    const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
+                    if (exact) return exact[1];
+
+                    for (let i = 0; i < sorted.length - 1; i++) {
+                        if (x >= sorted[i][0] && x <= sorted[i + 1][0]) {
+                            const t = (x - sorted[i][0]) / (sorted[i + 1][0] - sorted[i][0]);
+                            return sorted[i][1] + t * (sorted[i + 1][1] - sorted[i][1]);
+                        }
+                    }
+
+                    if (x < sorted[0][0]) return sorted[0][1];
+                    return sorted[sorted.length - 1][1];
+                },
+                type: modelType,
+                equation: result.equation || '',
+                meanY,
+                varianceY,
+                stdDevY,
+                rmse: result.rmse,
+                mae: result.mae,
+                adjustedR2: result.adjusted_r2,
+                modelName: result.model_name,
+                predictions: result.predictions || []
+            });
+
+            toast.success(`Analysis complete! Best model: ${result.model_name}`, {
+                icon: <Sparkles className="h-4 w-4 text-blue-500" />
+            });
+        } catch (error) {
+            console.error("Analysis error:", error);
+            setError(`Failed to analyze data: ${error.message || error}`);
+            toast.error(`Failed to analyze data: ${error.message || error}`);
+        } finally {
+            setLoading(false);
+        }
+    }, [data]);
+
+    // Derived predictions sorted for inverse mapping and interpolation
+    const sortedPredictions = useMemo(() => {
+        const predictions = regressionResult?.predictions || [];
+        return [...predictions].sort((a, b) => a[0] - b[0]);
+    }, [regressionResult]);
+
+    // Inverse regression predictor mapping Y -> X via linear segments along fit
     const inverseRegressionPredictor = useMemo(() => {
         if (sortedPredictions.length === 0) {
             return null;
@@ -120,19 +280,20 @@ const EnhancedDataAnalyzer = () => {
                 }
 
                 const isBetween = targetY >= Math.min(y1, y2) && targetY <= Math.max(y1, y2);
-                if (!isBetween) {
-                    continue;
+                if (isBetween) {
+                    const ratio = (targetY - y1) / (y2 - y1);
+                    const x = x1 + ratio * (x2 - x1);
+                    if (Number.isFinite(x)) {
+                        candidates.push(x);
+                    }
                 }
-
-    // Auto-save to Supabase with debounce
-    const debouncedSave = useMemo(
-        () => debounce(async (draftData) => {
-            if (!session) return;
+            }
 
             if (candidates.length > 0) {
                 return candidates[0];
             }
 
+            // Fallback to nearest point
             let nearest = sortedPredictions[0][0];
             let bestDistance = Math.abs(sortedPredictions[0][1] - targetY);
 
