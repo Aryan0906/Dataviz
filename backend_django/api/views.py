@@ -19,7 +19,7 @@ from .utils.ai_helpers import (
     AITimeoutError,
     AIValidationError
 )
-from .utils.langchain_helpers import recommend_chart_type
+from .utils.langchain_helpers import recommend_chart_type, generate_data_story
 from .utils.regression_models import find_best_regression
 
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -502,7 +502,6 @@ def upload_csv(request):
         # Get AI cleaning suggestions
         try:
             cleaning_analysis = suggest_cleaning_actions(metadata)
-            ai_summary = cleaning_analysis.get('summary', 'No issues detected')
         except AITimeoutError as e:
             # Return specific error code so frontend can show retry button
             return JsonResponse({
@@ -514,6 +513,12 @@ def upload_csv(request):
                 'error': f'AI validation failed: {str(e)}',
                 'code': 'ERR_AI_VALIDATION'
             }, status=500)
+            
+        # Generate AI Data Story (3-4 sentences narrative)
+        try:
+            ai_summary = generate_data_story(metadata)
+        except Exception as e:
+            ai_summary = "Unable to generate data story at this time."
         
         # Get chart type recommendation from AI
         try:
@@ -538,7 +543,8 @@ def upload_csv(request):
             'visualization_id': visualization.id,
             'metadata': metadata,
             'cleaning_analysis': cleaning_analysis,
-            'chart_recommendation': chart_rec
+            'chart_recommendation': chart_rec,
+            'ai_summary': ai_summary
         }, status=201)
     
     except ValidationError as e:

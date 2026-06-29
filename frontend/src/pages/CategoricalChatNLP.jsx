@@ -26,6 +26,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import StorySummaryCard from "@/components/StorySummaryCard";
 
 const CategoricalChatNLP = () => {
     const fileInputRef = useRef(null);
@@ -60,7 +61,11 @@ const CategoricalChatNLP = () => {
     const [filteredData, setFilteredData] = useState([]);
     const [tableSearch, setTableSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const itemsPerPage = 10;
+    
+    // === AI Data Story State ===
+    const [aiSummary, setAiSummary] = useState(null);
+    const [isGeneratingStory, setIsGeneratingStory] = useState(false);
 
     const [error, setError] = useState("");
 
@@ -230,6 +235,21 @@ const CategoricalChatNLP = () => {
             return;
         }
 
+        // Call backend to generate AI Data Story and metadata
+        setIsGeneratingStory(true);
+        dataAPI.uploadCSV(file)
+            .then(res => {
+                if (res.ai_summary) {
+                    setAiSummary(res.ai_summary);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to generate AI summary:", err);
+            })
+            .finally(() => {
+                setIsGeneratingStory(false);
+            });
+
         const reader = new FileReader();
         reader.onload = (e) => {
             const csv = e.target?.result;
@@ -376,6 +396,24 @@ const CategoricalChatNLP = () => {
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 )}
+
+            {/* Main Content Area */}
+            <div className="flex-1 lg:pl-10 pb-20 pt-5 pr-5 lg:pr-10 h-[calc(100vh-4rem)] overflow-y-auto">
+                <div className="max-w-6xl mx-auto space-y-6">
+
+                    {/* AI Data Story Card */}
+                    {aiSummary && (
+                        <StorySummaryCard 
+                            story={aiSummary} 
+                            onClose={() => setAiSummary(null)} 
+                        />
+                    )}
+                    {isGeneratingStory && !aiSummary && (
+                        <div className="mb-6 p-5 rounded-xl border border-indigo-100 bg-indigo-50/50 flex items-center justify-center space-x-2 text-indigo-500 text-sm">
+                            <Sparkles className="w-4 h-4 animate-pulse" />
+                            <span>Generating AI Data Story...</span>
+                        </div>
+                    )}
 
                 {/* Main 4-Quadrant Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

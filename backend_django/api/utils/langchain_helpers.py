@@ -12,7 +12,7 @@ from typing import Dict, Any
 llm = ChatOpenAI(
     model="gpt-4",
     temperature=0.2,
-    api_key=os.getenv('OPENAI_API_KEY')
+    api_key=os.getenv('OPENAI_API_KEY', 'dummy-key-for-initialization')
 )
 
 
@@ -78,6 +78,18 @@ data_insights_prompt = ChatPromptTemplate.from_messages([
     Provide insights:""")
 ])
 
+# Template for AI Data Storyteller
+data_story_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are an AI Data Storyteller. Your goal is to write a 3-4 sentence plain-English narrative about a dataset.
+    The narrative should highlight key trends, outliers, or interesting distributions.
+    Write for a non-technical audience. Do not just list facts; tell a brief, engaging story about what the data shows.
+    Be extremely concise."""),
+    ("user", """Dataset Metadata:
+    {metadata}
+    
+    Write the 3-4 sentence narrative:""")
+])
+
 
 # =============================================================================
 # LangChain Chains
@@ -140,6 +152,19 @@ def get_data_insights(df: pd.DataFrame) -> str:
     })
     
     return result.content
+
+
+def generate_data_story(metadata: Dict[str, Any]) -> str:
+    """
+    Generate a 3-4 sentence plain-English narrative from dataset metadata.
+    """
+    chain = data_story_prompt | llm
+    
+    result = chain.invoke({
+        "metadata": str(metadata)
+    })
+    
+    return result.content.strip()
 
 
 def extract_chart_type(text: str) -> str:
