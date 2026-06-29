@@ -36,7 +36,7 @@ def compute_r2(y_true, y_pred):
 def compute_adjusted_r2(r2, n, p):
     """Calculate adjusted R-squared."""
     if n <= p + 1:
-        return r2
+        return -999.0
     return 1 - (1 - r2) * (n - 1) / (n - p - 1)
 
 
@@ -78,6 +78,157 @@ class RegressionModelSelector:
         self.models_tested = []
         self.best_model = None
         
+    def _fit_and_predict_fold(self, model_type: str, params: Dict, X_train, y_train, X_val):
+        """Fit model on training fold and predict on validation fold."""
+        n_train = len(y_train)
+        try:
+            if model_type == 'linear':
+                x_mean = np.mean(X_train)
+                y_mean = np.mean(y_train)
+                numerator = np.sum((X_train.flatten() - x_mean) * (y_train - y_mean))
+                denominator = np.sum((X_train.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                slope = numerator / denominator
+                intercept = y_mean - slope * x_mean
+                return slope * X_val.flatten() + intercept
+                
+            elif model_type.startswith('polynomial-'):
+                degree = int(model_type.split('-')[1])
+                if n_train <= degree + 1:
+                    return None
+                coeffs = np.polyfit(X_train.flatten(), y_train, degree)
+                poly = np.poly1d(coeffs)
+                return poly(X_val.flatten())
+                
+            elif model_type == 'logarithmic':
+                if np.any(X_train <= 0) or np.any(X_val <= 0):
+                    return None
+                X_train_log = np.log(X_train)
+                x_mean = np.mean(X_train_log)
+                y_mean = np.mean(y_train)
+                numerator = np.sum((X_train_log.flatten() - x_mean) * (y_train - y_mean))
+                denominator = np.sum((X_train_log.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                a = numerator / denominator
+                b = y_mean - a * x_mean
+                return a * np.log(X_val.flatten()) + b
+                
+            elif model_type == 'exponential':
+                if np.any(y_train <= 0):
+                    return None
+                y_train_log = np.log(y_train)
+                x_mean = np.mean(X_train)
+                y_log_mean = np.mean(y_train_log)
+                numerator = np.sum((X_train.flatten() - x_mean) * (y_train_log - y_log_mean))
+                denominator = np.sum((X_train.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                b = numerator / denominator
+                ln_a = y_log_mean - b * x_mean
+                a = np.exp(ln_a)
+                return a * np.exp(b * X_val.flatten())
+                
+            elif model_type == 'power':
+                if np.any(X_train <= 0) or np.any(y_train <= 0) or np.any(X_val <= 0):
+                    return None
+                X_train_log = np.log(X_train)
+                y_train_log = np.log(y_train)
+                x_mean = np.mean(X_train_log)
+                y_mean = np.mean(y_train_log)
+                numerator = np.sum((X_train_log.flatten() - x_mean) * (y_train_log - y_mean))
+                denominator = np.sum((X_train_log.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                b = numerator / denominator
+                ln_a = y_mean - b * x_mean
+                a = np.exp(ln_a)
+                return a * np.power(X_val.flatten(), b)
+                
+            # Sklearn models
+            elif SKLEARN_AVAILABLE:
+                if model_type == 'ridge':
+                    from sklearn.linear_model import Ridge
+                    model = Ridge(alpha=params.get('alpha', 1.0))
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'lasso':
+                    from sklearn.linear_model import Lasso
+                    model = Lasso(alpha=params.get('alpha', 1.0), max_iter=5000)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'elasticnet':
+                    from sklearn.linear_model import ElasticNet
+                    model = ElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=5000)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'svr':
+                    from sklearn.preprocessing import StandardScaler
+                    from sklearn.svm import SVR
+                    scaler = StandardScaler()
+                    X_train_scaled = scaler.fit_transform(X_train)
+                    X_val_scaled = scaler.transform(X_val)
+                    model = SVR(kernel=params.get('kernel', 'rbf'), C=1.0, epsilon=0.1)
+                    model.fit(X_train_scaled, y_train)
+                    return model.predict(X_val_scaled)
+                    
+                elif model_type == 'decision_tree':
+                    from sklearn.tree import DecisionTreeRegressor
+                    model = DecisionTreeRegressor(max_depth=5, random_state=42)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'random_forest':
+                    from sklearn.ensemble import RandomForestRegressor
+                    model = RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'quantile':
+                    from sklearn.linear_model import QuantileRegressor
+                    model = QuantileRegressor(quantile=0.5, alpha=0, solver='highs')
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+            
+            return None
+        except Exception as e:
+            return None
+
+    def _get_cv_predictions(self, model_type: str, params: Dict) -> Optional[np.ndarray]:
+        """
+        Compute out-of-fold predictions for a given model type and its parameters.
+        """
+        if self.n < 4:
+            # Not enough data for cross-validation
+            return None
+        
+        k = min(5, self.n)
+        indices = np.arange(self.n)
+        # Deterministic shuffle using a fixed generator seed
+        rng = np.random.default_rng(42)
+        shuffled_indices = rng.permutation(indices)
+        
+        folds = np.array_split(shuffled_indices, k)
+        y_pred_cv = np.zeros(self.n)
+        
+        for i in range(k):
+            val_idx = folds[i]
+            train_idx = np.hstack([folds[j] for j in range(k) if j != i])
+            
+            X_train, y_train = self.X[train_idx], self.y[train_idx]
+            X_val = self.X[val_idx]
+            
+            pred_val = self._fit_and_predict_fold(model_type, params, X_train, y_train, X_val)
+            if pred_val is None:
+                return None
+            y_pred_cv[val_idx] = pred_val
+            
+        return y_pred_cv
+
     def _safe_predict(self, model, X):
         """Safely predict values, handling errors."""
         try:
@@ -452,23 +603,60 @@ class RegressionModelSelector:
         # Store all tested models
         self.models_tested = models
         
-        # Select best model based on adjusted R²
         if not models:
             return None
+            
+        # Compute cross-validation metrics for each model
+        for m in models:
+            if self.n < 4:
+                # Fallback if CV is not possible (e.g. self.n is too small)
+                m['cv_adjusted_r2'] = m['metrics']['adjusted_r2']
+                m['cv_r2'] = m['metrics']['r2']
+            else:
+                y_pred_cv = self._get_cv_predictions(m['type'], m.get('params', {}))
+                if y_pred_cv is not None:
+                    cv_r2 = compute_r2(self.y, y_pred_cv)
+                    # Find number of parameters based on model type
+                    n_params = 2  # default
+                    if m['type'].startswith('polynomial-'):
+                        degree = int(m['type'].split('-')[1])
+                        n_params = degree + 1
+                    elif m['type'] == 'svr':
+                        n_params = 3
+                    elif m['type'] == 'decision_tree':
+                        n_params = 5
+                    elif m['type'] == 'random_forest':
+                        n_params = 10
+                    
+                    cv_adj_r2 = compute_adjusted_r2(cv_r2, self.n, n_params)
+                    
+                    # Apply complexity penalty for tree models on small N
+                    if m['type'] in ['decision_tree', 'random_forest']:
+                        if self.n < 30:
+                            penalty = 0.2 * (1.0 - self.n / 30.0)
+                            cv_adj_r2 -= penalty
+                    
+                    m['cv_adjusted_r2'] = cv_adj_r2
+                    m['cv_r2'] = cv_r2
+                else:
+                    # Heavily penalize models that fail CV due to overfitting/insufficient data
+                    m['cv_adjusted_r2'] = -999.0
+                    m['cv_r2'] = -999.0
         
-        best = max(models, key=lambda m: m['metrics']['adjusted_r2'])
+        # Select best model based on cv_adjusted_r2
+        best = max(models, key=lambda m: m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']))
         self.best_model = best
         
         return best
     
     def get_all_models_summary(self):
-        """Get summary of all tested models sorted by adjusted R²."""
+        """Get summary of all tested models sorted by CV adjusted R²."""
         if not self.models_tested:
             return []
         
         sorted_models = sorted(
             self.models_tested, 
-            key=lambda m: m['metrics']['adjusted_r2'], 
+            key=lambda m: m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']), 
             reverse=True
         )
         
@@ -477,6 +665,8 @@ class RegressionModelSelector:
             'type': m['type'],
             'r2': m['metrics']['r2'],
             'adjusted_r2': m['metrics']['adjusted_r2'],
+            'cv_r2': m.get('cv_r2', m['metrics']['r2']),
+            'cv_adjusted_r2': m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']),
             'rmse': m['metrics']['rmse'],
             'mae': m['metrics']['mae']
         } for m in sorted_models]
@@ -539,6 +729,8 @@ def find_best_regression(data_points: List[Dict], requested_type: Optional[str] 
         'equation': selected_model['equation'],
         'r2': float(selected_model['metrics']['r2']),
         'adjusted_r2': float(selected_model['metrics']['adjusted_r2']),
+        'cv_r2': float(selected_model.get('cv_r2', selected_model['metrics']['r2'])),
+        'cv_adjusted_r2': float(selected_model.get('cv_adjusted_r2', selected_model['metrics']['adjusted_r2'])),
         'rmse': float(selected_model['metrics']['rmse']),
         'mae': float(selected_model['metrics']['mae']),
         'predict': selected_model['predict'],  # Function for predictions
