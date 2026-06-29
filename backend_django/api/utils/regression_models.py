@@ -603,23 +603,60 @@ class RegressionModelSelector:
         # Store all tested models
         self.models_tested = models
         
-        # Select best model based on adjusted R²
         if not models:
             return None
+            
+        # Compute cross-validation metrics for each model
+        for m in models:
+            if self.n < 4:
+                # Fallback if CV is not possible (e.g. self.n is too small)
+                m['cv_adjusted_r2'] = m['metrics']['adjusted_r2']
+                m['cv_r2'] = m['metrics']['r2']
+            else:
+                y_pred_cv = self._get_cv_predictions(m['type'], m.get('params', {}))
+                if y_pred_cv is not None:
+                    cv_r2 = compute_r2(self.y, y_pred_cv)
+                    # Find number of parameters based on model type
+                    n_params = 2  # default
+                    if m['type'].startswith('polynomial-'):
+                        degree = int(m['type'].split('-')[1])
+                        n_params = degree + 1
+                    elif m['type'] == 'svr':
+                        n_params = 3
+                    elif m['type'] == 'decision_tree':
+                        n_params = 5
+                    elif m['type'] == 'random_forest':
+                        n_params = 10
+                    
+                    cv_adj_r2 = compute_adjusted_r2(cv_r2, self.n, n_params)
+                    
+                    # Apply complexity penalty for tree models on small N
+                    if m['type'] in ['decision_tree', 'random_forest']:
+                        if self.n < 30:
+                            penalty = 0.2 * (1.0 - self.n / 30.0)
+                            cv_adj_r2 -= penalty
+                    
+                    m['cv_adjusted_r2'] = cv_adj_r2
+                    m['cv_r2'] = cv_r2
+                else:
+                    # Heavily penalize models that fail CV due to overfitting/insufficient data
+                    m['cv_adjusted_r2'] = -999.0
+                    m['cv_r2'] = -999.0
         
-        best = max(models, key=lambda m: m['metrics']['adjusted_r2'])
+        # Select best model based on cv_adjusted_r2
+        best = max(models, key=lambda m: m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']))
         self.best_model = best
         
         return best
     
     def get_all_models_summary(self):
-        """Get summary of all tested models sorted by adjusted R²."""
+        """Get summary of all tested models sorted by CV adjusted R²."""
         if not self.models_tested:
             return []
         
         sorted_models = sorted(
             self.models_tested, 
-            key=lambda m: m['metrics']['adjusted_r2'], 
+            key=lambda m: m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']), 
             reverse=True
         )
         
@@ -628,6 +665,8 @@ class RegressionModelSelector:
             'type': m['type'],
             'r2': m['metrics']['r2'],
             'adjusted_r2': m['metrics']['adjusted_r2'],
+            'cv_r2': m.get('cv_r2', m['metrics']['r2']),
+            'cv_adjusted_r2': m.get('cv_adjusted_r2', m['metrics']['adjusted_r2']),
             'rmse': m['metrics']['rmse'],
             'mae': m['metrics']['mae']
         } for m in sorted_models]
@@ -690,6 +729,8 @@ def find_best_regression(data_points: List[Dict], requested_type: Optional[str] 
         'equation': selected_model['equation'],
         'r2': float(selected_model['metrics']['r2']),
         'adjusted_r2': float(selected_model['metrics']['adjusted_r2']),
+        'cv_r2': float(selected_model.get('cv_r2', selected_model['metrics']['r2'])),
+        'cv_adjusted_r2': float(selected_model.get('cv_adjusted_r2', selected_model['metrics']['adjusted_r2'])),
         'rmse': float(selected_model['metrics']['rmse']),
         'mae': float(selected_model['metrics']['mae']),
         'predict': selected_model['predict'],  # Function for predictions
