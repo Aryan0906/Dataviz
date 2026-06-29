@@ -1,21 +1,26 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, Sigma, BarChart3 } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
-import EnhancedDataAnalyzer from '@/components/EnhancedDataAnalyzer';
-import DesmosPlot from '@/components/DesmosPlot';
-import ManualPlotCategorical from './ManualPlotCategorical';
 
 const ModernManualPlot = () => {
-    const [activeTab, setActiveTab] = useState('regression');
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Determine active tab from the last segment of the path
+    const pathSegments = location.pathname.split('/');
+    const activeTab = pathSegments[pathSegments.length - 1] || 'regression';
+
+    const handleTabChange = (value) => {
+        navigate(`/manual-plot/${value}`);
+    };
 
     return (
         <AppLayout>
             <div className="space-y-6" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
                 {/* ── Luxury Tab Navigation ── */}
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                     <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto w-full">
                         {[
                             { value: 'regression', label: 'Regression Analysis', icon: TrendingUp },
@@ -36,48 +41,11 @@ const ModernManualPlot = () => {
                             </TabsTrigger>
                         ))}
                     </TabsList>
-
-                    {/* ── Regression Tab ── */}
-                    <TabsContent value="regression" className="mt-6">
-                        <EnhancedDataAnalyzer />
-                    </TabsContent>
-
-                    {/* ── Curve Tab ── */}
-                    <TabsContent value="curve" className="mt-6">
-                        <div className="space-y-5">
-                            {/* Section header */}
-                            <div className="pb-5 border-b border-[#E8E4DC]">
-                                <p
-                                    className="text-[#0F172A] mb-1"
-                                    style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
-                                >
-                                    Mathematical Visualization
-                                </p>
-                                <h2
-                                    className="text-2xl font-bold text-[#0D1117] mb-1"
-                                    style={{ fontFamily: "'Playfair Display', serif" }}
-                                >
-                                    Curve Plotting
-                                </h2>
-                                <p className="text-sm text-[#6B6B6B]">
-                                    Interactive Desmos integration for mathematical graphing and curve visualization
-                                </p>
-                                <p className="text-xs text-[#D4AF37]/80 mt-1">
-                                    Enter LaTeX expressions like y=x² or choose from presets
-                                </p>
-                                <div className="mt-4 w-10 h-0.5 bg-[#D4AF37]" />
-                            </div>
-                            <DesmosPlot />
-                        </div>
-                    </TabsContent>
-
-                    {/* ── Categorical Tab ── */}
-                    <TabsContent value="categorical" className="mt-6">
-                        <ManualPlotCategorical />
-                    </TabsContent>
                 </Tabs>
 
-                <Outlet />
+                <div className="mt-6">
+                    <Outlet />
+                </div>
             </div>
         </AppLayout>
     );

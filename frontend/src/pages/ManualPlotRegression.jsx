@@ -1,7 +1,7 @@
-import { DataAnalyzer } from "@/components/DataAnalyzer";
+import { EnhancedDataAnalyzer } from "@/components/EnhancedDataAnalyzer";
 
 const ManualPlotRegression = () => {
-    return <DataAnalyzer />;
+    return <EnhancedDataAnalyzer />;
 };
 
 export default ManualPlotRegression;
