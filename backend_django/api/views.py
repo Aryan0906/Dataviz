@@ -233,7 +233,8 @@ def analyze(request):
     try:
         # Use comprehensive regression model selector
         print("Calling find_best_regression...")
-        result = find_best_regression(data_points)
+        model_type = body.get("modelType")
+        result = find_best_regression(data_points, model_type)
         print(f"Result: {result}")
         
         if not result:
@@ -261,7 +262,7 @@ def analyze(request):
             "rmse": result['rmse'],
             "mae": result['mae'],
             "predictions": predictions,
-            "all_models_tested": result['all_models'][:5]  # Top 5 models
+            "all_models_tested": result['all_models']  # Return all tested models
         }
         print(f"Returning response: {response_data}")
         return JsonResponse(response_data)

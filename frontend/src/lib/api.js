@@ -15,11 +15,11 @@ const getAuthHeaders = async () => {
 
 // Data API calls
 export const dataAPI = {
-    analyze: async (dataPoints) => {
+    analyze: async (dataPoints, modelType) => {
         const response = await fetch(`${API_BASE_URL}/data/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dataPoints })
+            body: JSON.stringify({ dataPoints, modelType })
         });
         if (!response.ok) {
             const error = await response.json();

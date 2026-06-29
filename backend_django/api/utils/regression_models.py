@@ -482,55 +482,66 @@ class RegressionModelSelector:
         } for m in sorted_models]
 
 
-def find_best_regression(data_points: List[Dict]) -> Optional[Dict]:
+def find_best_regression(data_points: List[Dict], requested_type: Optional[str] = None) -> Optional[Dict]:
     """
-    Main function to find the best regression model for given data.
+    Main function to find the best regression model or a specific requested model for given data.
     
     Args:
         data_points: List of dictionaries with 'x' and 'y' keys
+        requested_type: Optional string specifying the type of regression model to retrieve
         
     Returns:
-        Dictionary with best model information, or None if no valid model found
+        Dictionary with model information, or None if no valid model found
     """
     selector = RegressionModelSelector(data_points)
     best_model = selector.find_best_model()
     
-    if not best_model:
+    selected_model = None
+    if requested_type:
+        for model in selector.models_tested:
+            if model['type'] == requested_type:
+                selected_model = model
+                break
+                
+    if not selected_model:
+        selected_model = best_model
+        
+    if not selected_model:
         return None
     
-    # Calculate residuals for the best model
+    # Calculate residuals for the selected model
     X = np.array([p['x'] for p in data_points])
     y_actual = np.array([p['y'] for p in data_points])
     
     # Get predictions from the model
-    if 'model' in best_model and best_model['model'] is not None:
+    if 'model' in selected_model and selected_model['model'] is not None:
         # For sklearn models
         try:
             X_input = X.reshape(-1, 1)
-            if best_model.get('scaler'):
-                X_input = best_model['scaler'].transform(X_input)
-            if best_model.get('poly_features'):
-                X_input = best_model['poly_features'].transform(X_input)
-            y_predicted = best_model['model'].predict(X_input)
+            if selected_model.get('scaler'):
+                X_input = selected_model['scaler'].transform(X_input)
+            if selected_model.get('poly_features'):
+                X_input = selected_model['poly_features'].transform(X_input)
+            y_predicted = selected_model['model'].predict(X_input)
         except:
-            y_predicted = np.array([best_model['predict'](x) for x in X])
+            y_predicted = np.array([selected_model['predict'](x) for x in X])
     else:
         # For custom models with predict function
-        y_predicted = np.array([best_model['predict'](x) for x in X])
+        y_predicted = np.array([selected_model['predict'](x) for x in X])
     
     # Calculate residuals
     residuals = y_actual - y_predicted
     
     # Return formatted result
     return {
-        'model_name': best_model['name'],
-        'model_type': best_model['type'],
-        'equation': best_model['equation'],
-        'r2': float(best_model['metrics']['r2']),
-        'adjusted_r2': float(best_model['metrics']['adjusted_r2']),
-        'rmse': float(best_model['metrics']['rmse']),
-        'mae': float(best_model['metrics']['mae']),
-        'predict': best_model['predict'],  # Function for predictions
+        'model_name': selected_model['name'],
+        'model_type': selected_model['type'],
+        'equation': selected_model['equation'],
+        'r2': float(selected_model['metrics']['r2']),
+        'adjusted_r2': float(selected_model['metrics']['adjusted_r2']),
+        'rmse': float(selected_model['metrics']['rmse']),
+        'mae': float(selected_model['metrics']['mae']),
+        'predict': selected_model['predict'],  # Function for predictions
         'all_models': selector.get_all_models_summary(),
         # Residual analysis data
         'actual': y_actual.tolist(),

@@ -46,6 +46,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
@@ -63,6 +66,11 @@ export const EnhancedDataAnalyzer = () => {
     const [error, setError] = useState("");
     const [regressionType, setRegressionType] = useState("linear");
     const [polynomialDegree, setPolynomialDegree] = useState(2);
+    const [selectedModelType, setSelectedModelType] = useState("auto");
+    const [bookmarks, setBookmarks] = useState(() => {
+        const saved = localStorage.getItem("dataviz_bookmarks");
+        return saved ? JSON.parse(saved) : [];
+    });
     const [activeTab, setActiveTab] = useState("input");
 
     // Prediction feature state
@@ -174,7 +182,7 @@ export const EnhancedDataAnalyzer = () => {
         }
     };
 
-    const analyzeData = useCallback(async () => {
+    const analyzeData = useCallback(async (modelTypeOverride) => {
         setError("");
         if (data.length < 2) {
             setError("Need at least 2 data points to analyze");
@@ -185,7 +193,17 @@ export const EnhancedDataAnalyzer = () => {
         setActiveTab("results");
 
         try {
-            const result = await dataAPI.analyze(data);
+            let modelToRequest = undefined;
+            if (selectedModelType === "polynomial") {
+                modelToRequest = `polynomial-${polynomialDegree}`;
+            } else if (selectedModelType !== "auto") {
+                modelToRequest = selectedModelType;
+            }
+            if (modelTypeOverride) {
+                modelToRequest = modelTypeOverride;
+            }
+
+            const result = await dataAPI.analyze(data, modelToRequest);
 
             if (!result) {
                 setError("Failed to analyze data");
@@ -251,7 +269,7 @@ export const EnhancedDataAnalyzer = () => {
         } finally {
             setLoading(false);
         }
-    }, [data]);
+    }, [data, selectedModelType, polynomialDegree]);
 
     // Derived predictions sorted for inverse mapping and interpolation
     const sortedPredictions = useMemo(() => {
@@ -640,6 +658,187 @@ export const EnhancedDataAnalyzer = () => {
         setShowExportDialog(false);
     };
 
+    const dropEmptyValues = () => {
+        const clean = data.filter(pt => pt.x !== null && pt.x !== undefined && !isNaN(pt.x) && pt.y !== null && pt.y !== undefined && !isNaN(pt.y));
+        const dropped = data.length - clean.length;
+        setData(clean);
+        toast.success(`Removed ${dropped} empty/invalid data points`);
+    };
+
+    const filterOutliers = () => {
+        if (data.length < 4) {
+            toast.warning("Need at least 4 points to calculate outliers");
+            return;
+        }
+        const xs = data.map(d => d.x);
+        const ys = data.map(d => d.y);
+        
+        const getOutlierThresholds = (values) => {
+            const sorted = [...values].sort((a, b) => a - b);
+            const q1 = sorted[Math.floor(sorted.length * 0.25)];
+            const q3 = sorted[Math.floor(sorted.length * 0.75)];
+            const iqr = q3 - q1;
+            return [q1 - 1.5 * iqr, q3 + 1.5 * iqr];
+        };
+        
+        const [minX, maxX] = getOutlierThresholds(xs);
+        const [minY, maxY] = getOutlierThresholds(ys);
+        
+        const clean = data.filter(d => d.x >= minX && d.x <= maxX && d.y >= minY && d.y <= maxY);
+        const outliersCount = data.length - clean.length;
+        setData(clean);
+        toast.success(`Removed ${outliersCount} statistical outliers`);
+    };
+
+    const scaleData = () => {
+        if (data.length === 0) return;
+        const minX = Math.min(...data.map(d => d.x));
+        const maxX = Math.max(...data.map(d => d.x));
+        const minY = Math.min(...data.map(d => d.y));
+        const maxY = Math.max(...data.map(d => d.y));
+        
+        const rangeX = maxX - minX || 1;
+        const rangeY = maxY - minY || 1;
+        
+        const scaled = data.map(d => ({
+            x: (d.x - minX) / rangeX,
+            y: (d.y - minY) / rangeY
+        }));
+        setData(scaled);
+        toast.success("Normalized data points to [0, 1] range");
+    };
+
+    const exportDetailedPDFReport = async () => {
+        if (!regressionResult) return;
+        setLoading(true);
+        try {
+            const chartEl = chartContainerRef.current;
+            if (!chartEl) return;
+            
+            const canvas = await html2canvas(chartEl, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+            });
+            
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            
+            // Header
+            pdf.setFillColor(15, 23, 42); // slate-900
+            pdf.rect(0, 0, pdfWidth, 40, 'F');
+            
+            pdf.setFontSize(22);
+            pdf.setTextColor(255, 255, 255);
+            pdf.text("DataViz Regression Analysis Report", 20, 25);
+            
+            pdf.setFontSize(9);
+            pdf.setTextColor(203, 213, 225); // slate-300
+            pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 32);
+            
+            // Section: Model Summary
+            pdf.setFontSize(14);
+            pdf.setTextColor(15, 23, 42);
+            pdf.text("Model Summary", 20, 50);
+            pdf.setDrawColor(226, 232, 240);
+            pdf.line(20, 52, pdfWidth - 20, 52);
+            
+            pdf.setFontSize(10);
+            pdf.setTextColor(51, 65, 85);
+            
+            pdf.text(`Selected Model Type:`, 20, 60);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`${regressionResult.modelName}`, 60, 60);
+            pdf.setFont(undefined, 'normal');
+            
+            pdf.text(`Mathematical Fit:`, 20, 66);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`${regressionResult.equation}`, 60, 66);
+            pdf.setFont(undefined, 'normal');
+            
+            pdf.text(`R-Squared (R²):`, 20, 72);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`${regressionResult.r2.toFixed(6)}`, 60, 72);
+            pdf.setFont(undefined, 'normal');
+            
+            if (regressionResult.adjustedR2) {
+                pdf.text(`Adjusted R²:`, 20, 78);
+                pdf.text(`${regressionResult.adjustedR2.toFixed(6)}`, 60, 78);
+            }
+            
+            pdf.text(`Root Mean Squared Error (RMSE):`, 20, 84);
+            pdf.text(`${regressionResult.rmse.toFixed(6)}`, 80, 84);
+            
+            pdf.text(`Mean Absolute Error (MAE):`, 20, 90);
+            pdf.text(`${regressionResult.mae.toFixed(6)}`, 80, 90);
+            
+            // Section: Plot
+            pdf.setFontSize(14);
+            pdf.setTextColor(15, 23, 42);
+            pdf.text("Regression Plot", 20, 102);
+            pdf.line(20, 104, pdfWidth - 20, 104);
+            
+            const imgWidth = pdfWidth - 40;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 20, 110, imgWidth, imgHeight);
+            
+            const sanitizeFilename = regressionResult.modelName.replace(/\s+/g, '_').toLowerCase();
+            pdf.save(`dataviz_report_${sanitizeFilename}.pdf`);
+            toast.success("Detailed PDF Report exported successfully!");
+        } catch (error) {
+            console.error("PDF export failed:", error);
+            toast.error("Failed to generate PDF Report");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const saveBookmark = () => {
+        if (!regressionResult) {
+            toast.error("No analysis results to bookmark");
+            return;
+        }
+        const title = prompt("Enter a name for this bookmark:", `${regressionResult.modelName} Fit - ${data.length} Points`);
+        if (!title) return;
+        
+        const newBookmark = {
+            id: Date.now().toString(),
+            title,
+            data,
+            regressionResult,
+            regressionType,
+            polynomialDegree,
+            selectedModelType,
+            created_at: new Date().toISOString()
+        };
+        
+        const updated = [newBookmark, ...bookmarks];
+        setBookmarks(updated);
+        localStorage.setItem("dataviz_bookmarks", JSON.stringify(updated));
+        toast.success("Analysis bookmarked successfully!");
+    };
+
+    const loadBookmark = (bookmark) => {
+        setData(bookmark.data || []);
+        setRegressionResult(bookmark.regressionResult || null);
+        setRegressionType(bookmark.regressionType || "linear");
+        setPolynomialDegree(bookmark.polynomialDegree || 2);
+        if (bookmark.selectedModelType) {
+            setSelectedModelType(bookmark.selectedModelType);
+        }
+        setActiveTab("results");
+        toast.success(`Loaded bookmark: ${bookmark.title}`);
+    };
+
+    const deleteBookmark = (id) => {
+        const updated = bookmarks.filter(b => b.id !== id);
+        setBookmarks(updated);
+        localStorage.setItem("dataviz_bookmarks", JSON.stringify(updated));
+        toast.success("Bookmark removed");
+    };
+
     return (
         <div className="space-y-6">
             {/* Hero Section */}
@@ -821,6 +1020,75 @@ export const EnhancedDataAnalyzer = () => {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* Data Cleaning Panel */}
+                    <Card className="border-2 mt-4">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-blue-500" />
+                                Data Cleaning & Preparation
+                            </CardTitle>
+                            <CardDescription>
+                                Pre-process your data points to improve regression accuracy
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-wrap gap-3">
+                                <Button onClick={dropEmptyValues} variant="outline" className="gap-2">
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                    Drop Empty/NaN
+                                </Button>
+                                <Button onClick={filterOutliers} variant="outline" className="gap-2">
+                                    <AlertCircle className="h-4 w-4 text-orange-500" />
+                                    Filter Outliers (IQR)
+                                </Button>
+                                <Button onClick={scaleData} variant="outline" className="gap-2">
+                                    <RefreshCw className="h-4 w-4 text-blue-500" />
+                                    Normalize Data [0, 1]
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Bookmarks History */}
+                    {bookmarks.length > 0 && (
+                        <Card className="border-2 mt-4">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-yellow-600">
+                                    <Save className="h-5 w-5" />
+                                    Bookmarked Analyses ({bookmarks.length})
+                                </CardTitle>
+                                <CardDescription>
+                                    Quickly reload previously saved configurations and datasets
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {bookmarks.map((bookmark) => (
+                                        <div key={bookmark.id} className="p-4 rounded-lg border-2 bg-muted/10 hover:bg-muted/20 flex flex-col justify-between space-y-3">
+                                            <div>
+                                                <h4 className="font-semibold text-sm line-clamp-1">{bookmark.title}</h4>
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    {bookmark.data?.length || 0} points • {bookmark.regressionResult?.modelName || "Regression"}
+                                                </p>
+                                                <p className="text-[10px] text-muted-foreground mt-1">
+                                                    {new Date(bookmark.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button onClick={() => loadBookmark(bookmark)} size="sm" variant="outline" className="flex-1">
+                                                    Load
+                                                </Button>
+                                                <Button onClick={() => deleteBookmark(bookmark.id)} size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 {/* Data View Tab */}
@@ -1000,6 +1268,49 @@ export const EnhancedDataAnalyzer = () => {
                 </TabsContent>
             </Tabs>
 
+            {/* Regression Model Selector Option */}
+            <Card className="border-2 p-4 bg-muted/20">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex-1 min-w-[240px] space-y-1.5">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Regression Model Option</label>
+                        <Select value={selectedModelType} onValueChange={setSelectedModelType}>
+                            <SelectTrigger className="bg-white border-2">
+                                <SelectValue placeholder="Select regression model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="auto">Auto Select Best Fit</SelectItem>
+                                <SelectItem value="linear">Simple Linear Regression</SelectItem>
+                                <SelectItem value="polynomial">Polynomial Regression</SelectItem>
+                                <SelectItem value="logarithmic">Logarithmic Regression</SelectItem>
+                                <SelectItem value="exponential">Exponential Regression</SelectItem>
+                                <SelectItem value="power">Power Regression</SelectItem>
+                                <SelectItem value="ridge">Ridge Regression</SelectItem>
+                                <SelectItem value="lasso">Lasso Regression</SelectItem>
+                                <SelectItem value="elasticnet">Elastic Net Regression</SelectItem>
+                                <SelectItem value="svr">Support Vector Regression (SVR)</SelectItem>
+                                <SelectItem value="decision_tree">Decision Tree Regression</SelectItem>
+                                <SelectItem value="random_forest">Random Forest Regression</SelectItem>
+                                <SelectItem value="quantile">Quantile Regression</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {selectedModelType === "polynomial" && (
+                        <div className="w-[120px] space-y-1.5">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Degree (2-6)</label>
+                            <Input
+                                type="number"
+                                min={2}
+                                max={6}
+                                value={polynomialDegree}
+                                onChange={(e) => setPolynomialDegree(Math.max(2, Math.min(6, parseInt(e.target.value) || 2)))}
+                                className="bg-white border-2"
+                            />
+                        </div>
+                    )}
+                </div>
+            </Card>
+
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
                 <Button
@@ -1031,6 +1342,16 @@ export const EnhancedDataAnalyzer = () => {
                         <Button onClick={handleExportChart} variant="outline" size="lg" className="gap-2">
                             <Download className="h-4 w-4" />
                             Export Chart
+                        </Button>
+
+                        <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950">
+                            <FileText className="h-4 w-4" />
+                            PDF Report
+                        </Button>
+
+                        <Button onClick={saveBookmark} variant="outline" size="lg" className="gap-2 border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950">
+                            <Save className="h-4 w-4" />
+                            Bookmark Fit
                         </Button>
 
                         <ExportCodeButton
