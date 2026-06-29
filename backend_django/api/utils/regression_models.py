@@ -145,10 +145,89 @@ class RegressionModelSelector:
                 ln_a = y_mean - b * x_mean
                 a = np.exp(ln_a)
                 return a * np.power(X_val.flatten(), b)
+                
+            # Sklearn models
+            elif SKLEARN_AVAILABLE:
+                if model_type == 'ridge':
+                    from sklearn.linear_model import Ridge
+                    model = Ridge(alpha=params.get('alpha', 1.0))
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'lasso':
+                    from sklearn.linear_model import Lasso
+                    model = Lasso(alpha=params.get('alpha', 1.0), max_iter=5000)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'elasticnet':
+                    from sklearn.linear_model import ElasticNet
+                    model = ElasticNet(alpha=0.1, l1_ratio=0.5, max_iter=5000)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'svr':
+                    from sklearn.preprocessing import StandardScaler
+                    from sklearn.svm import SVR
+                    scaler = StandardScaler()
+                    X_train_scaled = scaler.fit_transform(X_train)
+                    X_val_scaled = scaler.transform(X_val)
+                    model = SVR(kernel=params.get('kernel', 'rbf'), C=1.0, epsilon=0.1)
+                    model.fit(X_train_scaled, y_train)
+                    return model.predict(X_val_scaled)
+                    
+                elif model_type == 'decision_tree':
+                    from sklearn.tree import DecisionTreeRegressor
+                    model = DecisionTreeRegressor(max_depth=5, random_state=42)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'random_forest':
+                    from sklearn.ensemble import RandomForestRegressor
+                    model = RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42)
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
+                    
+                elif model_type == 'quantile':
+                    from sklearn.linear_model import QuantileRegressor
+                    model = QuantileRegressor(quantile=0.5, alpha=0, solver='highs')
+                    model.fit(X_train, y_train)
+                    return model.predict(X_val)
             
             return None
         except Exception as e:
             return None
+
+    def _get_cv_predictions(self, model_type: str, params: Dict) -> Optional[np.ndarray]:
+        """
+        Compute out-of-fold predictions for a given model type and its parameters.
+        """
+        if self.n < 4:
+            # Not enough data for cross-validation
+            return None
+        
+        k = min(5, self.n)
+        indices = np.arange(self.n)
+        # Deterministic shuffle using a fixed generator seed
+        rng = np.random.default_rng(42)
+        shuffled_indices = rng.permutation(indices)
+        
+        folds = np.array_split(shuffled_indices, k)
+        y_pred_cv = np.zeros(self.n)
+        
+        for i in range(k):
+            val_idx = folds[i]
+            train_idx = np.hstack([folds[j] for j in range(k) if j != i])
+            
+            X_train, y_train = self.X[train_idx], self.y[train_idx]
+            X_val = self.X[val_idx]
+            
+            pred_val = self._fit_and_predict_fold(model_type, params, X_train, y_train, X_val)
+            if pred_val is None:
+                return None
+            y_pred_cv[val_idx] = pred_val
+            
+        return y_pred_cv
 
     def _safe_predict(self, model, X):
         """Safely predict values, handling errors."""
