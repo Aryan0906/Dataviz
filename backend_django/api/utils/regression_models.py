@@ -36,7 +36,7 @@ def compute_r2(y_true, y_pred):
 def compute_adjusted_r2(r2, n, p):
     """Calculate adjusted R-squared."""
     if n <= p + 1:
-        return r2
+        return -999.0
     return 1 - (1 - r2) * (n - 1) / (n - p - 1)
 
 
@@ -78,6 +78,78 @@ class RegressionModelSelector:
         self.models_tested = []
         self.best_model = None
         
+    def _fit_and_predict_fold(self, model_type: str, params: Dict, X_train, y_train, X_val):
+        """Fit model on training fold and predict on validation fold."""
+        n_train = len(y_train)
+        try:
+            if model_type == 'linear':
+                x_mean = np.mean(X_train)
+                y_mean = np.mean(y_train)
+                numerator = np.sum((X_train.flatten() - x_mean) * (y_train - y_mean))
+                denominator = np.sum((X_train.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                slope = numerator / denominator
+                intercept = y_mean - slope * x_mean
+                return slope * X_val.flatten() + intercept
+                
+            elif model_type.startswith('polynomial-'):
+                degree = int(model_type.split('-')[1])
+                if n_train <= degree + 1:
+                    return None
+                coeffs = np.polyfit(X_train.flatten(), y_train, degree)
+                poly = np.poly1d(coeffs)
+                return poly(X_val.flatten())
+                
+            elif model_type == 'logarithmic':
+                if np.any(X_train <= 0) or np.any(X_val <= 0):
+                    return None
+                X_train_log = np.log(X_train)
+                x_mean = np.mean(X_train_log)
+                y_mean = np.mean(y_train)
+                numerator = np.sum((X_train_log.flatten() - x_mean) * (y_train - y_mean))
+                denominator = np.sum((X_train_log.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                a = numerator / denominator
+                b = y_mean - a * x_mean
+                return a * np.log(X_val.flatten()) + b
+                
+            elif model_type == 'exponential':
+                if np.any(y_train <= 0):
+                    return None
+                y_train_log = np.log(y_train)
+                x_mean = np.mean(X_train)
+                y_log_mean = np.mean(y_train_log)
+                numerator = np.sum((X_train.flatten() - x_mean) * (y_train_log - y_log_mean))
+                denominator = np.sum((X_train.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                b = numerator / denominator
+                ln_a = y_log_mean - b * x_mean
+                a = np.exp(ln_a)
+                return a * np.exp(b * X_val.flatten())
+                
+            elif model_type == 'power':
+                if np.any(X_train <= 0) or np.any(y_train <= 0) or np.any(X_val <= 0):
+                    return None
+                X_train_log = np.log(X_train)
+                y_train_log = np.log(y_train)
+                x_mean = np.mean(X_train_log)
+                y_mean = np.mean(y_train_log)
+                numerator = np.sum((X_train_log.flatten() - x_mean) * (y_train_log - y_mean))
+                denominator = np.sum((X_train_log.flatten() - x_mean) ** 2)
+                if denominator == 0:
+                    return None
+                b = numerator / denominator
+                ln_a = y_mean - b * x_mean
+                a = np.exp(ln_a)
+                return a * np.power(X_val.flatten(), b)
+            
+            return None
+        except Exception as e:
+            return None
+
     def _safe_predict(self, model, X):
         """Safely predict values, handling errors."""
         try:
