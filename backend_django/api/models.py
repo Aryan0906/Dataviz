@@ -102,6 +102,7 @@ class UserHistory(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     snapshot_data = models.JSONField()  # Complete data snapshot at time of action
     metadata = models.JSONField(blank=True, null=True)  # Additional context (chart type, file name, etc.)
+    intent_cache = models.JSONField(blank=True, null=True)  # Cached intents for NLP
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

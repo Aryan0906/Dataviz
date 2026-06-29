@@ -244,6 +244,19 @@ export const dataAPI = {
         }
         return res.json();
     },
+
+    async categoricalQuery(query, data, columns, dataSchema = {}) {
+        const res = await fetch(`${API_BASE_URL}/data/categorical-query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, data, columns, data_schema: dataSchema }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Categorical query failed');
+        }
+        return res.json();
+    },
 };
 
 // Custom error class for AI timeout errors
