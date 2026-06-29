@@ -1253,3 +1253,26 @@ def generate_code_snippet(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ============ EXPORT NOTEBOOK ENDPOINT ============
+
+@csrf_exempt
+def export_notebook(request):
+    """Export a visualization as a Jupyter notebook.
+    Expected JSON body: {"visualization_id": int, "mode": "chartOnly"|"full"}
+    Returns JSON with key "notebook_content" containing the notebook JSON string.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        viz_id = body.get("visualization_id")
+        mode = body.get("mode", "full")
+        if not viz_id:
+            return JsonResponse({"error": "visualization_id is required"}, status=400)
+        # In a real implementation we would validate ownership
+        from .utils.notebook_generator import generate_notebook
+        notebook_json = generate_notebook(viz_id, mode)
+        return JsonResponse({"notebook_content": notebook_json})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
