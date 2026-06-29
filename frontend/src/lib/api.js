@@ -231,6 +231,19 @@ export const dataAPI = {
         if (!res.ok) throw new Error('Failed to generate code');
         return res.json();
     },
+
+    async nlpQuery(query, data, columns) {
+        const res = await fetch(`${API_BASE_URL}/data/nlp-query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, data, columns }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'NLP query failed');
+        }
+        return res.json();
+    },
 };
 
 // Custom error class for AI timeout errors
