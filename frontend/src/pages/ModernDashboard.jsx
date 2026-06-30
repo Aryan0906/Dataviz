@@ -16,15 +16,20 @@ import {
     Play,
     FolderOpen,
     Star,
-    History
+    History,
+    Share2,
+    Code
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/AppLayout";
+import { DashboardTour } from "@/components/DashboardTour";
 import { useAuth } from "@/context/AuthContext";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { dataAPI } from "@/lib/api";
 import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
+import { analysisTemplates } from "@/lib/templates";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -145,6 +150,7 @@ function QuickActionCard({ title, description, icon: Icon, action, index }) {
 /* ── Main Component ── */
 const ModernDashboard = () => {
     const { session, user } = useAuth();
+    const { activeWorkspace } = useWorkspace();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [analyses, setAnalyses] = useState([]);
@@ -155,7 +161,7 @@ const ModernDashboard = () => {
         if (!session) return;
         setLoading(true);
         try {
-            const items = await dataAPI.getAnalyses();
+            const items = await dataAPI.getAnalyses(activeWorkspace?.id);
             setAnalyses(items);
             const { draft: draftData } = await dataAPI.getDraft();
             setDraft(draftData);
@@ -179,7 +185,7 @@ const ModernDashboard = () => {
         fetchHistory();
         fetchSessions();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session]);
+    }, [session, activeWorkspace]);
 
     const handleDeleteSession = async (sessionId) => {
         if (!confirm("Delete this saved chart?")) return;
@@ -211,7 +217,8 @@ const ModernDashboard = () => {
 
     return (
         <AppLayout>
-            <div className="space-y-8" style={{ fontFamily: "'Raleway', sans-serif" }}>
+            <DashboardTour />
+            <div className="bg-[#FAFAF7] min-h-[calc(100vh-64px)] pb-24" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
                 {/* ── Luxury Hero Banner ── */}
                 <div className="relative overflow-hidden bg-[#0F172A]">
@@ -258,7 +265,7 @@ const ModernDashboard = () => {
                 </div>
 
                 {/* ── Quick Actions ── */}
-                <div>
+                <div className="tour-quick-actions">
                     <div className="flex items-center gap-3 mb-4">
                         <p
                             className="text-[#0F172A]"
@@ -281,7 +288,7 @@ const ModernDashboard = () => {
                 </div>
 
                 {/* ── Feature Grid ── */}
-                <div>
+                <div className="tour-features">
                     <div className="flex items-center gap-3 mb-4">
                         <p
                             className="text-[#0F172A]"
@@ -319,6 +326,7 @@ const ModernDashboard = () => {
                         <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto">
                             {[
                                 { value: "drafts", label: "Drafts" },
+                                { value: "templates", label: "Templates" },
                                 { value: "recent", label: "Saved Analyses", id: "recent-tab" },
                                 { value: "charts", label: "Saved Charts" },
                             ].map((tab) => (
@@ -335,7 +343,7 @@ const ModernDashboard = () => {
                         </TabsList>
 
                         {/* Drafts */}
-                        <TabsContent value="drafts" className="mt-5">
+                        <TabsContent value="drafts" className="mt-5 tour-templates">
                             {draft ? (
                                 <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
                                     <div className="h-0.5 w-full bg-[#D4AF37]" />
@@ -381,6 +389,32 @@ const ModernDashboard = () => {
                             )}
                         </TabsContent>
 
+                        {/* Templates Gallery */}
+                        <TabsContent value="templates" className="mt-5 tour-templates">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {analysisTemplates.map((template) => (
+                                    <div key={template.id} className="bg-white border border-[#E8E4DC] p-6 luxury-card-hover group cursor-pointer" onClick={() => navigate('/manual-plot/regression', { state: { template } })}>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 rounded-none bg-[#0F172A]/5 border border-[#0F172A]/10 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-colors duration-300">
+                                                {template.icon === 'trending' && <TrendingUp className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'graduation' && <Brain className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'server' && <Activity className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                            </div>
+                                            <h4 className="font-semibold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                                {template.title}
+                                            </h4>
+                                        </div>
+                                        <p className="text-sm text-[#6B6B6B] mb-4 h-10">
+                                            {template.description}
+                                        </p>
+                                        <button className="flex items-center text-xs font-semibold uppercase tracking-wider text-[#0F172A] group-hover:text-[#D4AF37] transition-colors">
+                                            Load Template <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </TabsContent>
+
                         {/* Saved Analyses */}
                         <TabsContent value="recent" className="mt-5">
                             {loading ? (
@@ -414,9 +448,45 @@ const ModernDashboard = () => {
                                                     <p className="text-xs font-mono text-[#6B6B6B] mt-0.5 truncate">{item.equation}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 text-xs text-[#6B6B6B] border-t border-[#E8E4DC] pt-3">
-                                                <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
-                                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                            <div className="flex items-center justify-between border-t border-[#E8E4DC] pt-3">
+                                                <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
+                                                    <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
+                                                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        dataAPI.createShareLink(item.id)
+                                                            .then(res => {
+                                                                const link = `${window.location.origin}/share/${res.token}`;
+                                                                navigator.clipboard.writeText(link);
+                                                                toast.success('Share link copied to clipboard!');
+                                                            })
+                                                            .catch(err => toast.error('Failed to create share link'));
+                                                    }}
+                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    title="Share Analysis"
+                                                >
+                                                    <Share2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        dataAPI.createShareLink(item.id)
+                                                            .then(res => {
+                                                                const embedCode = `<iframe src="${window.location.origin}/embed/${res.token}" width="100%" height="500px" frameborder="0"></iframe>`;
+                                                                navigator.clipboard.writeText(embedCode);
+                                                                toast.success('Embed code copied to clipboard!');
+                                                            })
+                                                            .catch(err => toast.error('Failed to create embed link'));
+                                                    }}
+                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    title="Get Embed Code"
+                                                >
+                                                    <Code className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}

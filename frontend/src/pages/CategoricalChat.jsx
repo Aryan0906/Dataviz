@@ -1,4 +1,5 @@
 import { useMemo, useState, useRef, useCallback } from "react";
+import ChartSuggestionChip from "@/components/ChartSuggestionChip";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import HCHeatmap from "highcharts/modules/heatmap";
@@ -52,6 +53,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { dataAPI } from "@/lib/api";
+import StorySummaryCard from "@/components/StorySummaryCard";
 
 HCHeatmap(Highcharts);
 HCExporting(Highcharts);
@@ -279,6 +282,27 @@ export const CategoricalChatPanel = () => {
 
     // Manual entry state
     const [newLabel, setNewLabel] = useState("");
+    const [chartRecommendation, setChartRecommendation] = useState(null);
+
+    const requestChartRecommendation = async (file) => {
+        const form = new FormData();
+        form.append('file', file);
+        try {
+            const response = await fetch('/api/upload_csv', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: form,
+            });
+            const data = await response.json();
+            if (data.chart_recommendation) {
+                setChartRecommendation(data.chart_recommendation);
+            }
+        } catch (err) {
+            console.error('Chart recommendation error:', err);
+        }
+    };
     const [newValue, setNewValue] = useState("");
     const fileInputRef = useRef(null);
     const chartContainerRef = useRef(null);
@@ -295,10 +319,14 @@ export const CategoricalChatPanel = () => {
     const [csvMetadata, setCsvMetadata] = useState(null);
     const [tableSearch, setTableSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
+    // === AI Data Story State ===
+    const [aiSummary, setAiSummary] = useState(null);
+    const [isGeneratingStory, setIsGeneratingStory] = useState(false);
     const [chartTitle, setChartTitle] = useState("Data Visualizer");
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [dragActive, setDragActive] = useState(false);
-    const itemsPerPage = 10;
 
     // Prepare state for persistence
     const sessionState = useMemo(() => ({
@@ -463,6 +491,21 @@ export const CategoricalChatPanel = () => {
     const handleCSVUpload = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
+
+        // Call backend to generate AI Data Story and metadata
+        setIsGeneratingStory(true);
+        dataAPI.uploadCSV(file)
+            .then(res => {
+                if (res.ai_summary) {
+                    setAiSummary(res.ai_summary);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to generate AI summary:", err);
+            })
+            .finally(() => {
+                setIsGeneratingStory(false);
+            });
 
         Papa.parse(file, {
             header: true,
@@ -1172,6 +1215,21 @@ export const CategoricalChatPanel = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-4">
+                <div className="col-span-full">
+                    {/* AI Data Story Card */}
+                    {aiSummary && (
+                        <StorySummaryCard 
+                            story={aiSummary} 
+                            onClose={() => setAiSummary(null)} 
+                        />
+                    )}
+                    {isGeneratingStory && !aiSummary && (
+                        <div className="mb-6 p-5 rounded-xl border border-indigo-100 bg-indigo-50/50 flex items-center justify-center space-x-2 text-indigo-500 text-sm">
+                            <Sparkles className="w-4 h-4 animate-pulse" />
+                            <span>Generating AI Data Story...</span>
+                        </div>
+                    )}
+                </div>
                 <Card className="order-2 lg:order-1">
                     <CardHeader>
                         <div className="flex items-center justify-between gap-2 flex-wrap">

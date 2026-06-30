@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
+import { useTaskPolling } from "@/hooks/useTaskPolling";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,16 +25,19 @@ import {
     Grid3x3,
     Trash2,
     PlayCircle,
-    CheckCircle2
+    CheckCircle2,
+    Beaker
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ExportCodeButton from "./ExportCodeButton";
+import StatsTester from "./StatsTester";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -52,17 +55,23 @@ import jsPDF from "jspdf";
 
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
-    const { session } = useAuth();
+    const { session, isGuest } = useAuth();
     const _navigate = useNavigate();
+    const location = useLocation();
+    const { activeWorkspace } = useWorkspace();
     const fileInputRef = useRef(null);
 
     // State initialization
     const [data, setData] = useState([]);
+    
+    // Polling hook
+    const polling = useTaskPolling();
     const [regressionResult, setRegressionResult] = useState(null);
     const [xValue, setXValue] = useState("");
     const [yValue, setYValue] = useState("");
     const [csvText, setCsvText] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isPublic, setIsPublic] = useState(false);
     const [error, setError] = useState("");
     const [regressionType, setRegressionType] = useState("linear");
     const [polynomialDegree, setPolynomialDegree] = useState(2);
@@ -125,8 +134,21 @@ export const EnhancedDataAnalyzer = () => {
             }
         };
 
-        loadDraft();
-    }, [session]);
+        if (location.state?.template) {
+            const tmpl = location.state.template;
+            setData(tmpl.data);
+            setSelectedModelType("auto"); // Let the backend decide or set based on template
+            if (tmpl.type === 'regression' && tmpl.id === 'student-grades') {
+                setSelectedModelType("polynomial");
+                setPolynomialDegree(2);
+            }
+            toast.success(`Loaded template: ${tmpl.title}`);
+            // Clear state so it doesn't reload on refresh
+            window.history.replaceState({}, document.title);
+        } else {
+            loadDraft();
+        }
+    }, [session, location.state]);
 
     // Auto-save to Supabase with debounce
     const debouncedSave = useMemo(
@@ -203,13 +225,27 @@ export const EnhancedDataAnalyzer = () => {
                 modelToRequest = modelTypeOverride;
             }
 
-            const result = await dataAPI.analyze(data, modelToRequest);
+            const response = await dataAPI.analyze(data, modelToRequest);
 
-            if (!result) {
-                setError("Failed to analyze data");
-                return;
+            if (response && response.task_id) {
+                polling.startPolling(response.task_id);
+                // We don't set loading to false yet; the useEffect will handle the result
+            } else {
+                setError("Failed to start analysis task");
+                setLoading(false);
             }
 
+        } catch (err) {
+            setError(err.message || "Failed to analyze data");
+            setLoading(false);
+        }
+    }, [data, selectedModelType, polynomialDegree, polling]);
+
+    // Handle polling result
+    useEffect(() => {
+        if (polling.result) {
+            const result = polling.result;
+            
             const modelType = result.model_type;
             if (modelType.startsWith('polynomial-')) {
                 const degree = parseInt(modelType.split('-')[1]);
@@ -248,28 +284,28 @@ export const EnhancedDataAnalyzer = () => {
                     return sorted[sorted.length - 1][1];
                 },
                 type: modelType,
-                equation: result.equation || '',
-                meanY,
-                varianceY,
-                stdDevY,
-                rmse: result.rmse,
-                mae: result.mae,
-                adjustedR2: result.adjusted_r2,
-                modelName: result.model_name,
-                predictions: result.predictions || []
+                equation: result.equation,
+                details: {
+                    stdDevX: Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                    stdDevY: stdDevY,
+                    varianceX: data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0,
+                    varianceY: varianceY,
+                    adjustedR2: result.adjusted_r2,
+                    rmse: result.rmse,
+                    mae: result.mae,
+                    allModels: result.all_models_tested
+                }
             });
 
-            toast.success(`Analysis complete! Best model: ${result.model_name}`, {
-                icon: <Sparkles className="h-4 w-4 text-blue-500" />
+            toast.success("Analysis complete!", {
+                icon: <Sparkles className="h-4 w-4 text-primary" />
             });
-        } catch (error) {
-            console.error("Analysis error:", error);
-            setError(`Failed to analyze data: ${error.message || error}`);
-            toast.error(`Failed to analyze data: ${error.message || error}`);
-        } finally {
+            setLoading(false);
+        } else if (polling.error) {
+            setError(polling.error);
             setLoading(false);
         }
-    }, [data, selectedModelType, polynomialDegree]);
+    }, [polling.result, polling.error, data]);
 
     // Derived predictions sorted for inverse mapping and interpolation
     const sortedPredictions = useMemo(() => {
@@ -484,18 +520,34 @@ export const EnhancedDataAnalyzer = () => {
             complete: (results) => {
                 try {
                     const newData = results.data
-                        .map((row) => ({
-                            x: parseFloat(row[0]),
-                            y: parseFloat(row[1]),
-                        }))
-                        .filter((d) => !isNaN(d.x) && !isNaN(d.y));
+                        .map((row) => {
+                            if (row.length > 2) {
+                                return {
+                                    x: row.slice(0, -1).map(v => parseFloat(v)),
+                                    y: parseFloat(row[row.length - 1]),
+                                };
+                            }
+                            return {
+                                x: parseFloat(row[0]),
+                                y: parseFloat(row[1]),
+                            };
+                        })
+                        .filter((d) => {
+                            if (Array.isArray(d.x)) {
+                                return d.x.every(v => !isNaN(v)) && !isNaN(d.y);
+                            }
+                            return !isNaN(d.x) && !isNaN(d.y);
+                        });
 
                     if (newData.length === 0) {
                         setError("No valid data found in CSV");
                         return;
                     }
 
-                    newData.sort((a, b) => a.x - b.x);
+                    // Sort only if 1D X
+                    if (!Array.isArray(newData[0]?.x)) {
+                        newData.sort((a, b) => a.x - b.x);
+                    }
                     setData(newData);
                     setCsvText("");
                     toast.success(`Imported ${newData.length} data points`);
@@ -529,18 +581,33 @@ export const EnhancedDataAnalyzer = () => {
                 complete: (results) => {
                     try {
                         const newData = results.data
-                            .map((row) => ({
-                                x: parseFloat(row[0]),
-                                y: parseFloat(row[1]),
-                            }))
-                            .filter((d) => !isNaN(d.x) && !isNaN(d.y));
+                            .map((row) => {
+                                if (row.length > 2) {
+                                    return {
+                                        x: row.slice(0, -1).map(v => parseFloat(v)),
+                                        y: parseFloat(row[row.length - 1]),
+                                    };
+                                }
+                                return {
+                                    x: parseFloat(row[0]),
+                                    y: parseFloat(row[1]),
+                                };
+                            })
+                            .filter((d) => {
+                                if (Array.isArray(d.x)) {
+                                    return d.x.every(v => !isNaN(v)) && !isNaN(d.y);
+                                }
+                                return !isNaN(d.x) && !isNaN(d.y);
+                            });
 
                         if (newData.length === 0) {
                             setError("No valid data found in CSV file");
                             return;
                         }
 
-                        newData.sort((a, b) => a.x - b.x);
+                        if (!Array.isArray(newData[0]?.x)) {
+                            newData.sort((a, b) => a.x - b.x);
+                        }
                         setData(newData);
                         setCsvText("");
                         toast.success(`Imported ${newData.length} data points from file`);
@@ -593,6 +660,16 @@ export const EnhancedDataAnalyzer = () => {
             return;
         }
 
+        if (isGuest) {
+            toast.warning("Sign up to save analyses and access your history!", {
+                action: {
+                    label: "Sign Up",
+                    onClick: () => _navigate("/signup")
+                },
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             if (!session) throw new Error("Not authenticated");
@@ -610,7 +687,8 @@ export const EnhancedDataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
-            toast.success("Analysis saved successfully");
+            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
+            toast.success("Analysis saved successfully!");
         } catch (_err) {
             toast.error("Failed to save analysis");
         } finally {
@@ -917,7 +995,7 @@ export const EnhancedDataAnalyzer = () => {
 
             {/* Main Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="input" className="gap-2">
                         <Upload className="h-4 w-4" />
                         Input Data
@@ -929,6 +1007,10 @@ export const EnhancedDataAnalyzer = () => {
                     <TabsTrigger value="results" className="gap-2" disabled={!regressionResult}>
                         <BarChart3 className="h-4 w-4" />
                         Results
+                    </TabsTrigger>
+                    <TabsTrigger value="stats" className="gap-2" disabled={data.length === 0}>
+                        <Beaker className="h-4 w-4" />
+                        Compare Groups
                     </TabsTrigger>
                 </TabsList>
 

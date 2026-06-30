@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import LandingNav from "@/components/LandingNav";
 import LandingFooter from "@/components/LandingFooter";
@@ -198,6 +199,8 @@ function ContentSection({ label, title, description, bullets, ctaText, ctaHref, 
 
 /* ─── Main Page ─── */
 const ProfessionalLanding = () => {
+    const { loginAsGuest } = useAuth();
+    const navigate = useNavigate();
     const heroRef = useRef(null);
     const { scrollYProgress: heroProgress } = useScroll({
         target: heroRef,
@@ -205,6 +208,11 @@ const ProfessionalLanding = () => {
     });
     const heroY = useTransform(heroProgress, [0, 1], ["0%", "20%"]);
     const heroOpacity = useTransform(heroProgress, [0, 0.7], [1, 0]);
+
+    const handleTryDemo = () => {
+        loginAsGuest();
+        navigate('/manual-plot');
+    };
 
     const features = [
         { icon: Brain, title: "AI-Powered Analysis", description: "Leverage advanced machine learning to automatically detect patterns and anomalies in your data.", color: "bg-slate-100" },
@@ -331,6 +339,13 @@ const ProfessionalLanding = () => {
                         >
                             Start Free Trial <span className="ml-1 text-lg">›</span>
                         </Link>
+                        <span className="hidden sm:block w-px h-4 bg-white/30" />
+                        <button
+                            onClick={handleTryDemo}
+                            className="luxury-link text-white/90 hover:text-white text-base bg-[#D4AF37]/20 px-4 py-1.5 border border-[#D4AF37]/50"
+                        >
+                            Try Demo <span className="ml-1 text-lg">›</span>
+                        </button>
                         <span className="hidden sm:block w-px h-4 bg-white/30" />
                         <Link
                             to="/login"

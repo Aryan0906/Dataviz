@@ -26,6 +26,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import StorySummaryCard from "@/components/StorySummaryCard";
 
 const CategoricalChatNLP = () => {
     const fileInputRef = useRef(null);
@@ -60,7 +61,11 @@ const CategoricalChatNLP = () => {
     const [filteredData, setFilteredData] = useState([]);
     const [tableSearch, setTableSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const itemsPerPage = 10;
+    
+    // === AI Data Story State ===
+    const [aiSummary, setAiSummary] = useState(null);
+    const [isGeneratingStory, setIsGeneratingStory] = useState(false);
 
     const [error, setError] = useState("");
 
@@ -83,12 +88,27 @@ const CategoricalChatNLP = () => {
         setChatHistory(prev => [...prev, { type: 'user', message: chatInput }]);
 
         try {
-            const response = await dataAPI.nlpQuery(chatInput, categoricalData, columns);
+            // Using the new categoricalQuery endpoint with LLM fallback
+            const response = await dataAPI.categoricalQuery(
+                chatInput, 
+                categoricalData, 
+                columns
+            );
 
             // Update visualization
-            setChartData(response.chart);
-            setChartTitle(response.chart.title || chatInput);
-            setInsights(response.insights);
+            setChartData(response.chart_data || response.chart); // Handling both new and old format if any
+            if (response.chart_config) {
+                setChartType(response.chart_config.chartType || "bar");
+                setChartTitle(response.chart_config.title || chatInput);
+            } else if (response.chart) {
+                setChartTitle(response.chart.title || chatInput);
+            }
+            
+            // New endpoint might not return full insights yet, handle gracefully
+            if (response.insights) {
+                setInsights(response.insights);
+            }
+
             setFilteredData(response.table_data || categoricalData);
 
             // Add system response to chat
@@ -96,19 +116,20 @@ const CategoricalChatNLP = () => {
                 ...prev,
                 {
                     type: 'system',
-                    message: response.insights.summary || "Chart generated successfully"
+                    message: response.insights?.summary || "Chart generated successfully based on your query."
                 }
             ]);
 
             setChatInput("");
             toast.success("Query processed successfully");
         } catch (_err) {
+            console.error(_err);
             toast.error("Failed to process query");
             setChatHistory(prev => [
                 ...prev,
                 {
                     type: 'error',
-                    message: "I couldn't understand that query. Try asking 'Show count by [Column Name]'"
+                    message: "I couldn't understand that query or generate a valid chart. Try asking 'Show count by [Column Name]'"
                 }
             ]);
         } finally {
@@ -213,6 +234,21 @@ const CategoricalChatNLP = () => {
             setError("Please select a CSV file");
             return;
         }
+
+        // Call backend to generate AI Data Story and metadata
+        setIsGeneratingStory(true);
+        dataAPI.uploadCSV(file)
+            .then(res => {
+                if (res.ai_summary) {
+                    setAiSummary(res.ai_summary);
+                }
+            })
+            .catch(err => {
+                console.error("Failed to generate AI summary:", err);
+            })
+            .finally(() => {
+                setIsGeneratingStory(false);
+            });
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -360,6 +396,24 @@ const CategoricalChatNLP = () => {
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 )}
+
+            {/* Main Content Area */}
+            <div className="flex-1 lg:pl-10 pb-20 pt-5 pr-5 lg:pr-10 h-[calc(100vh-4rem)] overflow-y-auto">
+                <div className="max-w-6xl mx-auto space-y-6">
+
+                    {/* AI Data Story Card */}
+                    {aiSummary && (
+                        <StorySummaryCard 
+                            story={aiSummary} 
+                            onClose={() => setAiSummary(null)} 
+                        />
+                    )}
+                    {isGeneratingStory && !aiSummary && (
+                        <div className="mb-6 p-5 rounded-xl border border-indigo-100 bg-indigo-50/50 flex items-center justify-center space-x-2 text-indigo-500 text-sm">
+                            <Sparkles className="w-4 h-4 animate-pulse" />
+                            <span>Generating AI Data Story...</span>
+                        </div>
+                    )}
 
                 {/* Main 4-Quadrant Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

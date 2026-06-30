@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from django_ratelimit.decorators import ratelimit
 from .models import AnalysisResult, DraftAnalysis, Visualization, PageSession, UserHistory
 from .utils.ai_helpers import (
     generate_metadata_summary,
@@ -19,6 +20,7 @@ from .utils.ai_helpers import (
     AITimeoutError,
     AIValidationError
 )
+from .utils.langchain_helpers import recommend_chart_type, generate_data_story
 from .utils.regression_models import find_best_regression
 
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -145,16 +147,25 @@ def save_analysis(request):
     regression_type = body.get("regressionType")
     equation = body.get("equation")
     r_squared = body.get("rSquared")
+    workspace_id = body.get("workspace_id")
+    is_public = body.get("is_public", False)
+    
     if not title or not data_points:
         return JsonResponse({"error": "Title and data points are required"}, status=400)
-    ar = AnalysisResult.objects.create(
+        
+    ar = AnalysisResult(
         user_id=user_id,
         title=title,
         data_points=data_points,
         regression_type=regression_type,
         equation=equation,
         r_squared=r_squared,
+        is_public=is_public,
     )
+    if workspace_id:
+        ar.workspace_id = workspace_id
+    ar.save()
+    
     return JsonResponse({"message": "Analysis saved successfully", "id": ar.id}, status=201)
 
 
@@ -162,7 +173,13 @@ def list_analyses(request):
     user_id, err = _require_auth(request)
     if err:
         return err
-    qs = AnalysisResult.objects.filter(user_id=user_id).order_by("-created_at")
+        
+    workspace_id = request.GET.get('workspace_id')
+    if workspace_id:
+        qs = AnalysisResult.objects.filter(workspace_id=workspace_id).order_by("-created_at")
+    else:
+        qs = AnalysisResult.objects.filter(user_id=user_id, workspace__isnull=True).order_by("-created_at")
+        
     return JsonResponse({
         "analyses": [
             {
@@ -172,6 +189,28 @@ def list_analyses(request):
                 "equation": a.equation,
                 "r_squared": a.r_squared,
                 "created_at": a.created_at.isoformat(),
+            }
+            for a in qs
+        ]
+    })
+
+
+def list_public_analyses(request):
+    """Fetch all analyses marked as public, regardless of user"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+        
+    qs = AnalysisResult.objects.filter(is_public=True).order_by("-created_at")
+    return JsonResponse({
+        "analyses": [
+            {
+                "id": a.id,
+                "title": a.title,
+                "regression_type": a.regression_type,
+                "equation": a.equation,
+                "r_squared": a.r_squared,
+                "created_at": a.created_at.isoformat(),
+                "author_id": a.user_id,
             }
             for a in qs
         ]
@@ -202,76 +241,41 @@ def get_analysis(request, pk: int):
 @csrf_exempt
 def analyze(request):
     """
-    Comprehensive regression analysis using multiple models.
-    Automatically selects the best model from:
-    - Linear, Polynomial (2-6 degrees)
-    - Logarithmic, Exponential, Power
-    - Ridge, Lasso, Elastic Net
-    - SVR, Decision Tree, Random Forest
-    - Quantile Regression
+    Async comprehensive regression analysis using Celery.
+    Automatically selects the best model and returns a task ID.
     """
     print("=== Analyze endpoint called ===")
-    print(f"Method: {request.method}")
-    print(f"Headers: {request.headers}")
     
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
     
     try:
         body = json.loads(request.body.decode() or "{}")
-        print(f"Request body: {body}")
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}")
+    except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
     
     data_points = body.get("dataPoints") or []
-    print(f"Data points: {data_points}")
     
     if len(data_points) < 2:
         return JsonResponse({"error": "At least 2 data points are required"}, status=400)
     
     try:
-        # Use comprehensive regression model selector
-        print("Calling find_best_regression...")
+        from .tasks import run_comprehensive_analysis
         model_type = body.get("modelType")
-        result = find_best_regression(data_points, model_type)
-        print(f"Result: {result}")
         
-        if not result:
-            return JsonResponse({"error": "Could not fit any regression model"}, status=400)
+        # Start background task
+        task = run_comprehensive_analysis.delay(data_points, model_type)
         
-        # Generate predictions for plotting
-        X = np.array([float(p["x"]) for p in data_points])
-        predictions = []
-        
-        for x_val in X:
-            try:
-                y_pred = result['predict'](float(x_val))
-                if y_pred is not None and np.isfinite(y_pred):
-                    predictions.append([float(x_val), float(y_pred)])
-            except:
-                # Skip invalid predictions
-                pass
-        
-        response_data = {
-            "model_name": result['model_name'],
-            "model_type": result['model_type'],
-            "equation": result['equation'],
-            "r2": result['r2'],
-            "adjusted_r2": result['adjusted_r2'],
-            "rmse": result['rmse'],
-            "mae": result['mae'],
-            "predictions": predictions,
-            "all_models_tested": result['all_models']  # Return all tested models
-        }
-        print(f"Returning response: {response_data}")
-        return JsonResponse(response_data)
+        # Return task ID immediately
+        return JsonResponse({
+            'task_id': task.id,
+            'status': 'processing'
+        }, status=202)
         
     except Exception as e:
         import traceback
-        print(f"Error in analyze: {e}")
         traceback.print_exc()
-        return JsonResponse({"error": f"Analysis failed: {str(e)}"}, status=500)
+        return JsonResponse({"error": f"Analysis failed to start: {str(e)}"}, status=500)
 
 
 @csrf_exempt
@@ -501,7 +505,6 @@ def upload_csv(request):
         # Get AI cleaning suggestions
         try:
             cleaning_analysis = suggest_cleaning_actions(metadata)
-            ai_summary = cleaning_analysis.get('summary', 'No issues detected')
         except AITimeoutError as e:
             # Return specific error code so frontend can show retry button
             return JsonResponse({
@@ -513,6 +516,18 @@ def upload_csv(request):
                 'error': f'AI validation failed: {str(e)}',
                 'code': 'ERR_AI_VALIDATION'
             }, status=500)
+            
+        # Generate AI Data Story (3-4 sentences narrative)
+        try:
+            ai_summary = generate_data_story(metadata)
+        except Exception as e:
+            ai_summary = "Unable to generate data story at this time."
+        
+        # Get chart type recommendation from AI
+        try:
+            chart_rec = recommend_chart_type(df)
+        except Exception as e:
+            chart_rec = {'recommendation': 'Unable to determine chart type', 'chart_type': 'bar'}
         
         # Create visualization record in database
         visualization = Visualization.objects.create(
@@ -530,7 +545,9 @@ def upload_csv(request):
             'message': 'CSV uploaded and analyzed successfully',
             'visualization_id': visualization.id,
             'metadata': metadata,
-            'cleaning_analysis': cleaning_analysis
+            'cleaning_analysis': cleaning_analysis,
+            'chart_recommendation': chart_rec,
+            'ai_summary': ai_summary
         }, status=201)
     
     except ValidationError as e:
@@ -553,6 +570,7 @@ def upload_csv(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
 def query_ai(request):
     """
     Generate a chart configuration from a natural language query.
@@ -700,6 +718,7 @@ def save_visualization_to_history(request):
     body = json.loads(request.body.decode() or "{}")
     vis_id = body.get('visualization_id')
     title = body.get('title')
+    workspace_id = body.get('workspace_id')
     
     if not vis_id:
         return JsonResponse({'error': 'visualization_id is required'}, status=400)
@@ -708,7 +727,7 @@ def save_visualization_to_history(request):
         vis = Visualization.objects.get(id=vis_id, user_id=user_id)
         
         # Create persistent analysis record
-        analysis = AnalysisResult.objects.create(
+        analysis = AnalysisResult(
             user_id=user_id,
             title=title or vis.title,
             data_points=vis.data,  # Store the chart data
@@ -716,6 +735,9 @@ def save_visualization_to_history(request):
             equation=vis.ai_summary,  # Store AI summary in equation field
             r_squared=None  # Not applicable for AI charts usually
         )
+        if workspace_id:
+            analysis.workspace_id = workspace_id
+        analysis.save()
         
         return JsonResponse({
             'message': 'Analysis saved to history successfully',
@@ -729,6 +751,97 @@ def save_visualization_to_history(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
+def categorical_query(request):
+    """
+    NLP query endpoint for CategoricalChatNLP.
+    Tries smart_column_matcher first, and if it fails to resolve a chart,
+    falls back to LangChain nl_query_to_chart_config.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    # user_id, err = _require_auth(request)
+    # if err:
+    #     return err
+
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        query = body.get("query")
+        raw_data = body.get("data", [])
+        columns = body.get("columns", [])
+        data_schema = body.get("data_schema", {})
+        
+        if not query or not raw_data:
+            return JsonResponse({"error": "Query and data are required"}, status=400)
+        
+        column_names = [col.get("name") for col in columns]
+        
+        # 1. Try fuzzy match + entity extraction
+        from .utils.nlp_helpers import smart_column_matcher
+        parsed = smart_column_matcher(query, column_names)
+        matched_columns = parsed.get("matched_columns", [])
+        
+        target_column_name = None
+        if matched_columns:
+            target_column_name = matched_columns[0]
+            
+        if target_column_name:
+            df = pd.DataFrame(raw_data)
+            if target_column_name in df.columns:
+                counts = df[target_column_name].value_counts().to_dict()
+                labels = [str(k) for k in counts.keys()]
+                values = [int(v) for v in counts.values()]
+                
+                chart_config = {
+                    "chartType": "bar",
+                    "title": f"Count of {target_column_name}",
+                    "xAxisKey": target_column_name,
+                    "dataKeys": ["Count"]
+                }
+                
+                chart_data = [{"label": l, "Count": v} for l, v in zip(labels, values)]
+                return JsonResponse({
+                    "chart_config": chart_config,
+                    "chart_data": chart_data
+                })
+        
+        # 2. Fallback to LangChain LLM
+        if not data_schema:
+            df = pd.DataFrame(raw_data)
+            data_schema = generate_metadata_summary(df)
+            
+        from .utils.nlp_query_helpers import nl_query_to_chart_config
+        chart_config = nl_query_to_chart_config(query, data_schema)
+        
+        x_key = chart_config.get('xAxisKey')
+        data_keys = chart_config.get('dataKeys', [])
+        
+        df = pd.DataFrame(raw_data)
+        required_cols = [x_key] + data_keys
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        
+        if missing_cols:
+            return JsonResponse({
+                'error': f'LLM suggested columns not found: {missing_cols}',
+                'code': 'ERR_INVALID_COLUMNS'
+            }, status=400)
+            
+        chart_data = df[required_cols].to_dict(orient='records')
+        
+        return JsonResponse({
+            'chart_config': chart_config,
+            'chart_data': chart_data
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
 def nlp_query(request):
     """
     Intelligent NLP querying view that fuzzy matches column names
@@ -1215,6 +1328,7 @@ def generate_code_snippet(request):
         
         from .utils.code_generator import (
             generate_regression_code,
+            generate_regression_notebook,
             generate_eda_code,
             generate_data_cleaning_code
         )
@@ -1224,14 +1338,22 @@ def generate_code_snippet(request):
             features = body.get('features', [])
             target = body.get('target', 'target')
             hyperparameters = body.get('hyperparameters', {})
+            format_type = body.get('format', 'python')
             
-            code = generate_regression_code(
-                model_type=model_type,
-                features=features,
-                target=target,
-                hyperparameters=hyperparameters
-            )
-            
+            if format_type == 'jupyter':
+                code = generate_regression_notebook(
+                    model_type=model_type,
+                    features=features,
+                    target=target,
+                    hyperparameters=hyperparameters
+                )
+            else:
+                code = generate_regression_code(
+                    model_type=model_type,
+                    features=features,
+                    target=target,
+                    hyperparameters=hyperparameters
+                )
         elif code_type == 'eda':
             columns = body.get('columns', [])
             code = generate_eda_code(columns)
@@ -1247,9 +1369,97 @@ def generate_code_snippet(request):
         return JsonResponse({
             'code': code,
             'type': code_type,
-            'language': 'python'
+            'language': 'python' if body.get('format') != 'jupyter' else 'json'
         })
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
+# ============ EXPORT NOTEBOOK ENDPOINT ============
+
+@csrf_exempt
+def export_notebook(request):
+    """Export a visualization as a Jupyter notebook.
+    Expected JSON body: {"visualization_id": int, "mode": "chartOnly"|"full"}
+    Returns JSON with key "notebook_content" containing the notebook JSON string.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    try:
+        body = json.loads(request.body.decode() or "{}")
+        viz_id = body.get("visualization_id")
+        mode = body.get("mode", "full")
+        if not viz_id:
+            return JsonResponse({"error": "visualization_id is required"}, status=400)
+        # In a real implementation we would validate ownership
+        from .utils.notebook_generator import generate_notebook
+        notebook_json = generate_notebook(viz_id, mode)
+        return JsonResponse({"notebook_content": notebook_json})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def check_task_status(request, task_id):
+    from celery.result import AsyncResult
+    
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+        
+    task = AsyncResult(task_id)
+    
+    if task.state == 'PENDING':
+        response = {'state': task.state, 'status': 'Pending...'}
+    elif task.state == 'PROGRESS':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0) if task.info else 0,
+            'total': task.info.get('total', 100) if task.info else 100,
+            'status': task.info.get('status', '') if task.info else ''
+        }
+    elif task.state == 'SUCCESS':
+        response = {
+            'state': task.state,
+            'result': task.result
+        }
+    else:
+        response = {'state': task.state, 'status': str(task.info)}
+    
+    return JsonResponse(response)
+
+@csrf_exempt
+def test_hypothesis(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+        
+    try:
+        from .utils.stats_tests import run_hypothesis_test
+        import pandas as pd
+        import json
+        
+        data = json.loads(request.body)
+        file_path = data.get('file_path')
+        group_col = data.get('group_col')
+        value_col = data.get('value_col')
+        
+        if not all([file_path, group_col, value_col]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            
+        if not file_path.endswith('.csv'):
+            return JsonResponse({'error': 'Only CSV files are supported'}, status=400)
+            
+        try:
+            df = pd.read_csv(file_path)
+        except Exception as e:
+            return JsonResponse({'error': f'Failed to read CSV: {str(e)}'}, status=400)
+            
+        results = run_hypothesis_test(df, group_col, value_col)
+        
+        if 'error' in results:
+            return JsonResponse(results, status=400)
+            
+        return JsonResponse(results)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

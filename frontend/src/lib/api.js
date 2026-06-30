@@ -28,12 +28,20 @@ export const dataAPI = {
         return response.json();
     },
 
-    save: async (title, dataPoints, regressionType, equation, rSquared) => {
+    checkTaskStatus: async (taskId) => {
+        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/status`);
+        if (!response.ok) {
+            throw new Error('Failed to check task status');
+        }
+        return response.json();
+    },
+
+    save: async (title, dataPoints, regressionType, equation, rSquared, workspaceId = null, isPublic = false) => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/data/save`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared })
+            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared, workspace_id: workspaceId, is_public: isPublic })
         });
         if (!response.ok) {
             const error = await response.json();
@@ -42,9 +50,12 @@ export const dataAPI = {
         return response.json();
     },
 
-    getAnalyses: async () => {
+    getAnalyses: async (workspaceId = null) => {
         const headers = await getAuthHeaders();
-        const response = await fetch(`${API_BASE_URL}/data/analyses`, {
+        const url = workspaceId 
+            ? `${API_BASE_URL}/data/analyses?workspace_id=${workspaceId}`
+            : `${API_BASE_URL}/data/analyses`;
+        const response = await fetch(url, {
             headers
         });
         if (!response.ok) {
@@ -53,6 +64,17 @@ export const dataAPI = {
         }
         const data = await response.json();
         return data.analyses || [];
+    },
+
+    getPublicAnalyses: async () => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/public/analyses`, {
+            headers
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch public analyses');
+        }
+        return response.json();
     },
 
     getAnalysis: async (id) => {
@@ -74,6 +96,18 @@ export const dataAPI = {
         });
         if (!response.ok) {
             throw new Error('Failed to delete analysis');
+        }
+        return response.json();
+    },
+
+    createShareLink: async (analysisId) => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/share/create/${analysisId}`, {
+            method: 'POST',
+            headers
+        });
+        if (!response.ok) {
+            throw new Error('Failed to create share link');
         }
         return response.json();
     },
@@ -180,12 +214,12 @@ export const dataAPI = {
         return res.json();
     },
 
-    async saveVisualizationToHistory(visualizationId, title) {
+    async saveVisualizationToHistory(visualizationId, title, workspaceId = null) {
         const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE_URL}/ai/save`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ visualization_id: visualizationId, title }),
+            body: JSON.stringify({ visualization_id: visualizationId, title, workspace_id: workspaceId }),
         });
         if (!res.ok) throw new Error('Failed to save visualization to history');
         return res.json();
@@ -241,6 +275,19 @@ export const dataAPI = {
         if (!res.ok) {
             const error = await res.json();
             throw new Error(error.error || 'NLP query failed');
+        }
+        return res.json();
+    },
+
+    async categoricalQuery(query, data, columns, dataSchema = {}) {
+        const res = await fetch(`${API_BASE_URL}/data/categorical-query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, data, columns, data_schema: dataSchema }),
+        });
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Categorical query failed');
         }
         return res.json();
     },

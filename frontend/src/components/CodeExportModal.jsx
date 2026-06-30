@@ -42,6 +42,15 @@ const CodeExportModal = ({
           hyperparameters: hyperparameters,
         });
 
+        // Fetch notebook using centralized API
+        const notebookData = await dataAPI.generateCode([], 'regression', {
+          model_type: modelType,
+          features: features,
+          target: target,
+          hyperparameters: hyperparameters,
+          format: 'jupyter'
+        });
+
         // Fetch EDA code using centralized API
         const edaData = await dataAPI.generateCode([], 'eda', {
           columns: [...features, target],
@@ -54,6 +63,7 @@ const CodeExportModal = ({
 
         setCodeSnippets({
           regression: regressionData.code,
+          notebook: notebookData.code,
           eda: edaData.code,
           cleaning: cleaningData.code,
         });
@@ -124,10 +134,11 @@ const CodeExportModal = ({
         </DialogHeader>
 
         <Tabs defaultValue="regression" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-900/50">
-            <TabsTrigger value="regression">Regression Model</TabsTrigger>
-            <TabsTrigger value="eda">EDA & Visualization</TabsTrigger>
-            <TabsTrigger value="cleaning">Data Cleaning</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-slate-900/50">
+            <TabsTrigger value="regression">Python Script</TabsTrigger>
+            <TabsTrigger value="jupyter">Jupyter Notebook</TabsTrigger>
+            <TabsTrigger value="eda">EDA & Viz</TabsTrigger>
+            <TabsTrigger value="cleaning">Cleaning</TabsTrigger>
           </TabsList>
 
           <TabsContent value="regression" className="space-y-4">
@@ -186,6 +197,66 @@ const CodeExportModal = ({
                 <li>Replace <code className="bg-slate-800 px-1 rounded">'your_data.csv'</code> with your file path</li>
                 <li>Run: <code className="bg-slate-800 px-1 rounded">python regression_model.py</code></li>
                 <li>The model will train and display performance metrics</li>
+              </ol>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="jupyter" className="space-y-4">
+            <div className="relative">
+              <div className="absolute top-2 right-2 flex gap-2 z-10">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => downloadCode(codeSnippets.notebook || '', 'regression_analysis.ipynb')}
+                  className="bg-slate-900/80 border-slate-700 hover:bg-slate-800"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download .ipynb
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(codeSnippets.notebook || '')}
+                  className="bg-slate-900/80 border-slate-700 hover:bg-slate-800"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-1" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy JSON
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-800">
+                <SyntaxHighlighter
+                  language="json"
+                  style={vscDarkPlus}
+                  customStyle={{
+                    margin: 0,
+                    padding: '1.5rem',
+                    background: '#1a1a1e',
+                    fontSize: '0.875rem',
+                  }}
+                  showLineNumbers
+                >
+                  {codeSnippets.notebook || '# Loading...'}
+                </SyntaxHighlighter>
+              </div>
+            </div>
+
+            <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-orange-400 mb-2">📓 How to Use</h4>
+              <ol className="text-sm text-slate-300 space-y-1 list-decimal list-inside">
+                <li>Download the file as <code className="bg-slate-800 px-1 rounded">regression_analysis.ipynb</code></li>
+                <li>Open the file in Jupyter Notebook, JupyterLab, or VS Code</li>
+                <li>Make sure to place <code className="bg-slate-800 px-1 rounded">your_data.csv</code> in the same folder</li>
+                <li>Run all cells to replicate the analysis</li>
               </ol>
             </div>
           </TabsContent>
