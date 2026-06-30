@@ -16,7 +16,8 @@ import {
     Play,
     FolderOpen,
     Star,
-    History
+    History,
+    Share2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -414,9 +415,28 @@ const ModernDashboard = () => {
                                                     <p className="text-xs font-mono text-[#6B6B6B] mt-0.5 truncate">{item.equation}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4 text-xs text-[#6B6B6B] border-t border-[#E8E4DC] pt-3">
-                                                <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
-                                                <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                            <div className="flex items-center justify-between border-t border-[#E8E4DC] pt-3">
+                                                <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
+                                                    <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
+                                                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        dataAPI.createShareLink(item.id)
+                                                            .then(res => {
+                                                                const link = `${window.location.origin}/share/${res.token}`;
+                                                                navigator.clipboard.writeText(link);
+                                                                toast.success('Share link copied to clipboard!');
+                                                            })
+                                                            .catch(err => toast.error('Failed to create share link'));
+                                                    }}
+                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    title="Share Analysis"
+                                                >
+                                                    <Share2 className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}

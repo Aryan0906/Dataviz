@@ -26,6 +26,7 @@ const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const SmartAnalytics = lazy(() => import("./pages/SmartAnalytics"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Documentation = lazy(() => import("./pages/Documentation"));
+const SharedAnalysis = lazy(() => import("./pages/SharedAnalysis"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Storytelling components (not lazy loaded for better UX)
@@ -57,6 +58,9 @@ const App = () => (
 
                             {/* Onboarding for new users */}
                             <Route path="/onboarding" element={<OnboardingWizard />} />
+
+                            {/* Public Share Links */}
+                            <Route path="/share/:token" element={<SharedAnalysis />} />
 
                             {/* Dashboard Options */}
                             <Route
