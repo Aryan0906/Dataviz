@@ -11,7 +11,8 @@ urlpatterns = [
     path("api/auth/login", api.login),
     path("api/auth/verify", api.verify),
     path("api/data/save", api.save_analysis),
-    path("api/data/analyses", api.list_analyses),
+    path("api/data/analyses", api.list_analyses, name="list_analyses"),
+    path("api/public/analyses", api.list_public_analyses, name="list_public_analyses"),
     path("api/data/analyses/<int:pk>/delete", api.delete_analysis),  # DELETE endpoint
     path("api/data/analyses/<int:pk>", api.get_analysis),
     path("api/data/analyze", api.analyze),

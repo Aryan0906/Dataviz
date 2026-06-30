@@ -36,12 +36,12 @@ export const dataAPI = {
         return response.json();
     },
 
-    save: async (title, dataPoints, regressionType, equation, rSquared, workspaceId = null) => {
+    save: async (title, dataPoints, regressionType, equation, rSquared, workspaceId = null, isPublic = false) => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/data/save`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared, workspace_id: workspaceId })
+            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared, workspace_id: workspaceId, is_public: isPublic })
         });
         if (!response.ok) {
             const error = await response.json();
@@ -64,6 +64,17 @@ export const dataAPI = {
         }
         const data = await response.json();
         return data.analyses || [];
+    },
+
+    getPublicAnalyses: async () => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/public/analyses`, {
+            headers
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch public analyses');
+        }
+        return response.json();
     },
 
     getAnalysis: async (id) => {

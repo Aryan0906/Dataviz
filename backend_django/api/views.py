@@ -148,6 +148,7 @@ def save_analysis(request):
     equation = body.get("equation")
     r_squared = body.get("rSquared")
     workspace_id = body.get("workspace_id")
+    is_public = body.get("is_public", False)
     
     if not title or not data_points:
         return JsonResponse({"error": "Title and data points are required"}, status=400)
@@ -159,6 +160,7 @@ def save_analysis(request):
         regression_type=regression_type,
         equation=equation,
         r_squared=r_squared,
+        is_public=is_public,
     )
     if workspace_id:
         ar.workspace_id = workspace_id
@@ -187,6 +189,28 @@ def list_analyses(request):
                 "equation": a.equation,
                 "r_squared": a.r_squared,
                 "created_at": a.created_at.isoformat(),
+            }
+            for a in qs
+        ]
+    })
+
+
+def list_public_analyses(request):
+    """Fetch all analyses marked as public, regardless of user"""
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET"])
+        
+    qs = AnalysisResult.objects.filter(is_public=True).order_by("-created_at")
+    return JsonResponse({
+        "analyses": [
+            {
+                "id": a.id,
+                "title": a.title,
+                "regression_type": a.regression_type,
+                "equation": a.equation,
+                "r_squared": a.r_squared,
+                "created_at": a.created_at.isoformat(),
+                "author_id": a.user_id,
             }
             for a in qs
         ]

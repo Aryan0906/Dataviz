@@ -30,6 +30,7 @@ const Documentation = lazy(() => import("./pages/Documentation"));
 const SharedAnalysis = lazy(() => import("./pages/SharedAnalysis"));
 const EmbedAnalysis = lazy(() => import("./pages/EmbedAnalysis"));
 const WorkspacesPage = lazy(() => import("./pages/WorkspacesPage"));
+const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Storytelling components (not lazy loaded for better UX)
@@ -174,6 +175,7 @@ const App = () => (
                                     </ProtectedRoute>
                                 }
                             />
+                            <Route path="/explore" element={<ExplorePage />} />
                             <Route path="/analyzer" element={<Navigate to="/manual-plot" replace />} />
                             <Route path="*" element={<NotFound />} />
                         </Routes>

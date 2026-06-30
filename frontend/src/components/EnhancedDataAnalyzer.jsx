@@ -71,6 +71,7 @@ export const EnhancedDataAnalyzer = () => {
     const [yValue, setYValue] = useState("");
     const [csvText, setCsvText] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isPublic, setIsPublic] = useState(false);
     const [error, setError] = useState("");
     const [regressionType, setRegressionType] = useState("linear");
     const [polynomialDegree, setPolynomialDegree] = useState(2);
@@ -686,7 +687,7 @@ export const EnhancedDataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
-            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id);
+            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
             toast.success("Analysis saved successfully!");
         } catch (_err) {
             toast.error("Failed to save analysis");
