@@ -160,15 +160,24 @@ def check_task_status(request, task_id):
 def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
     import numpy as np
     from api.utils.regression_models import find_best_regression
+    from api.utils.classification_models import find_best_classification
     
     self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'status': 'Loading data...'})
     
     self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'status': 'Training comprehensive models...'})
     
-    result = find_best_regression(data_points, model_type)
+    y = np.array([p['y'] for p in data_points])
+    unique_y = np.unique(y)
+    
+    if len(unique_y) <= 10 and np.all(y == y.astype(int)):
+        result = find_best_classification(data_points)
+        if not result:
+            result = find_best_regression(data_points, model_type)
+    else:
+        result = find_best_regression(data_points, model_type)
     
     if not result:
-        return {'error': 'Could not fit any regression model'}
+        return {'error': 'Could not fit any model'}
         
     self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'status': 'Calculating predictions...'})
     
