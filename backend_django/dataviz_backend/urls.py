@@ -52,6 +52,9 @@ urlpatterns = [
     path("api/workspaces", ws.workspaces),
     path("api/workspaces/<int:workspace_id>/invite", ws.invite_to_workspace),
 
+    # Statistical Testing
+    path("api/analysis/hypothesis", api.test_hypothesis, name="test_hypothesis"),
+
     # Todos API
     path("api/", include("todos.urls")),
 ]

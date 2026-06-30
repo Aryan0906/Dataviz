@@ -25,7 +25,8 @@ import {
     Grid3x3,
     Trash2,
     PlayCircle,
-    CheckCircle2
+    CheckCircle2,
+    Beaker
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -35,6 +36,7 @@ import Papa from "papaparse";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ExportCodeButton from "./ExportCodeButton";
+import StatsTester from "./StatsTester";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -989,7 +991,7 @@ export const EnhancedDataAnalyzer = () => {
 
             {/* Main Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="input" className="gap-2">
                         <Upload className="h-4 w-4" />
                         Input Data
@@ -1001,6 +1003,10 @@ export const EnhancedDataAnalyzer = () => {
                     <TabsTrigger value="results" className="gap-2" disabled={!regressionResult}>
                         <BarChart3 className="h-4 w-4" />
                         Results
+                    </TabsTrigger>
+                    <TabsTrigger value="stats" className="gap-2" disabled={data.length === 0}>
+                        <Beaker className="h-4 w-4" />
+                        Compare Groups
                     </TabsTrigger>
                 </TabsList>
 

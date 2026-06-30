@@ -1386,3 +1386,39 @@ def check_task_status(request, task_id):
         response = {'state': task.state, 'status': str(task.info)}
     
     return JsonResponse(response)
+
+@csrf_exempt
+def test_hypothesis(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+        
+    try:
+        from .utils.stats_tests import run_hypothesis_test
+        import pandas as pd
+        import json
+        
+        data = json.loads(request.body)
+        file_path = data.get('file_path')
+        group_col = data.get('group_col')
+        value_col = data.get('value_col')
+        
+        if not all([file_path, group_col, value_col]):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+            
+        if not file_path.endswith('.csv'):
+            return JsonResponse({'error': 'Only CSV files are supported'}, status=400)
+            
+        try:
+            df = pd.read_csv(file_path)
+        except Exception as e:
+            return JsonResponse({'error': f'Failed to read CSV: {str(e)}'}, status=400)
+            
+        results = run_hypothesis_test(df, group_col, value_col)
+        
+        if 'error' in results:
+            return JsonResponse(results, status=400)
+            
+        return JsonResponse(results)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
