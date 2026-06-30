@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { useTaskPolling } from "@/hooks/useTaskPolling";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,8 +52,9 @@ import jsPDF from "jspdf";
 
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
-    const { session } = useAuth();
+    const { session, isGuest } = useAuth();
     const _navigate = useNavigate();
+    const location = useLocation();
     const fileInputRef = useRef(null);
 
     // State initialization
@@ -128,8 +129,21 @@ export const EnhancedDataAnalyzer = () => {
             }
         };
 
-        loadDraft();
-    }, [session]);
+        if (location.state?.template) {
+            const tmpl = location.state.template;
+            setData(tmpl.data);
+            setSelectedModelType("auto"); // Let the backend decide or set based on template
+            if (tmpl.type === 'regression' && tmpl.id === 'student-grades') {
+                setSelectedModelType("polynomial");
+                setPolynomialDegree(2);
+            }
+            toast.success(`Loaded template: ${tmpl.title}`);
+            // Clear state so it doesn't reload on refresh
+            window.history.replaceState({}, document.title);
+        } else {
+            loadDraft();
+        }
+    }, [session, location.state]);
 
     // Auto-save to Supabase with debounce
     const debouncedSave = useMemo(
@@ -607,6 +621,16 @@ export const EnhancedDataAnalyzer = () => {
     const saveAnalysis = async () => {
         if (!regressionResult || data.length === 0) {
             setError("No analysis to save");
+            return;
+        }
+
+        if (isGuest) {
+            toast.warning("Sign up to save analyses and access your history!", {
+                action: {
+                    label: "Sign Up",
+                    onClick: () => _navigate("/signup")
+                },
+            });
             return;
         }
 
