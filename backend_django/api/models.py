@@ -113,3 +113,22 @@ class UserHistory(models.Model):
         ]
 
 
+
+
+import uuid
+from django.utils import timezone
+from datetime import timedelta
+
+class SharedLink(models.Model):
+    analysis = models.ForeignKey(AnalysisResult, on_delete=models.CASCADE, related_name='shared_links')
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked = models.BooleanField(default=False)
+    
+    def is_valid(self):
+        if self.revoked:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        return True
