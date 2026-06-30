@@ -23,9 +23,11 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/AppLayout";
+import { DashboardTour } from "@/components/DashboardTour";
 import { useAuth } from "@/context/AuthContext";
 import { dataAPI } from "@/lib/api";
 import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
+import { analysisTemplates } from "@/lib/templates";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -212,7 +214,8 @@ const ModernDashboard = () => {
 
     return (
         <AppLayout>
-            <div className="space-y-8" style={{ fontFamily: "'Raleway', sans-serif" }}>
+            <DashboardTour />
+            <div className="bg-[#FAFAF7] min-h-[calc(100vh-64px)] pb-24" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
                 {/* ── Luxury Hero Banner ── */}
                 <div className="relative overflow-hidden bg-[#0F172A]">
@@ -259,7 +262,7 @@ const ModernDashboard = () => {
                 </div>
 
                 {/* ── Quick Actions ── */}
-                <div>
+                <div className="tour-quick-actions">
                     <div className="flex items-center gap-3 mb-4">
                         <p
                             className="text-[#0F172A]"
@@ -282,7 +285,7 @@ const ModernDashboard = () => {
                 </div>
 
                 {/* ── Feature Grid ── */}
-                <div>
+                <div className="tour-features">
                     <div className="flex items-center gap-3 mb-4">
                         <p
                             className="text-[#0F172A]"
@@ -320,6 +323,7 @@ const ModernDashboard = () => {
                         <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto">
                             {[
                                 { value: "drafts", label: "Drafts" },
+                                { value: "templates", label: "Templates" },
                                 { value: "recent", label: "Saved Analyses", id: "recent-tab" },
                                 { value: "charts", label: "Saved Charts" },
                             ].map((tab) => (
@@ -336,7 +340,7 @@ const ModernDashboard = () => {
                         </TabsList>
 
                         {/* Drafts */}
-                        <TabsContent value="drafts" className="mt-5">
+                        <TabsContent value="drafts" className="mt-5 tour-templates">
                             {draft ? (
                                 <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
                                     <div className="h-0.5 w-full bg-[#D4AF37]" />
@@ -380,6 +384,32 @@ const ModernDashboard = () => {
                                     </button>
                                 </div>
                             )}
+                        </TabsContent>
+
+                        {/* Templates Gallery */}
+                        <TabsContent value="templates" className="mt-5 tour-templates">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                {analysisTemplates.map((template) => (
+                                    <div key={template.id} className="bg-white border border-[#E8E4DC] p-6 luxury-card-hover group cursor-pointer" onClick={() => navigate('/manual-plot/regression', { state: { template } })}>
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-10 h-10 rounded-none bg-[#0F172A]/5 border border-[#0F172A]/10 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-colors duration-300">
+                                                {template.icon === 'trending' && <TrendingUp className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'graduation' && <Brain className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'server' && <Activity className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                            </div>
+                                            <h4 className="font-semibold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                                {template.title}
+                                            </h4>
+                                        </div>
+                                        <p className="text-sm text-[#6B6B6B] mb-4 h-10">
+                                            {template.description}
+                                        </p>
+                                        <button className="flex items-center text-xs font-semibold uppercase tracking-wider text-[#0F172A] group-hover:text-[#D4AF37] transition-colors">
+                                            Load Template <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         </TabsContent>
 
                         {/* Saved Analyses */}
