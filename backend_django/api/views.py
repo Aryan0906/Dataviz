@@ -147,9 +147,12 @@ def save_analysis(request):
     regression_type = body.get("regressionType")
     equation = body.get("equation")
     r_squared = body.get("rSquared")
+    workspace_id = body.get("workspace_id")
+    
     if not title or not data_points:
         return JsonResponse({"error": "Title and data points are required"}, status=400)
-    ar = AnalysisResult.objects.create(
+        
+    ar = AnalysisResult(
         user_id=user_id,
         title=title,
         data_points=data_points,
@@ -157,6 +160,10 @@ def save_analysis(request):
         equation=equation,
         r_squared=r_squared,
     )
+    if workspace_id:
+        ar.workspace_id = workspace_id
+    ar.save()
+    
     return JsonResponse({"message": "Analysis saved successfully", "id": ar.id}, status=201)
 
 
@@ -164,7 +171,13 @@ def list_analyses(request):
     user_id, err = _require_auth(request)
     if err:
         return err
-    qs = AnalysisResult.objects.filter(user_id=user_id).order_by("-created_at")
+        
+    workspace_id = request.GET.get('workspace_id')
+    if workspace_id:
+        qs = AnalysisResult.objects.filter(workspace_id=workspace_id).order_by("-created_at")
+    else:
+        qs = AnalysisResult.objects.filter(user_id=user_id, workspace__isnull=True).order_by("-created_at")
+        
     return JsonResponse({
         "analyses": [
             {
@@ -681,6 +694,7 @@ def save_visualization_to_history(request):
     body = json.loads(request.body.decode() or "{}")
     vis_id = body.get('visualization_id')
     title = body.get('title')
+    workspace_id = body.get('workspace_id')
     
     if not vis_id:
         return JsonResponse({'error': 'visualization_id is required'}, status=400)
@@ -689,7 +703,7 @@ def save_visualization_to_history(request):
         vis = Visualization.objects.get(id=vis_id, user_id=user_id)
         
         # Create persistent analysis record
-        analysis = AnalysisResult.objects.create(
+        analysis = AnalysisResult(
             user_id=user_id,
             title=title or vis.title,
             data_points=vis.data,  # Store the chart data
@@ -697,6 +711,9 @@ def save_visualization_to_history(request):
             equation=vis.ai_summary,  # Store AI summary in equation field
             r_squared=None  # Not applicable for AI charts usually
         )
+        if workspace_id:
+            analysis.workspace_id = workspace_id
+        analysis.save()
         
         return JsonResponse({
             'message': 'Analysis saved to history successfully',

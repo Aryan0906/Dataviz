@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { dataAPI as api } from '@/lib/api';
 import { useAuth } from './AuthContext';
 
 const WorkspaceContext = createContext();

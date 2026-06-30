@@ -33,6 +33,7 @@ import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ExportCodeButton from "./ExportCodeButton";
@@ -57,6 +58,7 @@ export const EnhancedDataAnalyzer = () => {
     const { session, isGuest } = useAuth();
     const _navigate = useNavigate();
     const location = useLocation();
+    const { activeWorkspace } = useWorkspace();
     const fileInputRef = useRef(null);
 
     // State initialization
@@ -684,7 +686,8 @@ export const EnhancedDataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
-            toast.success("Analysis saved successfully");
+            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id);
+            toast.success("Analysis saved successfully!");
         } catch (_err) {
             toast.error("Failed to save analysis");
         } finally {

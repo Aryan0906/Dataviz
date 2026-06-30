@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import AppLayout from "@/components/AppLayout";
 import { DashboardTour } from "@/components/DashboardTour";
 import { useAuth } from "@/context/AuthContext";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { dataAPI } from "@/lib/api";
 import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
 import { analysisTemplates } from "@/lib/templates";
@@ -149,6 +150,7 @@ function QuickActionCard({ title, description, icon: Icon, action, index }) {
 /* ── Main Component ── */
 const ModernDashboard = () => {
     const { session, user } = useAuth();
+    const { activeWorkspace } = useWorkspace();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [analyses, setAnalyses] = useState([]);
@@ -159,7 +161,7 @@ const ModernDashboard = () => {
         if (!session) return;
         setLoading(true);
         try {
-            const items = await dataAPI.getAnalyses();
+            const items = await dataAPI.getAnalyses(activeWorkspace?.id);
             setAnalyses(items);
             const { draft: draftData } = await dataAPI.getDraft();
             setDraft(draftData);
@@ -183,7 +185,7 @@ const ModernDashboard = () => {
         fetchHistory();
         fetchSessions();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session]);
+    }, [session, activeWorkspace]);
 
     const handleDeleteSession = async (sessionId) => {
         if (!confirm("Delete this saved chart?")) return;

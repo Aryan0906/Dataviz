@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Beaker, Apperture, TrendingUp, BarChart} from "lucide-react";
-import { api } from "@/lib/api";
+import { dataAPI as api } from "@/lib/api";
 
 export default function StatsTester( { filePath, columns }) {
     const [groupCol, setGroupCol] = useState('');

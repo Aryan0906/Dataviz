@@ -36,12 +36,12 @@ export const dataAPI = {
         return response.json();
     },
 
-    save: async (title, dataPoints, regressionType, equation, rSquared) => {
+    save: async (title, dataPoints, regressionType, equation, rSquared, workspaceId = null) => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/data/save`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared })
+            body: JSON.stringify({ title, dataPoints, regressionType, equation, rSquared, workspace_id: workspaceId })
         });
         if (!response.ok) {
             const error = await response.json();
@@ -50,9 +50,12 @@ export const dataAPI = {
         return response.json();
     },
 
-    getAnalyses: async () => {
+    getAnalyses: async (workspaceId = null) => {
         const headers = await getAuthHeaders();
-        const response = await fetch(`${API_BASE_URL}/data/analyses`, {
+        const url = workspaceId 
+            ? `${API_BASE_URL}/data/analyses?workspace_id=${workspaceId}`
+            : `${API_BASE_URL}/data/analyses`;
+        const response = await fetch(url, {
             headers
         });
         if (!response.ok) {
@@ -200,12 +203,12 @@ export const dataAPI = {
         return res.json();
     },
 
-    async saveVisualizationToHistory(visualizationId, title) {
+    async saveVisualizationToHistory(visualizationId, title, workspaceId = null) {
         const headers = await getAuthHeaders();
         const res = await fetch(`${API_BASE_URL}/ai/save`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ visualization_id: visualizationId, title }),
+            body: JSON.stringify({ visualization_id: visualizationId, title, workspace_id: workspaceId }),
         });
         if (!res.ok) throw new Error('Failed to save visualization to history');
         return res.json();
