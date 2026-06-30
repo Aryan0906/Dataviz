@@ -42,26 +42,37 @@ chart_type_prompt = ChatPromptTemplate.from_messages([
 ])
 
 
-# Template for Natural Language to Pandas Query
+# Template for Natural Language to Pandas Query (Structured Spec)
 nl_to_pandas_prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are a Pandas expert. Convert natural language queries to Pandas code.
+    ("system", """You are a Data expert. Convert natural language queries to a structured JSON specification for data manipulation.
     
     Rules:
-    1. Return ONLY executable Python code
-    2. Assume dataframe is named 'df'
-    3. Do NOT include imports
-    4. Do NOT include explanations
+    1. Return ONLY valid JSON
+    2. The JSON must follow this schema:
+       {
+           "filter": [{"column": "col1", "operator": ">", "value": 1000}], // optional list of filters
+           "groupby": "col2", // optional column to group by
+           "agg": "mean", // optional aggregation function (mean, sum, count, min, max)
+           "agg_column": "col3" // optional column to aggregate
+       }
+    3. Valid operators for filter: ">", "<", ">=", "<=", "==", "!=", "contains"
+    4. Do not include any markdown formatting like ```json
     
     Example:
-    User: "Show me rows where sales > 1000"
-    You: df[df['sales'] > 1000]
+    User: "Show me average revenue by region for customers over 30"
+    You: {
+        "filter": [{"column": "age", "operator": ">", "value": 30}],
+        "groupby": "region",
+        "agg": "mean",
+        "agg_column": "revenue"
+    }
     """),
     ("user", """Dataframe columns: {columns}
     Dataframe dtypes: {dtypes}
     
     User query: {query}
     
-    Generate Pandas code:""")
+    Generate JSON:""")
 ])
 
 
@@ -97,8 +108,30 @@ data_story_prompt = ChatPromptTemplate.from_messages([
 
 def recommend_chart_type(df: pd.DataFrame) -> Dict[str, str]:
     """
-    Use LLM to recommend best chart type for the data
+    Recommend best chart type using a rule-based engine first to save LLM costs.
     """
+    columns = df.columns.tolist()
+    
+    # 1. Rule-based checks
+    date_cols = [c for c in columns if 'date' in c.lower() or 'time' in c.lower() or pd.api.types.is_datetime64_any_dtype(df[c])]
+    numeric_cols = [c for c in columns if pd.api.types.is_numeric_dtype(df[c])]
+    categorical_cols = [c for c in columns if not pd.api.types.is_numeric_dtype(df[c]) and c not in date_cols]
+    
+    if len(date_cols) > 0 and len(numeric_cols) > 0:
+        return {"chart_type": "line", "recommendation": f"Line chart recommended because there is a time-series column ({date_cols[0]}) and a numeric column ({numeric_cols[0]})."}
+        
+    if len(numeric_cols) == 2 and len(columns) == 2:
+        return {"chart_type": "scatter", "recommendation": "Scatter plot recommended to show correlation between two numeric variables."}
+        
+    if len(categorical_cols) > 0 and len(numeric_cols) > 0:
+        cardinality = df[categorical_cols[0]].nunique()
+        if cardinality <= 15:
+            return {"chart_type": "bar", "recommendation": f"Bar chart recommended to compare categories in '{categorical_cols[0]}'."}
+            
+    if len(numeric_cols) == 1 and len(columns) == 1:
+        return {"chart_type": "histogram", "recommendation": "Histogram recommended to show the distribution of a single numeric variable."}
+        
+    # 2. LLM Fallback for ambiguous cases
     chain = chart_type_prompt | llm
     
     result = chain.invoke({
@@ -113,14 +146,11 @@ def recommend_chart_type(df: pd.DataFrame) -> Dict[str, str]:
     }
 
 
-def nl_query_to_pandas(query: str, df: pd.DataFrame) -> str:
+import json
+
+def nl_query_to_pandas(query: str, df: pd.DataFrame) -> dict:
     """
-    Convert natural language query to Pandas code
-    
-    Example:
-        query = "Show rows where sales > 1000 and category is Electronics"
-        code = nl_query_to_pandas(query, df)
-        # Returns: "df[(df['sales'] > 1000) & (df['category'] == 'Electronics')]"
+    Convert natural language query to JSON execution spec
     """
     chain = nl_to_pandas_prompt | llm
     
@@ -130,7 +160,16 @@ def nl_query_to_pandas(query: str, df: pd.DataFrame) -> str:
         "query": query
     })
     
-    return result.content.strip()
+    content = result.content.strip()
+    if content.startswith('```json'):
+        content = content[7:-3]
+    elif content.startswith('```'):
+        content = content[3:-3]
+        
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        return {}
 
 
 def get_data_insights(df: pd.DataFrame) -> str:
@@ -231,14 +270,32 @@ def categorical_chat_view(request):
     # Get chart recommendation
     recommendation = recommend_chart_type(df)
     
-    # Or convert query to Pandas
+    # Or convert query to JSON execution spec
     if "filter" in user_message.lower():
-        pandas_code = nl_query_to_pandas(user_message, df)
+        spec = nl_query_to_pandas(user_message, df)
         
         try:
-            # Execute the generated code
-            filtered_df = eval(pandas_code)
-            return JsonResponse({'data': filtered_df.to_dict()})
+            # Execute the generated spec securely
+            filtered_df = df.copy()
+            if "filter" in spec:
+                for f in spec["filter"]:
+                    op = f["operator"]
+                    col = f["column"]
+                    val = f["value"]
+                    if op == ">": filtered_df = filtered_df[filtered_df[col] > val]
+                    elif op == "<": filtered_df = filtered_df[filtered_df[col] < val]
+                    elif op == ">=": filtered_df = filtered_df[filtered_df[col] >= val]
+                    elif op == "<=": filtered_df = filtered_df[filtered_df[col] <= val]
+                    elif op == "==": filtered_df = filtered_df[filtered_df[col] == val]
+                    elif op == "!=": filtered_df = filtered_df[filtered_df[col] != val]
+                    elif op == "contains": filtered_df = filtered_df[filtered_df[col].astype(str).str.contains(str(val), case=False, na=False)]
+            
+            if "groupby" in spec and "agg" in spec and "agg_column" in spec:
+                agg_func = spec["agg"]
+                if agg_func in ['mean', 'sum', 'count', 'min', 'max']:
+                    filtered_df = filtered_df.groupby(spec["groupby"])[spec["agg_column"]].agg(agg_func).reset_index()
+            
+            return JsonResponse({'data': filtered_df.to_dict(orient='records')})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
     
