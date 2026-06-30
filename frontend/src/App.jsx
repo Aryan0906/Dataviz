@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { WorkspaceProvider } from "@/context/WorkspaceContext";
 import { StorytellingProvider } from "@/context/StorytellingContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -28,6 +29,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const SharedAnalysis = lazy(() => import("./pages/SharedAnalysis"));
 const EmbedAnalysis = lazy(() => import("./pages/EmbedAnalysis"));
+const WorkspacesPage = lazy(() => import("./pages/WorkspacesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Storytelling components (not lazy loaded for better UX)
@@ -42,8 +44,9 @@ const LoadingFallback = () => (
 
 const App = () => (
     <AuthProvider>
-        <BrowserRouter>
-            <ThemeProvider>
+        <WorkspaceProvider>
+            <BrowserRouter>
+                <ThemeProvider>
                 <StorytellingProvider>
                     <TooltipProvider>
                     <Toaster />
@@ -163,13 +166,23 @@ const App = () => (
                                     </ProtectedRoute>
                                 }
                             />
+                            <Route
+                                path="/workspaces"
+                                element={
+                                    <ProtectedRoute>
+                                        <WorkspacesPage />
+                                    </ProtectedRoute>
+                                }
+                            />
                             <Route path="/analyzer" element={<Navigate to="/manual-plot" replace />} />
                             <Route path="*" element={<NotFound />} />
                         </Routes>
                     </Suspense>
                 </TooltipProvider>
-            </StorytellingProvider>
-        </BrowserRouter>
+                </StorytellingProvider>
+                </ThemeProvider>
+            </BrowserRouter>
+        </WorkspaceProvider>
     </AuthProvider>
 );
 

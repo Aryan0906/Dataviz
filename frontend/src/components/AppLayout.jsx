@@ -13,6 +13,7 @@ import {
     Zap,
     TrendingUp,
     ChevronRight,
+    Building,
 } from 'lucide-react';
 import { useStorytelling } from '@/context/StorytellingContext';
 import NavigationGuide from './NavigationGuide';
@@ -69,6 +70,13 @@ const AppLayout = ({ children }) => {
             url: '/dashboard',
             icon: LayoutDashboard,
             description: 'View all your analyses',
+            badge: null,
+        },
+        {
+            title: 'Workspaces',
+            url: '/workspaces',
+            icon: Building,
+            description: 'Manage teams and collaboration',
             badge: null,
         },
         {
