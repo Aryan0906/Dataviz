@@ -1287,6 +1287,7 @@ def generate_code_snippet(request):
         
         from .utils.code_generator import (
             generate_regression_code,
+            generate_regression_notebook,
             generate_eda_code,
             generate_data_cleaning_code
         )
@@ -1296,14 +1297,22 @@ def generate_code_snippet(request):
             features = body.get('features', [])
             target = body.get('target', 'target')
             hyperparameters = body.get('hyperparameters', {})
+            format_type = body.get('format', 'python')
             
-            code = generate_regression_code(
-                model_type=model_type,
-                features=features,
-                target=target,
-                hyperparameters=hyperparameters
-            )
-            
+            if format_type == 'jupyter':
+                code = generate_regression_notebook(
+                    model_type=model_type,
+                    features=features,
+                    target=target,
+                    hyperparameters=hyperparameters
+                )
+            else:
+                code = generate_regression_code(
+                    model_type=model_type,
+                    features=features,
+                    target=target,
+                    hyperparameters=hyperparameters
+                )
         elif code_type == 'eda':
             columns = body.get('columns', [])
             code = generate_eda_code(columns)
@@ -1319,7 +1328,7 @@ def generate_code_snippet(request):
         return JsonResponse({
             'code': code,
             'type': code_type,
-            'language': 'python'
+            'language': 'python' if body.get('format') != 'jupyter' else 'json'
         })
         
     except Exception as e:
