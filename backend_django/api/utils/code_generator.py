@@ -351,3 +351,120 @@ print("\\nCleaned data saved to 'cleaned_data.csv'")
 '''
     
     return code
+
+
+
+def generate_regression_notebook(
+    model_type: str,
+    features: List[str],
+    target: str,
+    hyperparameters: Dict[str, Any] = None,
+    test_size: float = 0.2,
+    random_state: int = 42
+) -> str:
+    """Generate a Jupyter Notebook (.ipynb) JSON string for regression analysis."""
+    import json
+    
+    hyperparameters = hyperparameters or {}
+    features_str = repr(features)
+    
+    model_configs = {
+        'linear': {'import': 'from sklearn.linear_model import LinearRegression', 'init': 'LinearRegression()', 'desc': 'Simple Linear Regression'},
+        'ridge': {'import': 'from sklearn.linear_model import Ridge', 'init': f'Ridge(alpha={hyperparameters.get("alpha", 1.0)})', 'desc': 'Ridge Regression'},
+        'lasso': {'import': 'from sklearn.linear_model import Lasso', 'init': f'Lasso(alpha={hyperparameters.get("alpha", 1.0)})', 'desc': 'Lasso Regression'},
+        'random_forest': {'import': 'from sklearn.ensemble import RandomForestRegressor', 'init': f'RandomForestRegressor(n_estimators={hyperparameters.get("n_estimators", 100)}, random_state={random_state})', 'desc': 'Random Forest Regressor'},
+        'svr': {'import': 'from sklearn.svm import SVR', 'init': f'SVR(kernel="{hyperparameters.get("kernel", "rbf")}", C={hyperparameters.get("C", 1.0)})', 'desc': 'Support Vector Regression'},
+        'polynomial': {'import': 'from sklearn.linear_model import LinearRegression\nfrom sklearn.preprocessing import PolynomialFeatures', 'init': 'LinearRegression()', 'desc': 'Polynomial Regression', 'polynomial': True, 'degree': hyperparameters.get('degree', 2)}
+    }
+    config = model_configs.get(model_type, model_configs['linear'])
+    
+    cells = []
+    
+    # Header markdown
+    cells.append({
+        "cell_type": "markdown", "metadata": {},
+        "source": [f"# {config['desc']}\n", "Generated from DataViz Analytics Platform"]
+    })
+    
+    # Imports
+    cells.append({
+        "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+        "source": [
+            "import pandas as pd\n",
+            "import numpy as np\n",
+            config['import'] + "\n",
+            "from sklearn.model_selection import train_test_split\n",
+            "from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error"
+        ]
+    })
+    
+    # Load Data markdown
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": ["## 1. Load Data"]})
+    
+    # Load Data code
+    cells.append({
+        "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+        "source": [
+            "df = pd.read_csv('your_data.csv')\n",
+            f"X = df{features_str}\n",
+            f"y = df['{target}']\n",
+            "print(f'Dataset shape: {{X.shape}}')"
+        ]
+    })
+    
+    # Train test split
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": ["## 2. Train-Test Split"]})
+    cells.append({
+        "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+        "source": [
+            f"X_train, X_test, y_train, y_test = train_test_split(X, y, test_size={test_size}, random_state={random_state})\n",
+            "print(f'Training set: {{X_train.shape[0]}} samples')\n",
+            "print(f'Test set: {{X_test.shape[0]}} samples')"
+        ]
+    })
+    
+    if config.get('polynomial'):
+        cells.append({"cell_type": "markdown", "metadata": {}, "source": ["## 3. Polynomial Feature Transformation"]})
+        cells.append({
+            "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+            "source": [
+                f"poly = PolynomialFeatures(degree={config['degree']})\n",
+                "X_train_poly = poly.fit_transform(X_train)\n",
+                "X_test_poly = poly.transform(X_test)"
+            ]
+        })
+        train_var = "X_train_poly"
+        test_var = "X_test_poly"
+    else:
+        train_var = "X_train"
+        test_var = "X_test"
+        
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": ["## 4. Train Model"]})
+    cells.append({
+        "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+        "source": [
+            f"model = {config['init']}\n",
+            f"model.fit({train_var}, y_train)\n",
+            f"y_pred_train = model.predict({train_var})\n",
+            f"y_pred_test = model.predict({test_var})"
+        ]
+    })
+    
+    cells.append({"cell_type": "markdown", "metadata": {}, "source": ["## 5. Evaluation"]})
+    cells.append({
+        "cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+        "source": [
+            "train_r2 = r2_score(y_train, y_pred_train)\n",
+            "test_r2 = r2_score(y_test, y_pred_test)\n",
+            "print(f'Training R² Score: {{train_r2:.4f}}')\n",
+            "print(f'Test R² Score: {{test_r2:.4f}}')"
+        ]
+    })
+    
+    notebook = {
+        "cells": cells,
+        "metadata": {},
+        "nbformat": 4,
+        "nbformat_minor": 5
+    }
+    return json.dumps(notebook, indent=2)
