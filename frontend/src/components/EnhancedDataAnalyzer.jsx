@@ -515,18 +515,34 @@ export const EnhancedDataAnalyzer = () => {
             complete: (results) => {
                 try {
                     const newData = results.data
-                        .map((row) => ({
-                            x: parseFloat(row[0]),
-                            y: parseFloat(row[1]),
-                        }))
-                        .filter((d) => !isNaN(d.x) && !isNaN(d.y));
+                        .map((row) => {
+                            if (row.length > 2) {
+                                return {
+                                    x: row.slice(0, -1).map(v => parseFloat(v)),
+                                    y: parseFloat(row[row.length - 1]),
+                                };
+                            }
+                            return {
+                                x: parseFloat(row[0]),
+                                y: parseFloat(row[1]),
+                            };
+                        })
+                        .filter((d) => {
+                            if (Array.isArray(d.x)) {
+                                return d.x.every(v => !isNaN(v)) && !isNaN(d.y);
+                            }
+                            return !isNaN(d.x) && !isNaN(d.y);
+                        });
 
                     if (newData.length === 0) {
                         setError("No valid data found in CSV");
                         return;
                     }
 
-                    newData.sort((a, b) => a.x - b.x);
+                    // Sort only if 1D X
+                    if (!Array.isArray(newData[0]?.x)) {
+                        newData.sort((a, b) => a.x - b.x);
+                    }
                     setData(newData);
                     setCsvText("");
                     toast.success(`Imported ${newData.length} data points`);
@@ -560,18 +576,33 @@ export const EnhancedDataAnalyzer = () => {
                 complete: (results) => {
                     try {
                         const newData = results.data
-                            .map((row) => ({
-                                x: parseFloat(row[0]),
-                                y: parseFloat(row[1]),
-                            }))
-                            .filter((d) => !isNaN(d.x) && !isNaN(d.y));
+                            .map((row) => {
+                                if (row.length > 2) {
+                                    return {
+                                        x: row.slice(0, -1).map(v => parseFloat(v)),
+                                        y: parseFloat(row[row.length - 1]),
+                                    };
+                                }
+                                return {
+                                    x: parseFloat(row[0]),
+                                    y: parseFloat(row[1]),
+                                };
+                            })
+                            .filter((d) => {
+                                if (Array.isArray(d.x)) {
+                                    return d.x.every(v => !isNaN(v)) && !isNaN(d.y);
+                                }
+                                return !isNaN(d.x) && !isNaN(d.y);
+                            });
 
                         if (newData.length === 0) {
                             setError("No valid data found in CSV file");
                             return;
                         }
 
-                        newData.sort((a, b) => a.x - b.x);
+                        if (!Array.isArray(newData[0]?.x)) {
+                            newData.sort((a, b) => a.x - b.x);
+                        }
                         setData(newData);
                         setCsvText("");
                         toast.success(`Imported ${newData.length} data points from file`);

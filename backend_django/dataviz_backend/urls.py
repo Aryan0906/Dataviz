@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from api import views as api
+from api import views_workspaces as ws
 from api import share_views
 
 urlpatterns = [
@@ -46,6 +47,11 @@ urlpatterns = [
     path("api/data/generate-code", api.generate_code_snippet),
     path("api/data/nlp-query", api.nlp_query),
     path("api/data/categorical-query", api.categorical_query),
+
+    # Workspaces
+    path("api/workspaces", ws.workspaces),
+    path("api/workspaces/<int:workspace_id>/invite", ws.invite_to_workspace),
+
     # Todos API
     path("api/", include("todos.urls")),
 ]

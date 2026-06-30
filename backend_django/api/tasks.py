@@ -181,16 +181,32 @@ def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
         
     self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'status': 'Calculating predictions...'})
     
-    X = np.array([float(p["x"]) for p in data_points])
+    # For multivariate, it's better to plot predicted vs actual, but for simplicity, 
+    # we return predictions that the frontend can map.
     predictions = []
+    y_actual = np.array([float(p["y"]) for p in data_points])
     
-    for x_val in X:
-        try:
-            y_pred = result['predict'](float(x_val))
-            if y_pred is not None and np.isfinite(y_pred):
-                predictions.append([float(x_val), float(y_pred)])
-        except:
-            pass
+    x_raw = [p["x"] for p in data_points]
+    if len(x_raw) > 0 and isinstance(x_raw[0], (list, tuple)):
+        # Multivariate: x_val is a list of features
+        X = np.array(x_raw)
+        for i, x_val in enumerate(X):
+            try:
+                y_pred = result['predict'](x_val.tolist())
+                if y_pred is not None and np.isfinite(y_pred):
+                    predictions.append([float(y_actual[i]), float(y_pred)]) # [Actual, Predicted]
+            except Exception:
+                pass
+    else:
+        # Univariate: x_val is a single feature
+        X = np.array([float(x) for x in x_raw])
+        for x_val in X:
+            try:
+                y_pred = result['predict'](float(x_val))
+                if y_pred is not None and np.isfinite(y_pred):
+                    predictions.append([float(x_val), float(y_pred)]) # [X, Predicted]
+            except Exception:
+                pass
             
     response_data = {
         "model_name": result['model_name'],
@@ -200,6 +216,8 @@ def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
         "adjusted_r2": result['adjusted_r2'],
         "rmse": result['rmse'],
         "mae": result['mae'],
+        "coefficients": result.get('coefficients', []),
+        "feature_names": result.get('feature_names', []),
         "predictions": predictions,
         "all_models_tested": result['all_models']
     }
