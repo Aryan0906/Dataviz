@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from api import views as api
+from api import views_workspaces as ws
+from api import share_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -9,10 +11,17 @@ urlpatterns = [
     path("api/auth/login", api.login),
     path("api/auth/verify", api.verify),
     path("api/data/save", api.save_analysis),
-    path("api/data/analyses", api.list_analyses),
+    path("api/data/analyses", api.list_analyses, name="list_analyses"),
+    path("api/public/analyses", api.list_public_analyses, name="list_public_analyses"),
     path("api/data/analyses/<int:pk>/delete", api.delete_analysis),  # DELETE endpoint
     path("api/data/analyses/<int:pk>", api.get_analysis),
     path("api/data/analyze", api.analyze),
+    path("api/tasks/<str:task_id>/status", api.check_task_status),
+    
+    # Share endpoints
+    path("api/share/create/<int:analysis_id>", share_views.create_shared_link),
+    path("api/share/<str:token>", share_views.get_shared_analysis),
+    
     # Draft analysis endpoints
     path("api/data/draft/save", api.save_draft),
     path("api/data/draft/get", api.get_draft),
@@ -39,6 +48,14 @@ urlpatterns = [
     path("api/data/generate-code", api.generate_code_snippet),
     path("api/data/nlp-query", api.nlp_query),
     path("api/data/categorical-query", api.categorical_query),
+
+    # Workspaces
+    path("api/workspaces", ws.workspaces),
+    path("api/workspaces/<int:workspace_id>/invite", ws.invite_to_workspace),
+
+    # Statistical Testing
+    path("api/analysis/hypothesis", api.test_hypothesis, name="test_hypothesis"),
+
     # Todos API
     path("api/", include("todos.urls")),
 ]

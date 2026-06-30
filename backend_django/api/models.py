@@ -3,11 +3,13 @@ from django.db import models
 class AnalysisResult(models.Model):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='analyses')
     title = models.CharField(max_length=255)
     data_points = models.JSONField()
     regression_type = models.CharField(max_length=50, blank=True, null=True)
     equation = models.TextField(blank=True, null=True)
     r_squared = models.FloatField(blank=True, null=True)
+    is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -17,9 +19,11 @@ class AnalysisResult(models.Model):
 class Visualization(models.Model):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='visualizations')
     title = models.CharField(max_length=200)
     chart_type = models.CharField(max_length=50)  # 'bar', 'pie', 'line', 'scatter'
     data = models.JSONField()  # Stores {"labels": ["A", "B"], "values": [10, 20]}
+    is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # AI-powered analysis fields
@@ -113,3 +117,33 @@ class UserHistory(models.Model):
         ]
 
 
+
+
+import uuid
+from django.utils import timezone
+from datetime import timedelta
+
+class SharedLink(models.Model):
+    analysis = models.ForeignKey(AnalysisResult, on_delete=models.CASCADE, related_name='shared_links')
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked = models.BooleanField(default=False)
+    
+    def is_valid(self):
+        if self.revoked:
+            return False
+        if self.expires_at and timezone.now() > self.expires_at:
+            return False
+        return True
+
+
+class Workspace(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class WorkspaceMembership(models.Model):
+    user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='members')
+    role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('editor', 'Editor'), ('viewer', 'Viewer')])
+    created_at = models.DateTimeField(auto_now_add=True)

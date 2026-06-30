@@ -6,6 +6,8 @@ const AuthContext = createContext({
     user: null,
     loading: true,
     isAuthenticated: false,
+    isGuest: false,
+    loginAsGuest: () => {},
     signOut: async () => { }
 });
 
@@ -13,6 +15,7 @@ export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isGuest, setIsGuest] = useState(sessionStorage.getItem('isGuest') === 'true');
 
     useEffect(() => {
         // Check active sessions and subscribe to auth changes
@@ -32,12 +35,22 @@ export const AuthProvider = ({ children }) => {
         return () => subscription.unsubscribe();
     }, []);
 
+    const loginAsGuest = () => {
+        sessionStorage.setItem('isGuest', 'true');
+        setIsGuest(true);
+    };
+
     const signOut = async () => {
-        await supabase.auth.signOut();
+        if (isGuest) {
+            sessionStorage.removeItem('isGuest');
+            setIsGuest(false);
+        } else {
+            await supabase.auth.signOut();
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, isAuthenticated: !!session, signOut }}>
+        <AuthContext.Provider value={{ session, user, loading, isAuthenticated: !!session || isGuest, isGuest, loginAsGuest, signOut }}>
             {!loading && children}
         </AuthContext.Provider>
     );
