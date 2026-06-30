@@ -49,23 +49,23 @@ nl_to_pandas_prompt = ChatPromptTemplate.from_messages([
     Rules:
     1. Return ONLY valid JSON
     2. The JSON must follow this schema:
-       {
-           "filter": [{"column": "col1", "operator": ">", "value": 1000}], // optional list of filters
+       {{
+           "filter": [{{"column": "col1", "operator": ">", "value": 1000}}], // optional list of filters
            "groupby": "col2", // optional column to group by
            "agg": "mean", // optional aggregation function (mean, sum, count, min, max)
            "agg_column": "col3" // optional column to aggregate
-       }
+       }}
     3. Valid operators for filter: ">", "<", ">=", "<=", "==", "!=", "contains"
     4. Do not include any markdown formatting like ```json
     
     Example:
     User: "Show me average revenue by region for customers over 30"
-    You: {
-        "filter": [{"column": "age", "operator": ">", "value": 30}],
+    You: {{
+        "filter": [{{"column": "age", "operator": ">", "value": 30}}],
         "groupby": "region",
         "agg": "mean",
         "agg_column": "revenue"
-    }
+    }}
     """),
     ("user", """Dataframe columns: {columns}
     Dataframe dtypes: {dtypes}

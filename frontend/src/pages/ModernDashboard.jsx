@@ -17,7 +17,8 @@ import {
     FolderOpen,
     Star,
     History,
-    Share2
+    Share2,
+    Code
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -466,6 +467,23 @@ const ModernDashboard = () => {
                                                     title="Share Analysis"
                                                 >
                                                     <Share2 className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        dataAPI.createShareLink(item.id)
+                                                            .then(res => {
+                                                                const embedCode = `<iframe src="${window.location.origin}/embed/${res.token}" width="100%" height="500px" frameborder="0"></iframe>`;
+                                                                navigator.clipboard.writeText(embedCode);
+                                                                toast.success('Embed code copied to clipboard!');
+                                                            })
+                                                            .catch(err => toast.error('Failed to create embed link'));
+                                                    }}
+                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    title="Get Embed Code"
+                                                >
+                                                    <Code className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </div>

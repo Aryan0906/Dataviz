@@ -3,6 +3,7 @@ from django.db import models
 class AnalysisResult(models.Model):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='analyses')
     title = models.CharField(max_length=255)
     data_points = models.JSONField()
     regression_type = models.CharField(max_length=50, blank=True, null=True)
@@ -17,6 +18,7 @@ class AnalysisResult(models.Model):
 class Visualization(models.Model):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='visualizations')
     title = models.CharField(max_length=200)
     chart_type = models.CharField(max_length=50)  # 'bar', 'pie', 'line', 'scatter'
     data = models.JSONField()  # Stores {"labels": ["A", "B"], "values": [10, 20]}
@@ -132,3 +134,14 @@ class SharedLink(models.Model):
         if self.expires_at and timezone.now() > self.expires_at:
             return False
         return True
+
+
+class Workspace(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class WorkspaceMembership(models.Model):
+    user_id = models.CharField(max_length=100, db_index=True)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='members')
+    role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('editor', 'Editor'), ('viewer', 'Viewer')])
+    created_at = models.DateTimeField(auto_now_add=True)

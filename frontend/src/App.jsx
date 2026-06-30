@@ -27,6 +27,7 @@ const SmartAnalytics = lazy(() => import("./pages/SmartAnalytics"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const SharedAnalysis = lazy(() => import("./pages/SharedAnalysis"));
+const EmbedAnalysis = lazy(() => import("./pages/EmbedAnalysis"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Storytelling components (not lazy loaded for better UX)
@@ -61,6 +62,7 @@ const App = () => (
 
                             {/* Public Share Links */}
                             <Route path="/share/:token" element={<SharedAnalysis />} />
+                            <Route path="/embed/:token" element={<EmbedAnalysis />} />
 
                             {/* Dashboard Options */}
                             <Route
