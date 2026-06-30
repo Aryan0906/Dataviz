@@ -28,6 +28,14 @@ export const dataAPI = {
         return response.json();
     },
 
+    checkTaskStatus: async (taskId) => {
+        const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/status`);
+        if (!response.ok) {
+            throw new Error('Failed to check task status');
+        }
+        return response.json();
+    },
+
     save: async (title, dataPoints, regressionType, equation, rSquared) => {
         const headers = await getAuthHeaders();
         const response = await fetch(`${API_BASE_URL}/data/save`, {
@@ -74,6 +82,18 @@ export const dataAPI = {
         });
         if (!response.ok) {
             throw new Error('Failed to delete analysis');
+        }
+        return response.json();
+    },
+
+    createShareLink: async (analysisId) => {
+        const headers = await getAuthHeaders();
+        const response = await fetch(`${API_BASE_URL}/share/create/${analysisId}`, {
+            method: 'POST',
+            headers
+        });
+        if (!response.ok) {
+            throw new Error('Failed to create share link');
         }
         return response.json();
     },
