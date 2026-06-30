@@ -155,3 +155,45 @@ def check_task_status(request, task_id):
     
     return JsonResponse(response)
 """
+
+@shared_task(bind=True)
+def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
+    import numpy as np
+    from api.utils.regression_models import find_best_regression
+    
+    self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'status': 'Loading data...'})
+    
+    self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'status': 'Training comprehensive models...'})
+    
+    result = find_best_regression(data_points, model_type)
+    
+    if not result:
+        return {'error': 'Could not fit any regression model'}
+        
+    self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'status': 'Calculating predictions...'})
+    
+    X = np.array([float(p["x"]) for p in data_points])
+    predictions = []
+    
+    for x_val in X:
+        try:
+            y_pred = result['predict'](float(x_val))
+            if y_pred is not None and np.isfinite(y_pred):
+                predictions.append([float(x_val), float(y_pred)])
+        except:
+            pass
+            
+    response_data = {
+        "model_name": result['model_name'],
+        "model_type": result['model_type'],
+        "equation": result['equation'],
+        "r2": result['r2'],
+        "adjusted_r2": result['adjusted_r2'],
+        "rmse": result['rmse'],
+        "mae": result['mae'],
+        "predictions": predictions,
+        "all_models_tested": result['all_models']
+    }
+    
+    self.update_state(state='PROGRESS', meta={'current': 100, 'total': 100, 'status': 'Complete!'})
+    return response_data

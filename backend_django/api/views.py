@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import ValidationError
+from django_ratelimit.decorators import ratelimit
 from .models import AnalysisResult, DraftAnalysis, Visualization, PageSession, UserHistory
 from .utils.ai_helpers import (
     generate_metadata_summary,
@@ -203,76 +204,41 @@ def get_analysis(request, pk: int):
 @csrf_exempt
 def analyze(request):
     """
-    Comprehensive regression analysis using multiple models.
-    Automatically selects the best model from:
-    - Linear, Polynomial (2-6 degrees)
-    - Logarithmic, Exponential, Power
-    - Ridge, Lasso, Elastic Net
-    - SVR, Decision Tree, Random Forest
-    - Quantile Regression
+    Async comprehensive regression analysis using Celery.
+    Automatically selects the best model and returns a task ID.
     """
     print("=== Analyze endpoint called ===")
-    print(f"Method: {request.method}")
-    print(f"Headers: {request.headers}")
     
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
     
     try:
         body = json.loads(request.body.decode() or "{}")
-        print(f"Request body: {body}")
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}")
+    except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
     
     data_points = body.get("dataPoints") or []
-    print(f"Data points: {data_points}")
     
     if len(data_points) < 2:
         return JsonResponse({"error": "At least 2 data points are required"}, status=400)
     
     try:
-        # Use comprehensive regression model selector
-        print("Calling find_best_regression...")
+        from .tasks import run_comprehensive_analysis
         model_type = body.get("modelType")
-        result = find_best_regression(data_points, model_type)
-        print(f"Result: {result}")
         
-        if not result:
-            return JsonResponse({"error": "Could not fit any regression model"}, status=400)
+        # Start background task
+        task = run_comprehensive_analysis.delay(data_points, model_type)
         
-        # Generate predictions for plotting
-        X = np.array([float(p["x"]) for p in data_points])
-        predictions = []
-        
-        for x_val in X:
-            try:
-                y_pred = result['predict'](float(x_val))
-                if y_pred is not None and np.isfinite(y_pred):
-                    predictions.append([float(x_val), float(y_pred)])
-            except:
-                # Skip invalid predictions
-                pass
-        
-        response_data = {
-            "model_name": result['model_name'],
-            "model_type": result['model_type'],
-            "equation": result['equation'],
-            "r2": result['r2'],
-            "adjusted_r2": result['adjusted_r2'],
-            "rmse": result['rmse'],
-            "mae": result['mae'],
-            "predictions": predictions,
-            "all_models_tested": result['all_models']  # Return all tested models
-        }
-        print(f"Returning response: {response_data}")
-        return JsonResponse(response_data)
+        # Return task ID immediately
+        return JsonResponse({
+            'task_id': task.id,
+            'status': 'processing'
+        }, status=202)
         
     except Exception as e:
         import traceback
-        print(f"Error in analyze: {e}")
         traceback.print_exc()
-        return JsonResponse({"error": f"Analysis failed: {str(e)}"}, status=500)
+        return JsonResponse({"error": f"Analysis failed to start: {str(e)}"}, status=500)
 
 
 @csrf_exempt
@@ -567,6 +533,7 @@ def upload_csv(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
 def query_ai(request):
     """
     Generate a chart configuration from a natural language query.
@@ -743,6 +710,7 @@ def save_visualization_to_history(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
 def categorical_query(request):
     """
     NLP query endpoint for CategoricalChatNLP.
@@ -832,6 +800,7 @@ def categorical_query(request):
 
 
 @csrf_exempt
+@ratelimit(key='ip', rate='20/d', block=True)
 def nlp_query(request):
     """
     Intelligent NLP querying view that fuzzy matches column names
@@ -1379,3 +1348,32 @@ def export_notebook(request):
         return JsonResponse({"notebook_content": notebook_json})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def check_task_status(request, task_id):
+    from celery.result import AsyncResult
+    
+    if request.method != 'GET':
+        return HttpResponseNotAllowed(['GET'])
+        
+    task = AsyncResult(task_id)
+    
+    if task.state == 'PENDING':
+        response = {'state': task.state, 'status': 'Pending...'}
+    elif task.state == 'PROGRESS':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0) if task.info else 0,
+            'total': task.info.get('total', 100) if task.info else 100,
+            'status': task.info.get('status', '') if task.info else ''
+        }
+    elif task.state == 'SUCCESS':
+        response = {
+            'state': task.state,
+            'result': task.result
+        }
+    else:
+        response = {'state': task.state, 'status': str(task.info)}
+    
+    return JsonResponse(response)
