@@ -1,8 +1,9 @@
 from django.db import models
 from django.core.validators import MinLengthValidator
+from api.sync_models import SyncModel
 
 
-class Todo(models.Model):
+class Todo(SyncModel):
     """
     Todo model with title, description, completion status, and timestamps.
     """

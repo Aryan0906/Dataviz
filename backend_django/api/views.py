@@ -101,8 +101,12 @@ def _require_auth(request):
         print("DEBUG: No token provided in Authorization header")
         return (None, JsonResponse({"error": "Access token required"}, status=401))
     
+    # Guest mode pass-through
+    if token == 'guest-token':
+        return ('guest-user', None)
+    
     try:
-        # Verify using Supabase JWT Secret
+        # Try Supabase JWT first
         if SUPABASE_JWT_SECRET:
             try:
                 decoded = jwt.decode(
@@ -111,22 +115,28 @@ def _require_auth(request):
                     algorithms=['HS256'],
                     audience="authenticated"
                 )
+                user_id = decoded.get('sub')
+                if user_id:
+                    return (user_id, None)
             except Exception as e:
                 if settings.DEBUG and SUPABASE_JWT_SECRET.startswith("insecure-"):
                     print("DEBUG: Dev mode bypass - decoding token without verification signature")
                     decoded = jwt.decode(token, options={"verify_signature": False})
-                else:
-                    print(f"DEBUG: Token decoding failed: {str(e)}")
-                    return (None, JsonResponse({"error": "Invalid token signature"}, status=401))
-            
-            user_id = decoded.get('sub')
-            print(f"DEBUG: Successfully authenticated user: {user_id}")
-        else:
-            # Fallback to custom JWT for backward compatibility
-            print("DEBUG: No Supabase JWT secret, using custom JWT")
+                    user_id = decoded.get('sub') or str(decoded.get('userId') or decoded.get('id', ''))
+                    if user_id:
+                        return (user_id, None)
+                # Fall through to custom JWT
+
+        # Fallback to custom JWT (local Django auth)
+        try:
             decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            user_id = str(decoded["userId"])
-        return (user_id, None)
+            user_id = str(decoded.get("userId") or decoded.get("id") or decoded.get("sub", ""))
+            if user_id:
+                return (user_id, None)
+        except Exception:
+            pass
+
+        return (None, JsonResponse({"error": "Invalid token"}, status=401))
     except jwt.ExpiredSignatureError:
         print("DEBUG: Token expired")
         return (None, JsonResponse({"error": "Token expired"}, status=401))
@@ -1467,3 +1477,52 @@ def test_hypothesis(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ── Dual Database Sync Views ──────────────────────────────────────────────
+
+@csrf_exempt
+def sync_status(request):
+    """Return the current database connection status and pending sync count."""
+    from dataviz_backend.db_router import is_supabase_online, force_db
+    from .sync_models import DeletedSyncRecord
+    from django.apps import apps
+
+    online = is_supabase_online()
+    pending_count = 0
+
+    try:
+        with force_db('sqlite'):
+            for model in apps.get_models():
+                if hasattr(model, 'pending_sync'):
+                    pending_count += model.objects.filter(pending_sync=True).count()
+            pending_count += DeletedSyncRecord.objects.count()
+    except Exception:
+        pass
+
+    return JsonResponse({
+        'online': online,
+        'database': 'supabase' if online else 'sqlite',
+        'pending_sync': pending_count
+    })
+
+
+@csrf_exempt
+def trigger_sync(request):
+    """Manually trigger an offline → Supabase sync."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    from .db_manager import sync_offline_data
+    from dataviz_backend.db_router import is_supabase_online
+
+    if not is_supabase_online():
+        return JsonResponse({'error': 'Supabase is not reachable'}, status=503)
+
+    synced_saves, synced_deletes = sync_offline_data()
+    return JsonResponse({
+        'synced_saves': synced_saves,
+        'synced_deletes': synced_deletes,
+        'message': f'Synced {synced_saves} saves and {synced_deletes} deletes'
+    })
+
