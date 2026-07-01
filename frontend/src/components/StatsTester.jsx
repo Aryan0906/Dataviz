@@ -13,7 +13,7 @@ export default function StatsTester( { filePath, columns }) {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    const handleRunTest = async () -> {
+    const handleRunTest = async () => {
         if (!filePath || !groupCol || !valueCol) return;
         setIsLoading(true);
         setError(null);

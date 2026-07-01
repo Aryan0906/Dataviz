@@ -964,6 +964,8 @@ const CategoricalChatNLP = () => {
                     chartTitle={chartTitle}
                 />
             </div>
+            </div>
+            </div>
         </AppLayout>
     );
 };
