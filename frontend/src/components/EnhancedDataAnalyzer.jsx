@@ -67,6 +67,10 @@ export const EnhancedDataAnalyzer = () => {
     // State initialization
     const [data, setData] = useState([]);
     
+    const isMultivariate = useMemo(() => {
+        return data.length > 0 && Array.isArray(data[0].x);
+    }, [data]);
+    
     // Polling hook
     const polling = useTaskPolling();
     const [regressionResult, setRegressionResult] = useState(null);
@@ -218,34 +222,20 @@ export const EnhancedDataAnalyzer = () => {
         setLoading(true);
         setActiveTab("results");
 
-        try {
-            let modelToRequest = undefined;
-            if (selectedModelType === "polynomial") {
-                modelToRequest = `polynomial-${polynomialDegree}`;
-            } else if (selectedModelType !== "auto") {
-                modelToRequest = selectedModelType;
-            }
-            if (modelTypeOverride && typeof modelTypeOverride === "string") {
-                modelToRequest = modelTypeOverride;
-            }
+        let modelToRequest = selectedModelType;
+        if (modelTypeOverride && typeof modelTypeOverride === "string") {
+            modelToRequest = modelTypeOverride;
+        }
 
-            const response = await dataAPI.analyze(data, modelToRequest);
+        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial"];
+        const isStandardModel = standardModels.includes(modelToRequest);
 
-            if (response && response.task_id) {
-                polling.startPolling(response.task_id);
-                // We don't set loading to false yet; the useEffect will handle the result
-            } else {
-                setError("Failed to start analysis task");
-                setLoading(false);
-            }
-
-        } catch (err) {
-            console.warn("Server analysis failed or offline. Attempting client-side fallback fitting...", err);
+        if (isStandardModel) {
             try {
-                // Client-side regression fallback
+                // Client-side regression fitting
                 const points = data.map(d => [d.x, d.y]);
                 let bestResult = null;
-                let typeApplied = selectedModelType || "linear";
+                let typeApplied = modelToRequest || "linear";
 
                 if (typeApplied === "auto") {
                     const candidates = [
@@ -278,7 +268,7 @@ export const EnhancedDataAnalyzer = () => {
                 }
 
                 if (!bestResult || isNaN(bestResult.r2)) {
-                    throw new Error("Unable to fit mathematical model locally with current points.");
+                    throw new Error("Unable to fit mathematical model with current points.");
                 }
 
                 const predictions = [];
@@ -292,19 +282,24 @@ export const EnhancedDataAnalyzer = () => {
                     }
                 }
 
-                // Map variables and update state
+                const n = data.length;
+                const ys = data.map(d => d.y);
+                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
+                const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
+                const stdDevY = Math.sqrt(varianceY);
+
                 const localResult = {
                     r2: bestResult.r2,
-                    predict: (x) => bestResult.predict(x)[1],
                     modelName: `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
+                    predictions: predictions,
+                    predict: (x) => bestResult.predict(x)[1],
                     type: typeApplied,
                     equation: bestResult.string,
-                    predictions: predictions,
                     details: {
-                        stdDevX: 0,
-                        stdDevY: 0,
-                        varianceX: 0,
-                        varianceY: 0,
+                        stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        stdDevY: stdDevY,
+                        varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        varianceY: varianceY,
                         adjustedR2: bestResult.r2,
                         rmse: 0,
                         mae: 0,
@@ -314,7 +309,74 @@ export const EnhancedDataAnalyzer = () => {
 
                 setRegressionResult(localResult);
                 setLoading(false);
-                toast.success(`Local model fitted: ${typeApplied} (Offline Mode)`);
+                toast.success(`Model fitted successfully: ${typeApplied} (Instant Client-Side)`);
+                return;
+            } catch (fallbackErr) {
+                console.error("Local regression fit failed:", fallbackErr);
+                setError(fallbackErr.message || "Local analysis failed");
+                setLoading(false);
+                return;
+            }
+        }
+
+        // For non-standard complex ML models, make backend request
+        try {
+            let modelToRequestBackend = modelToRequest;
+            if (modelToRequest === "polynomial") {
+                modelToRequestBackend = `polynomial-${polynomialDegree}`;
+            }
+
+            const response = await dataAPI.analyze(data, modelToRequestBackend);
+
+            if (response && response.task_id) {
+                polling.startPolling(response.task_id);
+            } else {
+                setError("Failed to start analysis task");
+                setLoading(false);
+            }
+        } catch (err) {
+            console.warn("Backend analysis failed. Reverting to local linear fit...", err);
+            // Revert back to local linear fitting
+            try {
+                const points = data.map(d => [d.x, d.y]);
+                const bestResult = regression.linear(points);
+                const predictions = [];
+                const minX = Math.min(...data.map(d => d.x));
+                const maxX = Math.max(...data.map(d => d.x));
+                const step = (maxX - minX) / 100 || 1;
+                for (let x = minX; x <= maxX; x += step) {
+                    const y = bestResult.predict(x)[1];
+                    if (isFinite(y)) {
+                        predictions.push([x, y]);
+                    }
+                }
+                const n = data.length;
+                const ys = data.map(d => d.y);
+                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
+                const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
+                const stdDevY = Math.sqrt(varianceY);
+
+                const localResult = {
+                    r2: bestResult.r2,
+                    modelName: "Linear Regression",
+                    predictions: predictions,
+                    predict: (x) => bestResult.predict(x)[1],
+                    type: "linear",
+                    equation: bestResult.string,
+                    details: {
+                        stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        stdDevY: stdDevY,
+                        varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        varianceY: varianceY,
+                        adjustedR2: bestResult.r2,
+                        rmse: 0,
+                        mae: 0,
+                        localFallback: true
+                    }
+                };
+                setRegressionResult(localResult);
+                setLoading(false);
+                toast.success("Local linear fallback model fitted (Offline Mode)");
             } catch (fallbackErr) {
                 setError(fallbackErr.message || "Failed to analyze data");
                 setLoading(false);
@@ -1087,7 +1149,7 @@ export const EnhancedDataAnalyzer = () => {
                         <Grid3x3 className="h-4 w-4" />
                         View Data
                     </TabsTrigger>
-                    <TabsTrigger value="results" className="gap-2" disabled={!regressionResult}>
+                    <TabsTrigger value="results" className="gap-2" disabled={!regressionResult && !loading}>
                         <BarChart3 className="h-4 w-4" />
                         Results
                     </TabsTrigger>
@@ -1281,6 +1343,17 @@ export const EnhancedDataAnalyzer = () => {
 
                 {/* Results Tab */}
                 <TabsContent value="results" className="space-y-4 mt-6">
+                    {loading && !regressionResult && (
+                        <Card className="border-2 p-12 text-center flex flex-col items-center justify-center space-y-4 bg-white dark:bg-slate-950">
+                            <RefreshCw className="h-10 w-10 animate-spin text-primary mx-auto" />
+                            <div>
+                                <h3 className="font-semibold text-lg">Fitting Regression Model...</h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    {polling.status || "Fitting curve parameters. Please wait..."}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
                     {regressionResult && (
                         <>
                             <Card className="border-2">
