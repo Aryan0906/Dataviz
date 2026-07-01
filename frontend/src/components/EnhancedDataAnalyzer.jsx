@@ -346,11 +346,13 @@ export const EnhancedDataAnalyzer = () => {
 
             setRegressionResult({
                 r2: result.r2,
+                modelName: result.model_name || `${modelType.charAt(0).toUpperCase() + modelType.slice(1)} Regression`,
+                predictions: result.predictions || [],
                 predict: (x) => {
                     const predictions = result.predictions || [];
                     if (predictions.length === 0) return null;
 
-                    const sorted = predictions.sort((a, b) => a[0] - b[0]);
+                    const sorted = [...predictions].sort((a, b) => a[0] - b[0]);
                     const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
                     if (exact) return exact[1];
 
@@ -367,9 +369,9 @@ export const EnhancedDataAnalyzer = () => {
                 type: modelType,
                 equation: result.equation,
                 details: {
-                    stdDevX: Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                    stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                     stdDevY: stdDevY,
-                    varianceX: data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0,
+                    varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                     varianceY: varianceY,
                     adjustedR2: result.adjusted_r2,
                     rmse: result.rmse,
