@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Command } from 'cmdk';
+import { useNavigate } from 'react-router-dom';
 import { commands } from '@/utils/commands';
 import { useTheme } from '@/context/ThemeContext';
 
@@ -7,6 +8,7 @@ const CommandPalette = () => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const down = (e) => {
@@ -25,7 +27,7 @@ const CommandPalette = () => {
 
   const handleSelect = (command) => {
     if (command && typeof command.action === 'function') {
-      command.action();
+      command.action(navigate);
     }
     setOpen(false);
     setQuery('');

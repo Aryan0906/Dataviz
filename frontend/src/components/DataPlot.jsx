@@ -233,3 +233,5 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         </div>
     );
 });
+
+DataPlot.displayName = "DataPlot";

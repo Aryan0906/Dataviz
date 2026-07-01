@@ -4,10 +4,11 @@ export const commands = [
     id: 'upload-csv',
     name: 'Upload CSV',
     shortcut: '⌘U',
-    action: () => {
+    action: (navigate) => {
       // Navigate to upload page (handled by router)
-      const navigate = require('react-router-dom').useNavigate();
-      navigate('/manual-plot');
+      if (navigate) {
+        navigate('/manual-plot');
+      }
     },
   },
   {
