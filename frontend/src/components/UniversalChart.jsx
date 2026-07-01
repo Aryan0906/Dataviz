@@ -6,8 +6,13 @@ import { Button } from "@/components/ui/button";
 import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
 import { useTheme } from "@/components/theme-provider";
 
+const COLORS = [
+    '#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a4de6c',
+    '#d0ed57', '#8dd1e1', '#83a6ed', '#8e44ad', '#f39c12'
+];
+
 export const UniversalChart = forwardRef(
-    ({ type, data = [], regression = null, categories = [], onBarClick = null }, ref) => {
+    ({ type, data = [], regression = null, categories = [], onBarClick = null, xAxisKey, dataKeys }, ref) => {
         const chartContainerRef = useRef(null);
         const { theme } = useTheme();
 
@@ -27,6 +32,20 @@ export const UniversalChart = forwardRef(
 
         // Support both old format (categories array) and new format (data object with labels/datasets)
         const barData = useMemo(() => {
+            if (Array.isArray(data) && data.length > 0 && !data.labels) {
+                const xKey = xAxisKey || 'label';
+                const yKey = (dataKeys && dataKeys[0]) || 'Count';
+                const firstElem = data[0];
+                const actualXKey = xKey in firstElem ? xKey : Object.keys(firstElem)[0];
+                const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
+                
+                return data.map((item, idx) => ({
+                    label: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
+                    value: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
+                    color: item.color || COLORS[idx % COLORS.length]
+                }));
+            }
+
             if (data?.labels && data?.datasets) {
                 // New format: { labels: [...], datasets: [{ data: [...] }] }
                 return data.labels.map((label, idx) => ({
@@ -37,9 +56,23 @@ export const UniversalChart = forwardRef(
             }
             // Old format: categories array
             return categories;
-        }, [data, categories]);
+        }, [data, categories, xAxisKey, dataKeys]);
 
         const pieData = useMemo(() => {
+            if (Array.isArray(data) && data.length > 0 && !data.labels) {
+                const xKey = xAxisKey || 'label';
+                const yKey = (dataKeys && dataKeys[0]) || 'Count';
+                const firstElem = data[0];
+                const actualXKey = xKey in firstElem ? xKey : Object.keys(firstElem)[0];
+                const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
+                
+                return data.map((item, idx) => ({
+                    name: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
+                    value: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
+                    color: item.color || COLORS[idx % COLORS.length]
+                }));
+            }
+
             if (data?.labels && data?.datasets) {
                 return data.labels.map((label, idx) => ({
                     name: label,
@@ -48,9 +81,23 @@ export const UniversalChart = forwardRef(
                 }));
             }
             return categories.map(c => ({ name: c.label, value: c.value }));
-        }, [data, categories]);
+        }, [data, categories, xAxisKey, dataKeys]);
 
         const treemapData = useMemo(() => {
+            if (Array.isArray(data) && data.length > 0 && !data.labels) {
+                const xKey = xAxisKey || 'label';
+                const yKey = (dataKeys && dataKeys[0]) || 'Count';
+                const firstElem = data[0];
+                const actualXKey = xKey in firstElem ? xKey : Object.keys(firstElem)[0];
+                const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
+                
+                return data.map((item, idx) => ({
+                    name: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
+                    size: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
+                    color: item.color || COLORS[idx % COLORS.length]
+                }));
+            }
+
             if (data?.labels && data?.datasets) {
                 return data.labels.map((label, idx) => ({
                     name: label,
@@ -59,16 +106,13 @@ export const UniversalChart = forwardRef(
                 }));
             }
             return categories.map(c => ({ name: c.label, size: c.value }));
-        }, [data, categories]);
+        }, [data, categories, xAxisKey, dataKeys]);
 
         if (type === 'regression') {
             return <DataPlot ref={ref} data={data} regression={regression} />;
         }
 
-        const COLORS = [
-            '#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a4de6c',
-            '#d0ed57', '#8dd1e1', '#83a6ed', '#8e44ad', '#f39c12'
-        ];
+
 
         const handleBarClick = (entry) => {
             if (onBarClick && entry?.label) {

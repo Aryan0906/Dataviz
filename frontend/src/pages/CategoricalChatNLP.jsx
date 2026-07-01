@@ -46,6 +46,8 @@ const CategoricalChatNLP = () => {
     const [chartType, setChartType] = useState("bar"); // bar, pie, treemap
     const [chartData, setChartData] = useState(null);
     const [chartTitle, setChartTitle] = useState("Visualizer");
+    const [xAxisKey, setXAxisKey] = useState("");
+    const [dataKeys, setDataKeys] = useState([]);
 
     // === Insights State ===
     const [insights, setInsights] = useState({
@@ -100,8 +102,12 @@ const CategoricalChatNLP = () => {
             if (response.chart_config) {
                 setChartType(response.chart_config.chartType || "bar");
                 setChartTitle(response.chart_config.title || chatInput);
+                setXAxisKey(response.chart_config.xAxisKey || "");
+                setDataKeys(response.chart_config.dataKeys || []);
             } else if (response.chart) {
                 setChartTitle(response.chart.title || chatInput);
+                setXAxisKey("");
+                setDataKeys([]);
             }
             
             // New endpoint might not return full insights yet, handle gracefully
@@ -482,6 +488,8 @@ const CategoricalChatNLP = () => {
                                 <UniversalChart
                                     type={chartType}
                                     data={chartData}
+                                    xAxisKey={xAxisKey}
+                                    dataKeys={dataKeys}
                                     onBarClick={handleChartClick}
                                 />
                             ) : (
@@ -843,6 +851,8 @@ const CategoricalChatNLP = () => {
                             onClick={() => {
                                 setCategoricalData([]);
                                 setChartData(null);
+                                setXAxisKey("");
+                                setDataKeys([]);
                                 setInsights({});
                                 setChatHistory([]);
                                 setChartTitle("Visualizer");
