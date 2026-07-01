@@ -37,12 +37,12 @@ REM 3. Check Redis/Celery status
 echo Checking if Redis is running...
 netstat -ano | findstr 127.0.0.1:6379 >nul
 if %errorlevel% equ 0 (
-    echo Redis is running. Background task worker (Celery) will be started.
+    echo Redis is running. Celery background task worker will be started.
     set RUN_CELERY=true
 ) else (
     netstat -ano | findstr [::1]:6379 >nul
     if !errorlevel! equ 0 (
-        echo Redis is running. Background task worker (Celery) will be started.
+        echo Redis is running. Celery background task worker will be started.
         set RUN_CELERY=true
     ) else (
         echo [Warning] Redis is not running on port 6379. Celery worker will not be started.
