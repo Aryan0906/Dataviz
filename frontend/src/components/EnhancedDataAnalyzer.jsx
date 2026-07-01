@@ -1158,10 +1158,12 @@ export const EnhancedDataAnalyzer = () => {
                         <Grid3x3 className="h-4 w-4" />
                         View Data
                     </TabsTrigger>
-                    <TabsTrigger value="results" className="gap-2" disabled={!regressionResult && !loading}>
-                        <BarChart3 className="h-4 w-4" />
-                        Results
-                    </TabsTrigger>
+                    {(regressionResult || loading) && (
+                        <TabsTrigger value="results" className="gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            Results
+                        </TabsTrigger>
+                    )}
                     <TabsTrigger value="stats" className="gap-2" disabled={data.length === 0}>
                         <Beaker className="h-4 w-4" />
                         Compare Groups
