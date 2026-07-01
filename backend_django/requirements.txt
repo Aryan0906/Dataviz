@@ -47,6 +47,7 @@ polars>=0.20.0
 # Async task queue for long-running operations
 celery>=5.3.0
 redis>=5.0.0
+django-celery-results>=2.5.0
 
 # =============================================================================
 # API Performance
