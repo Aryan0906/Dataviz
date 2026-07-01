@@ -129,17 +129,42 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         return { combinedData: combined, identityLine: [], coefficientData: [] };
     }, [data, regression, regressionPredictor, isMultivariate]);
 
+    // Selected point logic
+    const selectedPoint = useMemo(() => {
+        if (selectedPointIndex !== undefined && selectedPointIndex !== null) {
+            if (isMultivariate) {
+                return combinedData[selectedPointIndex] || null;
+            }
+            return data[selectedPointIndex] || null;
+        }
+        return null;
+    }, [data, combinedData, selectedPointIndex, isMultivariate]);
+
     if (data.length === 0) return null;
 
     if (isMultivariate) {
         return (
-            <div className="w-full flex flex-col gap-6" ref={ref}>
+            <div className="w-full flex flex-col gap-6 relative" ref={ref}>
                 <div className="flex justify-end mb-1">
                     <Button variant="outline" size="sm" onClick={handleExportSVG} className="gap-1.5 text-xs">
                         <Download className="h-3.5 w-3.5" />
                         Export SVG
                     </Button>
                 </div>
+                
+                {selectedPoint && (
+                    <div className="absolute top-16 left-6 z-10 bg-background/95 backdrop-blur-md border rounded-xl p-3.5 shadow-lg max-w-[240px] text-xs">
+                        <div className="font-semibold text-primary mb-1.5 flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
+                            Selected Point (HUD)
+                        </div>
+                        <div className="space-y-1 text-muted-foreground font-mono">
+                            <div>Actual: <span className="text-foreground font-semibold">{selectedPoint.actual.toFixed(4)}</span></div>
+                            <div>Predicted: <span className="text-foreground font-semibold">{selectedPoint.predicted.toFixed(4)}</span></div>
+                            <div>Residual: <span className="text-foreground font-semibold">{(selectedPoint.actual - selectedPoint.predicted).toFixed(4)}</span></div>
+                        </div>
+                    </div>
+                )}
                 
                 <div ref={chartContainerRef} className="flex flex-col gap-8">
                     <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
@@ -152,6 +177,20 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                                 <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                                 <Scatter name="Predictions" data={combinedData} fill="#3b82f6" shape="circle" />
                                 <Line dataKey="predicted" data={identityLine} type="monotone" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={false} isAnimationActive={false} />
+                                {selectedPoint && (
+                                    <>
+                                        <ReferenceLine x={selectedPoint.actual} stroke="#D4AF37" strokeDasharray="3 3" />
+                                        <ReferenceLine y={selectedPoint.predicted} stroke="#D4AF37" strokeDasharray="3 3" />
+                                        <ReferenceDot
+                                            x={selectedPoint.actual}
+                                            y={selectedPoint.predicted}
+                                            r={6}
+                                            fill="#D4AF37"
+                                            stroke="#fff"
+                                            strokeWidth={2}
+                                        />
+                                    </>
+                                )}
                             </ScatterChart>
                         </ResponsiveContainer>
                     </div>
@@ -183,7 +222,27 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                     Export SVG
                 </Button>
             </div>
-            <div ref={chartContainerRef} className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 sedow-sm transition-shadow hover:shadow-md">
+            
+            {selectedPoint && (
+                <div className="absolute top-16 left-6 z-10 bg-background/95 backdrop-blur-md border rounded-xl p-3.5 shadow-lg max-w-[240px] text-xs">
+                    <div className="font-semibold text-primary mb-1.5 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
+                        Selected Point (HUD)
+                    </div>
+                    <div className="space-y-1 text-muted-foreground font-mono">
+                        <div>X: <span className="text-foreground font-semibold">{selectedPoint.x.toFixed(4)}</span></div>
+                        <div>Y: <span className="text-foreground font-semibold">{selectedPoint.y.toFixed(4)}</span></div>
+                        {regressionPredictor && (
+                            <>
+                                <div>Predicted: <span className="text-foreground font-semibold">{regressionPredictor(selectedPoint.x).toFixed(4)}</span></div>
+                                <div>Residual: <span className="text-foreground font-semibold">{(selectedPoint.y - regressionPredictor(selectedPoint.x)).toFixed(4)}</span></div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <div ref={chartContainerRef} className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-shadow hover:shadow-md">
                 <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={combinedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
@@ -227,6 +286,20 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                             name="y"
                             isAnimationActive={false}
                         />
+                        {selectedPoint && (
+                            <>
+                                <ReferenceLine x={selectedPoint.x} stroke="#D4AF37" strokeDasharray="3 3" />
+                                <ReferenceLine y={selectedPoint.y} stroke="#D4AF37" strokeDasharray="3 3" />
+                                <ReferenceDot
+                                    x={selectedPoint.x}
+                                    y={selectedPoint.y}
+                                    r={6}
+                                    fill="#D4AF37"
+                                    stroke="#fff"
+                                    strokeWidth={2}
+                                />
+                            </>
+                        )}
                     </LineChart>
                 </ResponsiveContainer>
             </div>

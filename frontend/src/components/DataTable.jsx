@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit2, Check, X, Database } from "lucide-react";
 import { toast } from "sonner";
 
-export const DataTable = ({ data, onDataChange }) => {
+export const DataTable = ({ data, onDataChange, selectedPointIndex, onRowSelect }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const [editX, setEditX] = useState("");
     const [editY, setEditY] = useState("");
@@ -110,7 +110,15 @@ export const DataTable = ({ data, onDataChange }) => {
                         </TableHeader>
                         <TableBody>
                             {data.map((point, index) => (
-                                <TableRow key={index}>
+                                <TableRow
+                                    key={index}
+                                    className={`cursor-pointer transition-colors ${
+                                        selectedPointIndex === index
+                                            ? "bg-[#D4AF37]/10 dark:bg-primary/20 border-l-4 border-l-[#D4AF37] font-semibold"
+                                            : "hover:bg-muted/50"
+                                    }`}
+                                    onClick={() => onRowSelect && onRowSelect(index)}
+                                >
                                     <TableCell className="font-mono text-sm">{index + 1}</TableCell>
                                     <TableCell>
                                         {editingIndex === index ? (
@@ -120,6 +128,7 @@ export const DataTable = ({ data, onDataChange }) => {
                                                 value={editX}
                                                 onChange={(e) => setEditX(e.target.value)}
                                                 className="h-8"
+                                                onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
                                             <span className="font-mono">{point.x.toFixed(4)}</span>
@@ -133,12 +142,13 @@ export const DataTable = ({ data, onDataChange }) => {
                                                 value={editY}
                                                 onChange={(e) => setEditY(e.target.value)}
                                                 className="h-8"
+                                                onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
                                             <span className="font-mono">{point.y.toFixed(4)}</span>
                                         )}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell onClick={(e) => e.stopPropagation()}>
                                         {editingIndex === index ? (
                                             <div className="flex gap-1">
                                                 <Button

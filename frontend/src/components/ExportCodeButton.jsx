@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Code2 } from 'lucide-react';
 import ChartCodeExportModal from './ChartCodeExportModal';
@@ -49,6 +49,30 @@ const ExportCodeButton = ({
 }) => {
   const [showModal, setShowModal] = useState(false);
 
+  // Sanitize regressionData: strip non-serializable values (functions) to prevent circular JSON errors
+  const safeRegressionData = useMemo(() => {
+    if (!regressionData) return null;
+    try {
+      const clean = {};
+      for (const [key, value] of Object.entries(regressionData)) {
+        if (typeof value !== 'function') {
+          clean[key] = value;
+        }
+      }
+      // Verify it's serializable
+      JSON.stringify(clean);
+      return clean;
+    } catch {
+      // If still not serializable, extract only known safe keys
+      return {
+        dataPoints: regressionData.dataPoints || [],
+        equation: regressionData.equation || '',
+        modelType: regressionData.modelType || '',
+        rSquared: regressionData.rSquared || 0,
+      };
+    }
+  }, [regressionData]);
+
   const handleClick = () => {
     setShowModal(true);
     if (onExport) {
@@ -75,7 +99,7 @@ const ExportCodeButton = ({
         chartType={chartType}
         chartData={chartData}
         categoricalData={categoricalData}
-        regressionData={regressionData}
+        regressionData={safeRegressionData}
         chartTitle={chartTitle}
       />
     </>
