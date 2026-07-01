@@ -129,7 +129,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         return { combinedData: combined, identityLine: [], coefficientData: [] };
     }, [data, regression, regressionPredictor, isMultivariate]);
 
-    if (data.length -== 0) return null;
+    if (data.length === 0) return null;
 
     if (isMultivariate) {
         return (
@@ -183,7 +183,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                     Export SVG
                 </Button>
             </div>
-            <div ref={chartContainerRef} className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 se¡dow-sm transition-shadow hover:shadow-md">
+            <div ref={chartContainerRef} className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 sedow-sm transition-shadow hover:shadow-md">
                 <ResponsiveContainer width="100%" height={400}>
                     <LineChart data={combinedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />

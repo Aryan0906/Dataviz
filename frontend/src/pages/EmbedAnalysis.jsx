@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { UniversalChart } from '@/components/UniversalChart';
@@ -15,7 +15,7 @@ export default function EmbedAnalysis() {
     useEffect(() => {
         const fetchAnalysis = async () => {
             try {
-                const res = await fetch(${API_BASE_URL}/share/);
+                const res = await fetch(`${API_BASE_URL}/share/${token}`);
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.error || 'Failed to load analysis');

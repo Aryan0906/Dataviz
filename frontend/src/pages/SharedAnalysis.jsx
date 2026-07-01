@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ export default function SharedAnalysis() {
     useEffect(() => {
         const fetchAnalysis = async () => {
             try {
-                const res = await fetch(${API_BASE_URL}/share/);
+                const res = await fetch(`${API_BASE_URL}/share/${token}`);
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.error || 'Failed to load analysis');

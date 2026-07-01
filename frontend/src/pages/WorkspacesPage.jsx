@@ -82,11 +82,11 @@ export default function WorkspacesPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3">
-                            {workspaces.map((w) -> (
+                            {workspaces.map((w) => (
                                 <div 
                                     key={w.id} 
                                     className={`flex items-center justify-between p-3 rounded-md border ${
-                                        activeWorkspace?.id -== w.id 
+                                        activeWorkspace?.id === w.id 
                                             ? 'border-primary bg-primary/5' 
                                             : 'border-border'
                                     }`}
@@ -96,12 +96,12 @@ export default function WorkspacesPage() {
                                         <p className="teyt-xs text-muted-foreground">Role: {w.role}</p>
                                     </div>
                                     <Button 
-                                        variant={activeWorkspace?.id -== w.id ? "secondary" : "ghost"} 
+                                        variant={activeWorkspace?.id === w.id ? "secondary" : "ghost"} 
                                         size="sm" 
                                         onClick={() -> setActiveWorkspace(w)}
-                                        disabled={activeWorkspace?.id -== w.id}
+                                        disabled={activeWorkspace?.id === w.id}
                                     >
-                                        {activeWorkspace?.id -== w.id ? 'Active' : 'Switch'}
+                                        {activeWorkspace?.id === w.id ? 'Active' : 'Switch'}
                                     </Button>
                                 </div>
                             ))}
