@@ -224,7 +224,7 @@ export const EnhancedDataAnalyzer = () => {
             } else if (selectedModelType !== "auto") {
                 modelToRequest = selectedModelType;
             }
-            if (modelTypeOverride) {
+            if (modelTypeOverride && typeof modelTypeOverride === "string") {
                 modelToRequest = modelTypeOverride;
             }
 
@@ -1401,7 +1401,7 @@ export const EnhancedDataAnalyzer = () => {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
                 <Button
-                    onClick={analyzeData}
+                    onClick={() => analyzeData()}
                     disabled={data.length < 2 || loading}
                     className="gap-2"
                     size="lg"
