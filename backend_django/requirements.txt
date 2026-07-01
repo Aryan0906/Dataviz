@@ -2,6 +2,7 @@ django
 djangorestframework
 django-cors-headers
 django-filter
+django-ratelimit>=4.0.0
 python-dotenv
 psycopg2-binary
 dj-database-url
