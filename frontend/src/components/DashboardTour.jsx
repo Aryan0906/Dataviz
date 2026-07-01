@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
-import Joyride, { STATUS } from 'react-joyride';
+import React, { useState, useEffect } from 'react';
+import { Joyride, STATUS } from 'react-joyride';
 
 export const DashboardTour = () => {
     const [run, setRun] = useState(false);
