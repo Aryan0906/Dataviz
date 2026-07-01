@@ -100,16 +100,10 @@ const AppLayout = ({ children }) => {
             description: 'Plot & visualize data',
         },
         {
-            title: 'Categorical Data',
+            title: 'Categorical Chat',
             url: '/categorical',
             icon: BarChart3,
-            description: 'Analyze categories',
-        },
-        {
-            title: 'NLP Analysis',
-            url: '/categorical-nlp',
-            icon: Database,
-            description: 'Natural language queries',
+            description: 'NLP & manual command chat',
         },
     ];
 
