@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
-import { useTheme } from "@/components/theme-provider";
+
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     Sparkles, Send, BarChart3, PieChart as PieIcon, TreePalm,
-    Download, Code2, FileUp, RefreshCw, AlertCircle, Database,
-    TrendingUp, TrendingDown, Search, ArrowRight, Sun, Moon,
-    AlertTriangle, MessageSquare, Bot, User, Trash2
+    Download, FileUp, RefreshCw, AlertCircle, Database,
+    TrendingUp, Search, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -43,50 +42,6 @@ const INITIAL_COLUMNS = [
     { name: "label", type: "categorical" },
     { name: "value", type: "numerical" }
 ];
-
-const formatNumber = (val) => Number.isFinite(val) ? val.toFixed(2) : "-";
-
-const computeStats = (data, xAxisKey, dataKeys) => {
-    const xKey = xAxisKey || 'label';
-    const yKey = (dataKeys && dataKeys[0]) || 'value';
-
-    if (!data.length) {
-        return {
-            count: 0,
-            sum: 0,
-            mean: 0,
-            median: 0,
-            mode: "-",
-            min: 0,
-            max: 0,
-            range: 0,
-            stdev: 0,
-        };
-    }
-    const values = data.map((d) => Number(d[yKey]) || 0).sort((a, b) => a - b);
-    const count = values.length;
-    const sum = values.reduce((a, b) => a + b, 0);
-    const mean = sum / count;
-    const median = count % 2 === 0
-        ? (values[count / 2 - 1] + values[count / 2]) / 2
-        : values[Math.floor(count / 2)];
-    const freq = new Map();
-    values.forEach((v) => freq.set(v, (freq.get(v) || 0) + 1));
-    let modeVal = values[0];
-    let modeFreq = 0;
-    freq.forEach((f, v) => {
-        if (f > modeFreq) {
-            modeFreq = f;
-            modeVal = v;
-        }
-    });
-    const min = values[0];
-    const max = values[values.length - 1];
-    const range = max - min;
-    const variance = values.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / count;
-    const stdev = Math.sqrt(variance);
-    return { count, sum, mean, median, mode: modeVal.toString(), min, max, range, stdev };
-};
 
 const normalizeLabel = (label) => String(label).trim().toLowerCase();
 
@@ -172,7 +127,6 @@ const interpretCommand = (raw, current, currentChart, xAxisKey, dataKeys) => {
 };
 
 export const CategoricalChatPanel = () => {
-    const { theme } = useTheme();
     const fileInputRef = useRef(null);
     const chartContainerRef = useRef(null);
 
@@ -254,10 +208,10 @@ export const CategoricalChatPanel = () => {
     }, []);
 
     // Session auto-save
-    const { saveNow } = usePageSession('categorical', sessionState, restoreState);
+    usePageSession('categorical', sessionState, restoreState);
 
     // History tracking
-    const { logCreate, _logUpdate, logExport } = useHistoryLogger('categorical');
+    const { logCreate, logExport } = useHistoryLogger('categorical');
 
     // Dynamically update insights when data changes
     useEffect(() => {
@@ -396,7 +350,7 @@ export const CategoricalChatPanel = () => {
                         message: `Generated local summary count chart by scanning categories.`
                     }
                 ]);
-            } catch (fallbackErr) {
+            } catch (_) {
                 setChatHistory(prev => [
                     ...prev,
                     {
@@ -473,6 +427,7 @@ export const CategoricalChatPanel = () => {
             } else if (exportFormat === "pdf") {
                 await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
             }
+            logExport(filename, chartData);
         } catch (error) {
             console.error("Export failed:", error);
         }
@@ -554,6 +509,7 @@ export const CategoricalChatPanel = () => {
                             }
                         ]);
 
+                        logCreate("Uploaded CSV", rawData);
                         toast.success(`Imported ${rawData.length} rows`);
                         if (fileInputRef.current) {
                             fileInputRef.current.value = '';

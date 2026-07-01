@@ -7,7 +7,6 @@ import {
     User,
     Sparkles,
     BarChart3,
-    Database,
     Settings,
     BookOpen,
     Zap,
