@@ -30,7 +30,7 @@ const _fadeUp = {
 
 const Login = () => {
     const navigate = useNavigate();
-    const { loading: authLoading } = useAuth();
+    const { loading: authLoading, setLocalAuth } = useAuth();
 
     const [activeTab, setActiveTab] = useState("login");
     const [loginEmail, setLoginEmail] = useState("");
@@ -44,13 +44,52 @@ const Login = () => {
     const [showSignupConfirm, setShowSignupConfirm] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
+    // Try local Django auth as fallback
+    const tryLocalLogin = async (email, password) => {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Local login failed');
+        }
+        return res.json();
+    };
+
+    const tryLocalSignup = async (name, email, password) => {
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password }),
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Local signup failed');
+        }
+        return res.json();
+    };
+
+    const isNetworkError = (err) => {
+        const msg = (err?.message || '').toLowerCase();
+        return msg.includes('fetch') || msg.includes('network') || msg.includes('failed to fetch') || msg.includes('load failed');
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
         if (!loginEmail || !loginPassword) { toast.error("Please fill in all fields"); return; }
         setIsLoading(true);
         try {
+            // 1. Try Supabase first
             const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
             if (error) {
+                // If it's a network/connection error → fallback to local
+                if (isNetworkError(error)) {
+                    throw error; // caught below to trigger local fallback
+                }
                 if (error.message.includes("Invalid login credentials"))
                     toast.error("Invalid email or password. Don't have an account? Try the Sign Up tab.");
                 else if (error.message.includes("Email not confirmed"))
@@ -61,7 +100,15 @@ const Login = () => {
                 navigate("/dashboard");
             }
         } catch (err) {
-            toast.error(err.message || "Login failed. Please try again.");
+            // 2. Try local Django backend fallback
+            try {
+                const result = await tryLocalLogin(loginEmail, loginPassword);
+                setLocalAuth(result.user, result.token);
+                toast.success("Welcome back! (offline mode)");
+                navigate("/dashboard");
+            } catch (localErr) {
+                toast.error(localErr.message || "Login failed. Please try again.");
+            }
         } finally { setIsLoading(false); }
     };
 
@@ -78,6 +125,7 @@ const Login = () => {
                 options: { data: { name: signupName } },
             });
             if (error) {
+                if (isNetworkError(error)) throw error;
                 toast.error(error.message.includes("already registered")
                     ? "This email is already registered. Try logging in instead."
                     : error.message);
@@ -88,7 +136,15 @@ const Login = () => {
                 navigate("/dashboard");
             }
         } catch (err) {
-            toast.error(err.message || "Signup failed.");
+            // Fallback to local Django signup
+            try {
+                const result = await tryLocalSignup(signupName, signupEmail, signupPassword);
+                setLocalAuth(result.user, result.token);
+                toast.success("Account created! (offline mode)");
+                navigate("/dashboard");
+            } catch (localErr) {
+                toast.error(localErr.message || "Signup failed.");
+            }
         } finally { setIsLoading(false); }
     };
 

@@ -17,6 +17,7 @@ import {
 import { useStorytelling } from '@/context/StorytellingContext';
 import NavigationGuide from './NavigationGuide';
 import ProgressTracker from './ProgressTracker';
+import NetworkStatus from './NetworkStatus';
 import AchievementModal from './AchievementModal';
 import {
     Sidebar,
@@ -394,6 +395,7 @@ const AppLayout = ({ children }) => {
                                 <HelpCircle className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline uppercase" style={{ fontSize: "0.65rem" }}>Help</span>
                             </Button>
+                            <NetworkStatus />
                             <ThemeToggle />
                         </div>
                     </header>
