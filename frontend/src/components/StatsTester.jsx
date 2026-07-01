@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Beaker, Apperture, TrendingUp, BarChart} from "lucide-react";
+import { Beaker, Aperture, TrendingUp, BarChart} from "lucide-react";
 import { dataAPI as api } from "@/lib/api";
 
 export default function StatsTester( { filePath, columns }) {
@@ -82,7 +82,7 @@ export default function StatsTester( { filePath, columns }) {
                 <Card className="border-primary/20 bg-primary/5">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Apperture className="h-5 w-5" />
+                            <Aperture className="h-5 w-5" />
                             Test Results: {result.test_name}
                         </CardTitle>
                     </CardHeader>
