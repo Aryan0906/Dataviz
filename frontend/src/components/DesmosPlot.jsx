@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Sun, Moon, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Sun, Moon, Save, Upload, Copy, Code } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
 import { wrapSvgWithXmlMetadata } from "@/lib/chartExport";
@@ -31,15 +32,17 @@ const PRESET_EXPRESSIONS = [
     { label: "Linear", latex: "y = x" },
     { label: "Quadratic", latex: "y = x^2" },
     { label: "Cubic", latex: "y = x^3" },
-    { label: "Sine", latex: "y = sin(x)" },
-    { label: "Cosine", latex: "y = cos(x)" },
-    { label: "Tangent", latex: "y = tan(x)" },
-    { label: "Square Root", latex: "y = sqrt(x)" },
+    { label: "Sine", latex: "y = \\sin\\left(x\\right)" },
+    { label: "Cosine", latex: "y = \\cos\\left(x\\right)" },
+    { label: "Tangent", latex: "y = \\tan\\left(x\\right)" },
+    { label: "Square Root", latex: "y = \\sqrt{x}" },
     { label: "Circle", latex: "x^2 + y^2 = 25" },
-    { label: "Absolute Value", latex: "y = abs(x)" },
-    { label: "Exponential", latex: "y = e^x" },
-    { label: "Logarithm", latex: "y = log(x)" },
+    { label: "Absolute Value", latex: "y = \\left|x\\right|" },
+    { label: "Exponential", latex: "y = e^{x}" },
+    { label: "Logarithm", latex: "y = \\ln\\left(x\\right)" },
     { label: "Parabola", latex: "y = -x^2 + 4" },
+    { label: "Reciprocal", latex: "y = \\frac{1}{x}" },
+    { label: "Ellipse", latex: "\\frac{x^2}{9} + \\frac{y^2}{4} = 1" },
 ];
 
 const ensureCdnCss = () => {
@@ -113,6 +116,9 @@ const DesmosPlot = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
     const [exportTheme, setExportTheme] = useState(getInitialTheme());
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importCode, setImportCode] = useState("");
+    const [showCodeExport, setShowCodeExport] = useState(false);
 
     // Function to extract expressions from calculator
     const _extractExpressionsFromCalculator = () => {
@@ -264,23 +270,18 @@ const DesmosPlot = () => {
     }, [currentTheme]);
 
     const applyTheme = (calc, themeMode) => {
-        const getColor = (name, fallback) => {
-            const value = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`);
-            const trimmed = value.trim();
-            if (!trimmed) return fallback;
-            return `hsl(${trimmed})`;
-        };
-
-        // Enhanced dark mode colors with better contrast
         const isDark = themeMode === "dark";
-        const bg = isDark ? "#1a1a1e" : getColor("background", "#ffffff");
-        const panel = isDark ? "#27272b" : getColor("card", "#f9f9f9");
-        const border = isDark ? "#52525b" : getColor("border", "#e4e4e7");
-        const text = isDark ? "#fafafa" : getColor("foreground", "#09090b");
-        const mutedText = isDark ? "#d4d4d8" : getColor("muted-foreground", "#71717a");
-        const graphBg = isDark ? "#1f1f23" : "#ffffff";
-        const hoverBg = isDark ? "#3f3f46" : "#f4f4f5";
 
+        // Use native Desmos settings for clean theme toggling
+        try {
+            calc.updateSettings({
+                invertedColors: isDark,
+            });
+        } catch (err) {
+            console.warn("Unable to set calculator settings", err);
+        }
+
+        // Minimal container background override only
         const containerId = containerRef.current?.id || "graph-container";
         let styleElement = document.getElementById(`${containerId}-theme-style`);
         if (!styleElement) {
@@ -290,172 +291,11 @@ const DesmosPlot = () => {
         }
 
         styleElement.textContent = `
-            /* Main container */
             #${containerId} {
-                background-color: ${bg} !important;
-            }
-            
-            /* Calculator containers and panels */
-            #${containerId} .dcg-container,
-            #${containerId} .dcg-expressions,
-            #${containerId} .dcg-expressionlist,
-            #${containerId} .dcg-expressions-scrollable,
-            #${containerId} .dcg-expressions-content,
-            #${containerId} .dcg-left-gutter,
-            #${containerId} .dcg-hud,
-            #${containerId} .dcg-expressionsTopbar {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            
-            /* Graph paper background - lighter in dark mode */
-            #${containerId} .dcg-grapher-container {
-                background-color: ${graphBg} !important;
-            }
-            #${containerId} .dcg-graphpaper {
-                background-color: ${graphBg} !important;
-            }
-            
-            /* Expression items and inputs */
-            #${containerId} .dcg-expressionitem {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            #${containerId} .dcg-expressionitem:hover {
-                background-color: ${hoverBg} !important;
-            }
-            #${containerId} .dcg-expressionitem input,
-            #${containerId} .dcg-expressionitem textarea {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            
-            /* Math field styling */
-            #${containerId} .dcg-mq-root-block,
-            #${containerId} .dcg-math-field,
-            #${containerId} .dcg-mq-editable-field {
-                background-color: transparent !important;
-                color: ${text} !important;
-            }
-            #${containerId} .dcg-mq-math-mode {
-                color: ${text} !important;
-            }
-            
-            /* Input fields */
-            #${containerId} input,
-            #${containerId} textarea {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            
-            /* Buttons */
-            #${containerId} .dcg-icon-btn,
-            #${containerId} .dcg-btn-flat,
-            #${containerId} .dcg-btn-light-gray,
-            #${containerId} .dcg-action-button {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            #${containerId} .dcg-icon-btn:hover,
-            #${containerId} .dcg-btn-flat:hover,
-            #${containerId} .dcg-btn-light-gray:hover,
-            #${containerId} .dcg-action-button:hover {
-                background-color: ${hoverBg} !important;
-            }
-            
-            /* Menus and tooltips */
-            #${containerId} .dcg-tooltip,
-            #${containerId} .dcg-menu,
-            #${containerId} .dcg-popover,
-            #${containerId} .dcg-dropdown,
-            #${containerId} .dcg-option-item,
-            #${containerId} .dcg-selectable {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            #${containerId} .dcg-option-item:hover {
-                background-color: ${hoverBg} !important;
-            }
-            
-            /* Axis labels with better visibility */
-            #${containerId} .dcg-axis-label,
-            #${containerId} .dcg-tick-label {
-                color: ${mutedText} !important;
-                font-weight: 500 !important;
-            }
-            
-            /* Icons with proper contrast */
-            #${containerId} .dcg-icon-btn svg,
-            #${containerId} .dcg-btn-flat svg,
-            #${containerId} .dcg-btn-light-gray svg,
-            #${containerId} .dcg-icon svg,
-            #${containerId} .dcg-action-button svg,
-            #${containerId} .dcg-icon-inline svg {
-                fill: ${text} !important;
-                color: ${text} !important;
-            }
-            
-            /* Settings panel */
-            #${containerId} .dcg-settings-pillbox,
-            #${containerId} .dcg-basic-toggle,
-            #${containerId} .dcg-action-card,
-            #${containerId} .dcg-exppanel {
-                background-color: ${panel} !important;
-                color: ${text} !important;
-                border-color: ${border} !important;
-            }
-            
-            /* Scrollbar styling for dark mode */
-            ${isDark ? `
-            #${containerId} ::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-            #${containerId} ::-webkit-scrollbar-track {
-                background: ${panel};
-            }
-            #${containerId} ::-webkit-scrollbar-thumb {
-                background: ${border};
-                border-radius: 4px;
-            }
-            #${containerId} ::-webkit-scrollbar-thumb:hover {
-                background: ${mutedText};
-            }
-            ` : ''}
-            
-            /* Expression color indicators - keep visible */
-            #${containerId} .dcg-expression-icon-container {
-                opacity: 1 !important;
-            }
-            
-            /* Folder items */
-            #${containerId} .dcg-folder-title {
-                color: ${text} !important;
-            }
-            
-            /* Slider controls */
-            #${containerId} .dcg-slider-container,
-            #${containerId} .dcg-slider-thumb {
-                background-color: ${hoverBg} !important;
+                background-color: ${isDark ? '#1a1a2e' : '#ffffff'} !important;
+                border-radius: 0.5rem;
             }
         `;
-
-        // Align Desmos internal settings with theme
-        try {
-            calc.updateSettings({
-                projectorMode: isDark,
-                // Additional settings for better visibility
-                clearIntoDarkMode: isDark
-            });
-        } catch (err) {
-            console.warn("Unable to set calculator settings", err);
-        }
     };
 
     const handleExportClick = (format) => {
@@ -612,6 +452,63 @@ const DesmosPlot = () => {
         }
     };
 
+    // Code Import: parse newline-separated LaTeX expressions
+    const handleImportCode = () => {
+        if (!calculatorRef.current || !importCode.trim()) return;
+        const lines = importCode.split('\n').map(l => l.trim()).filter(Boolean);
+        const added = [];
+        lines.forEach((latex) => {
+            try {
+                const id = `expr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+                calculatorRef.current.setExpression({ id, latex });
+                added.push({ id, latex });
+            } catch (err) {
+                console.warn('Skipped invalid expression:', latex, err);
+            }
+        });
+        setExpressions(prev => [...prev, ...added]);
+        setImportCode('');
+        setShowImportModal(false);
+        toast.success(`Imported ${added.length} expression(s)`);
+    };
+
+    // Code Export: generate Python matplotlib code
+    const getExportedPythonCode = () => {
+        if (!calculatorRef.current) return '# Calculator not loaded';
+        try {
+            const state = calculatorRef.current.getState();
+            const exprList = state?.expressions?.list || [];
+            const latexLines = [];
+            exprList.forEach(e => { if (e.latex && e.type !== 'folder') latexLines.push(e.latex); });
+            if (latexLines.length === 0) return '# No expressions to export';
+
+            const lines = [
+                'import numpy as np',
+                'import matplotlib.pyplot as plt',
+                'from matplotlib import rc',
+                '',
+                'rc("text", usetex=True)',
+                'x = np.linspace(-10, 10, 500)',
+                '',
+                '# Expressions (LaTeX):',
+                ...latexLines.map(l => `# ${l}`),
+                '',
+                'fig, ax = plt.subplots(figsize=(10, 8))',
+                '# TODO: Add manual function definitions for each expression above',
+                'ax.set_xlabel("x")',
+                'ax.set_ylabel("y")',
+                'ax.grid(True, alpha=0.3)',
+                'ax.axhline(y=0, color="k", linewidth=0.5)',
+                'ax.axvline(x=0, color="k", linewidth=0.5)',
+                'plt.tight_layout()',
+                'plt.show()',
+            ];
+            return lines.join('\n');
+        } catch {
+            return '# Error reading calculator state';
+        }
+    };
+
     return (
         <div className="space-y-4">
             {/* Help Text */}
@@ -668,6 +565,30 @@ const DesmosPlot = () => {
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                    {/* Code Import */}
+                    <Button
+                        onClick={() => setShowImportModal(true)}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        title="Import LaTeX expressions"
+                    >
+                        <Upload className="h-4 w-4" />
+                        Import
+                    </Button>
+
+                    {/* Code Export */}
+                    <Button
+                        onClick={() => setShowCodeExport(true)}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        title="Export as Python code"
+                    >
+                        <Code className="h-4 w-4" />
+                        Code
+                    </Button>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button
@@ -821,8 +742,66 @@ const DesmosPlot = () => {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Code Import Modal */}
+            <AlertDialog open={showImportModal} onOpenChange={setShowImportModal}>
+                <AlertDialogContent className="max-w-lg">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Upload className="h-5 w-5" />
+                            Import LaTeX Expressions
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Paste one LaTeX expression per line. Each line will be added as a separate graph.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <textarea
+                        className="w-full h-40 p-3 rounded-lg border bg-muted/30 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        placeholder={"y = x^2\ny = \\sin\\left(x\\right)\nx^2 + y^2 = 25"}
+                        value={importCode}
+                        onChange={(e) => setImportCode(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleImportCode} disabled={!importCode.trim()}>
+                            Import
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Code Export Modal */}
+            <AlertDialog open={showCodeExport} onOpenChange={setShowCodeExport}>
+                <AlertDialogContent className="max-w-2xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Code className="h-5 w-5" />
+                            Export as Python Code
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Copy the generated matplotlib code below.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <pre className="w-full max-h-80 overflow-auto p-4 rounded-lg border bg-muted/30 text-xs font-mono whitespace-pre">
+                        {getExportedPythonCode()}
+                    </pre>
+                    <div className="flex justify-end gap-2">
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                navigator.clipboard.writeText(getExportedPythonCode());
+                                toast.success('Code copied to clipboard!');
+                            }}
+                        >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Code
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
 
 export default DesmosPlot;
+
