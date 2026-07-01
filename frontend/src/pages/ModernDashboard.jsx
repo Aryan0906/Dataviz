@@ -203,8 +203,7 @@ const ModernDashboard = () => {
         { title: "AI-Powered Analysis", description: "Get intelligent insights from your data automatically", icon: Brain, href: "/ai" },
         { title: "Data Analyzer", description: "Advanced regression analysis and visualization", icon: TrendingUp, href: "/manual-plot" },
         { title: "Mathematical Graphing", description: "Interactive Desmos integration for curve plotting", icon: Activity, href: "/manual-plot?tab=curve" },
-        { title: "Categorical Analysis", description: "Analyze and visualize categorical data patterns", icon: BarChart3, href: "/categorical" },
-        { title: "NLP Analytics", description: "Text analysis and natural language processing", icon: FileText, href: "/categorical-nlp" },
+        { title: "Categorical Chat", description: "Natural language & manual command chat visualizer", icon: BarChart3, href: "/categorical" },
     ];
 
     const quickActions = [
