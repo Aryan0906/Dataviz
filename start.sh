@@ -61,9 +61,9 @@ else
   exit 1
 fi
 
-# Verify Python dependencies are installed (simple manage.py check)
-if ! python -c "import django" 2>/dev/null; then
-  echo -e "${YELLOW}Django is not installed in the virtual environment. Installing requirements...${NC}"
+# Verify Python dependencies are installed
+if ! python -c "import django, django_celery_results" 2>/dev/null; then
+  echo -e "${YELLOW}Required python packages are not fully installed. Installing requirements...${NC}"
   pip install -r backend_django/requirements.txt
 fi
 

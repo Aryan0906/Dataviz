@@ -17,10 +17,10 @@ if not exist "venv\Scripts\activate.bat" (
 REM Activate virtualenv for dependencies check
 call venv\Scripts\activate
 
-REM Verify Django is installed
-python -c "import django" 2>nul
+REM Verify backend dependencies are installed
+python -c "import django, django_celery_results" 2>nul
 if %errorlevel% neq 0 (
-    echo Django is not installed in the virtual environment. Installing requirements...
+    echo Required python packages are not fully installed. Installing/updating requirements...
     pip install -r backend_django\requirements.txt
 )
 
