@@ -1,17 +1,19 @@
-﻿from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Workspace, WorkspaceMembership
+from .views import _require_auth
+
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def workspaces(request):
-    user_id = request.headers.get('Authorization', '').replace('Bearer ', '')
-    if not user_id:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    user_id, err = _require_auth(request)
+    if err:
+        return err
         
     if request.method == 'GET':
         memberships = WorkspaceMembership.objects.filter(user_id=user_id).select_related('workspace')
@@ -44,9 +46,9 @@ def workspaces(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def invite_to_workspace(request, workspace_id):
-    user_id = request.headers.get('Authorization', '').replace('Bearer ', '')
-    if not user_id:
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    user_id, err = _require_auth(request)
+    if err:
+        return err
         
     try:
         membership = WorkspaceMembership.objects.get(user_id=user_id, workspace_id=workspace_id, role='owner')
