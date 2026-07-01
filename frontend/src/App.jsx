@@ -22,7 +22,6 @@ const ManualPlotCurve = lazy(() => import("./pages/ManualPlotCurve"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
 const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
-const CategoricalChatNLP = lazy(() => import("./pages/CategoricalChatNLP"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const SmartAnalytics = lazy(() => import("./pages/SmartAnalytics"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -129,11 +128,7 @@ const App = () => (
                             />
                             <Route
                                 path="/categorical-nlp"
-                                element={
-                                    <ProtectedRoute>
-                                        <CategoricalChatNLP />
-                                    </ProtectedRoute>
-                                }
+                                element={<Navigate to="/categorical" replace />}
                             />
                             <Route
                                 path="/ai"
