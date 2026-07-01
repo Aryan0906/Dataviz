@@ -2,7 +2,7 @@ import { useMemo, forwardRef, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ReferenceLine, ReferenceDot } from "recharts";
 import { TrendingUp, Download, BarChart3 } from "lucide-react";
 import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
 import { useTheme } from "@/components/theme-provider";
@@ -139,6 +139,26 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
         }
         return null;
     }, [data, combinedData, selectedPointIndex, isMultivariate]);
+
+    // Highlight the latest prediction point
+    const latestPrediction = useMemo(() => {
+        if (data.length < 2 || isMultivariate || !regressionPredictor) return null;
+        
+        // Find point with highest X value
+        const sortedData = [...data].sort((a, b) => a.x - b.x);
+        const latest = sortedData[sortedData.length - 1];
+        
+        // Check if the latest point matches prediction fit within 1% tolerance
+        const predictedY = regressionPredictor(latest.x);
+        if (isFinite(predictedY)) {
+            const tolerance = Math.max(0.001, Math.abs(predictedY * 0.01));
+            if (Math.abs(latest.y - predictedY) < tolerance) {
+                return latest;
+            }
+        }
+        
+        return null;
+    }, [data, isMultivariate, regressionPredictor]);
 
     if (data.length === 0) return null;
 
@@ -286,6 +306,14 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                             name="y"
                             isAnimationActive={false}
                         />
+                        {latestPrediction && (
+                            <ReferenceLine 
+                                x={latestPrediction.x} 
+                                stroke="#10b981" 
+                                strokeDasharray="5 5"
+                                label={{ value: "Prediction", position: "top", fill: "#10b981", fontSize: 10 }}
+                            />
+                        )}
                         {selectedPoint && (
                             <>
                                 <ReferenceLine x={selectedPoint.x} stroke="#D4AF37" strokeDasharray="3 3" />

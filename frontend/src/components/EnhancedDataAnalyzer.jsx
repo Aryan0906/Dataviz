@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
+import regression from "regression";
 import Papa from "papaparse";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
@@ -239,8 +240,85 @@ export const EnhancedDataAnalyzer = () => {
             }
 
         } catch (err) {
-            setError(err.message || "Failed to analyze data");
-            setLoading(false);
+            console.warn("Server analysis failed or offline. Attempting client-side fallback fitting...", err);
+            try {
+                // Client-side regression fallback
+                const points = data.map(d => [d.x, d.y]);
+                let bestResult = null;
+                let typeApplied = selectedModelType || "linear";
+
+                if (typeApplied === "auto") {
+                    const candidates = [
+                        { type: 'linear', res: regression.linear(points) },
+                        { type: 'exponential', res: regression.exponential(points) },
+                        { type: 'logarithmic', res: regression.logarithmic(points) },
+                        { type: 'power', res: regression.power(points) },
+                        { type: 'polynomial', res: regression.polynomial(points, { order: 2 }) }
+                    ];
+                    const valid = candidates.filter(c => c.res && !isNaN(c.res.r2));
+                    if (valid.length > 0) {
+                        const best = valid.reduce((prev, curr) => curr.res.r2 > prev.res.r2 ? curr : prev);
+                        bestResult = best.res;
+                        typeApplied = best.type;
+                    } else {
+                        bestResult = regression.linear(points);
+                        typeApplied = 'linear';
+                    }
+                } else if (typeApplied === "polynomial") {
+                    bestResult = regression.polynomial(points, { order: polynomialDegree });
+                } else {
+                    if (typeApplied === 'linear') bestResult = regression.linear(points);
+                    else if (typeApplied === 'exponential') bestResult = regression.exponential(points);
+                    else if (typeApplied === 'logarithmic') bestResult = regression.logarithmic(points);
+                    else if (typeApplied === 'power') bestResult = regression.power(points);
+                    else {
+                        bestResult = regression.linear(points);
+                        typeApplied = 'linear';
+                    }
+                }
+
+                if (!bestResult || isNaN(bestResult.r2)) {
+                    throw new Error("Unable to fit mathematical model locally with current points.");
+                }
+
+                const predictions = [];
+                const minX = Math.min(...data.map(d => d.x));
+                const maxX = Math.max(...data.map(d => d.x));
+                const step = (maxX - minX) / 100 || 1;
+                for (let x = minX; x <= maxX; x += step) {
+                    const y = bestResult.predict(x)[1];
+                    if (isFinite(y)) {
+                        predictions.push([x, y]);
+                    }
+                }
+
+                // Map variables and update state
+                const localResult = {
+                    r2: bestResult.r2,
+                    predict: (x) => bestResult.predict(x)[1],
+                    modelName: `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
+                    type: typeApplied,
+                    equation: bestResult.string,
+                    predictions: predictions,
+                    details: {
+                        stdDevX: 0,
+                        stdDevY: 0,
+                        varianceX: 0,
+                        varianceY: 0,
+                        adjustedR2: bestResult.r2,
+                        rmse: 0,
+                        mae: 0,
+                        localFallback: true
+                    }
+                };
+
+                setRegressionResult(localResult);
+                setLoading(false);
+                toast.success(`Local model fitted: ${typeApplied} (Offline Mode)`);
+            } catch (fallbackErr) {
+                setError(fallbackErr.message || "Failed to analyze data");
+                setLoading(false);
+            }
         }
     }, [data, selectedModelType, polynomialDegree, polling]);
 
