@@ -27,7 +27,9 @@ import {
     PlayCircle,
     CheckCircle2,
     Beaker,
-    Zap
+    Zap,
+    BookOpen,
+    Activity
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -1327,6 +1329,76 @@ export const EnhancedDataAnalyzer = () => {
                             </CardContent>
                         </Card>
                     )}
+                    {/* Curve Fitting Best Practices Reference */}
+                    <Card className="border-2 mt-4">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <BookOpen className="h-5 w-5 text-slate-800 dark:text-slate-100" />
+                                Curve Fitting Principles & Best Practices
+                            </CardTitle>
+                            <CardDescription>
+                                Key guidelines for constructing mathematical functions that accurately reflect physical or statistical trends.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Sparkles className="h-4 w-4 text-blue-500" />
+                                        Model Selection
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Choose the simplest equation that adequately explains the data. Avoid overfitting with high-order polynomials unless physically justified.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                        Data Quality
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Ensure variables are truly related. Aim for at least <strong>five or six data points</strong> to establish statistical confidence in the curve fit.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Activity className="h-4 w-4 text-purple-500" />
+                                        Error Handling
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Use weighted least squares for non-uniform errors, assigning higher weights to data points with smaller measurement errors (w<sub>i</sub> = 1/&Delta;Y<sub>i</sub><sup>2</sup>).
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Zap className="h-4 w-4 text-amber-500" />
+                                        Algorithm Choice
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Use direct least-squares for linear models. For non-linear equations, iterative algorithms like Levenberg-Marquardt are preferred but require a close initial guess.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                        Robustness to Outliers
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        If outliers are present, use robust fitting methods like Least Absolute Residuals (LAR) or Bisquare rather than standard ordinary least squares.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Info className="h-4 w-4 text-slate-500" />
+                                        Interpretation
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Always transform results back to natural physical units, and verify that the fitted curve aligns with the underlying physical relationship.
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 {/* Data View Tab */}
