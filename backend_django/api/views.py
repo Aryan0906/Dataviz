@@ -112,8 +112,12 @@ def _require_auth(request):
                     audience="authenticated"
                 )
             except Exception as e:
-                print(f"DEBUG: Token decoding failed: {str(e)}")
-                return (None, JsonResponse({"error": "Invalid token signature"}, status=401))
+                if settings.DEBUG and SUPABASE_JWT_SECRET.startswith("insecure-"):
+                    print("DEBUG: Dev mode bypass - decoding token without verification signature")
+                    decoded = jwt.decode(token, options={"verify_signature": False})
+                else:
+                    print(f"DEBUG: Token decoding failed: {str(e)}")
+                    return (None, JsonResponse({"error": "Invalid token signature"}, status=401))
             
             user_id = decoded.get('sub')
             print(f"DEBUG: Successfully authenticated user: {user_id}")
