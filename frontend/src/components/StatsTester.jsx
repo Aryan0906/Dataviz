@@ -57,7 +57,7 @@ export default function StatsTester( { filePath, columns }) {
                             <Select value={valueCol} onValueChange={setValueCol}>
                                 <SelectTrigger><SelectValue placeholder="Select values..." /></SelectTrigger>
                                 <SelectContent>
-                                    {columns?.map((col) -> (
+                                    {columns?.map((col) => (
                                         <SelectItem key={col} value={col}>{col}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -102,7 +102,7 @@ export default function StatsTester( { filePath, columns }) {
                             </div>
                         </div>
 
-                        <Alert variant="{result.p_value < 0.05 ? 'default' : 'destructive'}">
+                        <Alert variant={result.p_value < 0.05 ? 'default' : 'destructive'}>
                             <AlertTitle>{groupCol} vs {valueCol}</AlertTitle>
 
                             <AlertTitle>Verdict</AlertTitle>
