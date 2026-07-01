@@ -290,6 +290,9 @@ export const EnhancedDataAnalyzer = () => {
 
                 const localResult = {
                     r2: bestResult.r2,
+                    adjustedR2: bestResult.r2,
+                    rmse: 0,
+                    mae: 0,
                     modelName: `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
                     predictions: predictions,
                     predict: (x) => bestResult.predict(x)[1],
@@ -358,6 +361,9 @@ export const EnhancedDataAnalyzer = () => {
 
                 const localResult = {
                     r2: bestResult.r2,
+                    adjustedR2: bestResult.r2,
+                    rmse: 0,
+                    mae: 0,
                     modelName: "Linear Regression",
                     predictions: predictions,
                     predict: (x) => bestResult.predict(x)[1],
@@ -408,6 +414,9 @@ export const EnhancedDataAnalyzer = () => {
 
             setRegressionResult({
                 r2: result.r2,
+                adjustedR2: result.adjusted_r2,
+                rmse: result.rmse,
+                mae: result.mae,
                 modelName: result.model_name || `${modelType.charAt(0).toUpperCase() + modelType.slice(1)} Regression`,
                 predictions: result.predictions || [],
                 predict: (x) => {

@@ -7,7 +7,7 @@ import { TrendingUp, Download, BarChart3 } from "lucide-react";
 import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
 import { useTheme } from "@/components/theme-provider";
 
-export const DataPlot = forwardRef(({ data, regression }, ref) => {
+export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, ref) => {
     const chartContainerRef = useRef(null);
     const { theme } = useTheme();
 
@@ -250,12 +250,29 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                         Selected Point (HUD)
                     </div>
                     <div className="space-y-1 text-muted-foreground font-mono">
-                        <div>X: <span className="text-foreground font-semibold">{selectedPoint.x.toFixed(4)}</span></div>
-                        <div>Y: <span className="text-foreground font-semibold">{selectedPoint.y.toFixed(4)}</span></div>
-                        {regressionPredictor && (
+                        {isMultivariate ? (
                             <>
-                                <div>Predicted: <span className="text-foreground font-semibold">{regressionPredictor(selectedPoint.x).toFixed(4)}</span></div>
-                                <div>Residual: <span className="text-foreground font-semibold">{(selectedPoint.y - regressionPredictor(selectedPoint.x)).toFixed(4)}</span></div>
+                                <div>Actual Y: <span className="text-foreground font-semibold">{selectedPoint.actual !== undefined ? selectedPoint.actual.toFixed(4) : 'N/A'}</span></div>
+                                <div>Predicted Y: <span className="text-foreground font-semibold">{selectedPoint.predicted !== undefined ? selectedPoint.predicted.toFixed(4) : 'N/A'}</span></div>
+                            </>
+                        ) : (
+                            <>
+                                <div>X: <span className="text-foreground font-semibold">{selectedPoint.x !== undefined ? selectedPoint.x.toFixed(4) : 'N/A'}</span></div>
+                                <div>Y: <span className="text-foreground font-semibold">{selectedPoint.y !== undefined ? selectedPoint.y.toFixed(4) : 'N/A'}</span></div>
+                                {regressionPredictor && (
+                                    <>
+                                        <div>Predicted: <span className="text-foreground font-semibold">
+                                            {typeof regressionPredictor(selectedPoint.x) === 'number' 
+                                                ? regressionPredictor(selectedPoint.x).toFixed(4) 
+                                                : 'N/A'}
+                                        </span></div>
+                                        <div>Residual: <span className="text-foreground font-semibold">
+                                            {typeof regressionPredictor(selectedPoint.x) === 'number' 
+                                                ? (selectedPoint.y - regressionPredictor(selectedPoint.x)).toFixed(4) 
+                                                : 'N/A'}
+                                        </span></div>
+                                    </>
+                                )}
                             </>
                         )}
                     </div>
