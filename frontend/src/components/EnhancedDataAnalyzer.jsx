@@ -26,7 +26,8 @@ import {
     Trash2,
     PlayCircle,
     CheckCircle2,
-    Beaker
+    Beaker,
+    Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -34,6 +35,7 @@ import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
 import Papa from "papaparse";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { useAuth } from "@/context/AuthContext";
 import { UniversalChart } from "./UniversalChart";
 import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
 import ExportCodeButton from "./ExportCodeButton";
@@ -687,7 +689,7 @@ export const EnhancedDataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
-            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
+            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, regressionType, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
             toast.success("Analysis saved successfully!");
         } catch (_err) {
             toast.error("Failed to save analysis");
