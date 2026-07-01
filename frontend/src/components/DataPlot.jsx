@@ -161,9 +161,9 @@ export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, re
               <Line
                 type="monotone"
                 dataKey="y"
-                stroke="hsl(var(--chart-primary))"
+                stroke="#0f172a"
                 strokeWidth={0}
-                dot={{ fill: 'hsl(var(--chart-primary))', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#0f172a', strokeWidth: 2, r: 4 }}
                 name="Data Points"
                 connectNulls={false}
               />
@@ -173,8 +173,8 @@ export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, re
                 <Line
                   type="monotone"
                   dataKey="regressionY"
-                  stroke="hsl(var(--chart-secondary))"
-                  strokeWidth={2}
+                  stroke="#2563eb"
+                  strokeWidth={2.5}
                   dot={false}
                   name={`${(regression.type || 'linear').charAt(0).toUpperCase() + (regression.type || 'linear').slice(1)} Fit`}
                   connectNulls={true}
@@ -185,9 +185,9 @@ export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, re
               {latestPrediction && (
                 <ReferenceLine 
                   x={latestPrediction.x} 
-                  stroke="hsl(var(--chart-tertiary))" 
+                  stroke="#10b981" 
                   strokeDasharray="5 5"
-                  label={{ value: "Prediction", position: "top" }}
+                  label={{ value: "Prediction", position: "top", fill: "#10b981", fontSize: 10 }}
                 />
               )}
 
