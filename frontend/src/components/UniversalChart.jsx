@@ -30,8 +30,8 @@ export const UniversalChart = forwardRef(
             });
         }, [theme, type]);
 
-        // Support both old format (categories array) and new format (data object with labels/datasets)
-        const barData = useMemo(() => {
+        // Unify raw, new, and old data formats into a single, clean parsed array
+        const chartData = useMemo(() => {
             if (Array.isArray(data) && data.length > 0 && !data.labels) {
                 const xKey = xAxisKey || 'label';
                 const yKey = (dataKeys && dataKeys[0]) || 'Count';
@@ -40,7 +40,7 @@ export const UniversalChart = forwardRef(
                 const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
                 
                 return data.map((item, idx) => ({
-                    label: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
+                    name: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
                     value: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
                     color: item.color || COLORS[idx % COLORS.length]
                 }));
@@ -49,74 +49,28 @@ export const UniversalChart = forwardRef(
             if (data?.labels && data?.datasets) {
                 // New format: { labels: [...], datasets: [{ data: [...] }] }
                 return data.labels.map((label, idx) => ({
-                    label: label,
+                    name: label,
                     value: data.datasets[0]?.data[idx] || 0,
                     color: data.datasets[0]?.backgroundColor?.[idx] || '#8884d8'
                 }));
             }
+
             // Old format: categories array
-            return categories;
-        }, [data, categories, xAxisKey, dataKeys]);
-
-        const pieData = useMemo(() => {
-            if (Array.isArray(data) && data.length > 0 && !data.labels) {
-                const xKey = xAxisKey || 'label';
-                const yKey = (dataKeys && dataKeys[0]) || 'Count';
-                const firstElem = data[0];
-                const actualXKey = xKey in firstElem ? xKey : Object.keys(firstElem)[0];
-                const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
-                
-                return data.map((item, idx) => ({
-                    name: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
-                    value: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
-                    color: item.color || COLORS[idx % COLORS.length]
-                }));
-            }
-
-            if (data?.labels && data?.datasets) {
-                return data.labels.map((label, idx) => ({
-                    name: label,
-                    value: data.datasets[0]?.data[idx] || 0,
-                    color: data.datasets[0]?.backgroundColor?.[idx] || '#8884d8'
-                }));
-            }
-            return categories.map(c => ({ name: c.label, value: c.value }));
-        }, [data, categories, xAxisKey, dataKeys]);
-
-        const treemapData = useMemo(() => {
-            if (Array.isArray(data) && data.length > 0 && !data.labels) {
-                const xKey = xAxisKey || 'label';
-                const yKey = (dataKeys && dataKeys[0]) || 'Count';
-                const firstElem = data[0];
-                const actualXKey = xKey in firstElem ? xKey : Object.keys(firstElem)[0];
-                const actualYKey = yKey in firstElem ? yKey : (Object.keys(firstElem)[1] || actualXKey);
-                
-                return data.map((item, idx) => ({
-                    name: String(item[actualXKey] !== undefined ? item[actualXKey] : ''),
-                    size: Number(item[actualYKey] !== undefined ? item[actualYKey] : 0),
-                    color: item.color || COLORS[idx % COLORS.length]
-                }));
-            }
-
-            if (data?.labels && data?.datasets) {
-                return data.labels.map((label, idx) => ({
-                    name: label,
-                    size: data.datasets[0]?.data[idx] || 0,
-                    color: data.datasets[0]?.backgroundColor?.[idx] || '#8884d8'
-                }));
-            }
-            return categories.map(c => ({ name: c.label, size: c.value }));
+            return categories.map((c, idx) => ({
+                name: c.label,
+                value: c.value,
+                color: c.color || COLORS[idx % COLORS.length]
+            }));
         }, [data, categories, xAxisKey, dataKeys]);
 
         if (type === 'regression') {
             return <DataPlot ref={ref} data={data} regression={regression} />;
         }
 
-
-
         const handleBarClick = (entry) => {
-            if (onBarClick && entry?.label) {
-                onBarClick(entry.label);
+            const key = entry?.name || entry?.label;
+            if (onBarClick && key) {
+                onBarClick(key);
             }
         };
 
@@ -143,13 +97,13 @@ export const UniversalChart = forwardRef(
                     <div ref={chartContainerRef}>
                         <ResponsiveContainer width="100%" height={320}>
                             <BarChart
-                                data={barData}
+                                data={chartData}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                                 onClick={(data) => data?.activePayload?.[0] && handleBarClick(data.activePayload[0].payload)}
                             >
                                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
                                 <XAxis
-                                    dataKey="label"
+                                    dataKey="name"
                                     tick={{ fontSize: 12 }}
                                     angle={-45}
                                     textAnchor="end"
@@ -168,7 +122,7 @@ export const UniversalChart = forwardRef(
                                     fill="hsl(var(--chart-primary))"
                                     cursor="pointer"
                                 >
-                                    {barData.map((entry, index) => (
+                                    {chartData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                                     ))}
                                 </Bar>
@@ -187,7 +141,7 @@ export const UniversalChart = forwardRef(
                         <ResponsiveContainer width="100%" height={320}>
                             <PieChart>
                                 <Pie
-                                    data={pieData}
+                                    data={chartData}
                                     dataKey="value"
                                     nameKey="name"
                                     cx="50%"
@@ -197,7 +151,7 @@ export const UniversalChart = forwardRef(
                                     onClick={(entry) => onBarClick && onBarClick(entry.name)}
                                     cursor="pointer"
                                 >
-                                    {pieData.map((entry, index) => (
+                                    {chartData.map((entry, index) => (
                                         <Cell
                                             key={`cell-${index}`}
                                             fill={entry.color || COLORS[index % COLORS.length]}
@@ -221,7 +175,7 @@ export const UniversalChart = forwardRef(
 
         if (type === 'treemap') {
             // Treemap rendering with custom content
-            const CustomTreemapContent = ({ x, y, width, height, name, size, color }) => {
+            const CustomTreemapContent = ({ x, y, width, height, name, value, color }) => {
                 return (
                     <g>
                         <rect
@@ -257,7 +211,7 @@ export const UniversalChart = forwardRef(
                                     fontSize={14}
                                     fontWeight="bold"
                                 >
-                                    {size}
+                                    {value}
                                 </text>
                             </>
                         )}
@@ -271,8 +225,8 @@ export const UniversalChart = forwardRef(
                     <div ref={chartContainerRef}>
                         <ResponsiveContainer width="100%" height={320}>
                             <Treemap
-                                data={treemapData}
-                                dataKey="size"
+                                data={chartData}
+                                dataKey="value"
                                 aspectRatio={4 / 3}
                                 stroke="hsl(var(--border))"
                                 fill="hsl(var(--chart-primary))"
