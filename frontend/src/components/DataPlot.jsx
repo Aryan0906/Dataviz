@@ -225,7 +225,7 @@ export const DataPlot = forwardRef(({ data, regression }, ref) => {
                             dot={{ stroke: '#ef4444', strokeWidth: 2, r: 4, fill: '#fff' }}
                             activeDot={{ r: 6, fill: '#ef4444' }}
                             name="y"
-                            isAnimationActive=-{false}
+                            isAnimationActive={false}
                         />
                     </LineChart>
                 </ResponsiveContainer>
