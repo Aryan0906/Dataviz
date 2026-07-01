@@ -17,6 +17,13 @@ def workspaces(request):
         
     if request.method == 'GET':
         memberships = WorkspaceMembership.objects.filter(user_id=user_id).select_related('workspace')
+        
+        # Auto-provision a default workspace if user has no memberships
+        if not memberships.exists():
+            default_ws = Workspace.objects.create(name="Personal Workspace")
+            WorkspaceMembership.objects.create(user_id=user_id, workspace=default_ws, role='owner')
+            memberships = WorkspaceMembership.objects.filter(user_id=user_id).select_related('workspace')
+        
         data = [
             {
                 'id': m.workspace.id,

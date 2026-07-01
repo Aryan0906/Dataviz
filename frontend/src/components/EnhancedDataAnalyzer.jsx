@@ -83,6 +83,7 @@ export const EnhancedDataAnalyzer = () => {
         return saved ? JSON.parse(saved) : [];
     });
     const [activeTab, setActiveTab] = useState("input");
+    const [selectedPointIndex, setSelectedPointIndex] = useState(null);
 
     // Prediction feature state
     const [predictionInput, setPredictionInput] = useState("");
@@ -1188,11 +1189,12 @@ export const EnhancedDataAnalyzer = () => {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <DataTable data={data} onDelete={(idx) => {
-                                const newData = data.filter((_, i) => i !== idx);
-                                setData(newData);
-                                toast.success("Data point removed");
-                            }} />
+                            <DataTable
+                                data={data}
+                                onDataChange={setData}
+                                selectedPointIndex={selectedPointIndex}
+                                onRowSelect={setSelectedPointIndex}
+                            />
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -1254,6 +1256,7 @@ export const EnhancedDataAnalyzer = () => {
                                             data={data}
                                             regression={regressionResult}
                                             title={`${regressionResult.modelName} Analysis`}
+                                            selectedPointIndex={selectedPointIndex}
                                         />
                                     </div>
                                 </CardContent>
@@ -1400,7 +1403,7 @@ export const EnhancedDataAnalyzer = () => {
                 <Button
                     onClick={analyzeData}
                     disabled={data.length < 2 || loading}
-                    className="gap-2 bg-slate-700 hover:bg-slate-800"
+                    className="gap-2"
                     size="lg"
                 >
                     {loading ? (
@@ -1428,25 +1431,39 @@ export const EnhancedDataAnalyzer = () => {
                             Export Chart
                         </Button>
 
-                        <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950">
+                        <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2">
                             <FileText className="h-4 w-4" />
                             PDF Report
                         </Button>
 
-                        <Button onClick={saveBookmark} variant="outline" size="lg" className="gap-2 border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950">
+                        <Button onClick={saveBookmark} variant="outline" size="lg" className="gap-2">
                             <Save className="h-4 w-4" />
                             Bookmark Fit
                         </Button>
 
                         <ExportCodeButton
-                            data={data}
-                            regressionResult={regressionResult}
+                            chartType="regression"
+                            regressionData={{
+                                dataPoints: data || [],
+                                equation: regressionResult?.equation || '',
+                                modelType: regressionType || 'linear',
+                                rSquared: regressionResult?.r2 || 0
+                            }}
+                            chartTitle="Regression Analysis"
+                            buttonText="Export Code"
+                            buttonSize="lg"
+                            buttonVariant="outline"
                         />
                     </>
                 )}
 
                 {data.length > 0 && (
-                    <Button onClick={clearData} variant="outline" size="lg" className="gap-2 ml-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950">
+                    <Button 
+                        onClick={clearData} 
+                        variant="ghost" 
+                        size="lg" 
+                        className="gap-2 ml-auto text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                    >
                         <Trash2 className="h-4 w-4" />
                         Clear All Data
                     </Button>

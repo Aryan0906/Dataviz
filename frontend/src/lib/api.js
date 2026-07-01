@@ -3,12 +3,33 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
-// Helper to get auth headers with Supabase access token
+// Helper to get auth headers with Supabase access token or local fallback
 const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    // 1. Check local Django auth token first
+    const localToken = localStorage.getItem('local_auth_token');
+    if (localToken) {
+        return {
+            'Authorization': `Bearer ${localToken}`,
+            'Content-Type': 'application/json',
+        };
+    }
 
+    // 2. Try Supabase session
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+            return {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+            };
+        }
+    } catch {
+        // Supabase unavailable, fall through
+    }
+
+    // 3. Guest mode fallback
     return {
-        'Authorization': `Bearer ${session?.access_token || ''}`,
+        'Authorization': 'Bearer guest-token',
         'Content-Type': 'application/json',
     };
 };

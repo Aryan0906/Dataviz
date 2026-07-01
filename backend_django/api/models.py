@@ -1,6 +1,7 @@
 from django.db import models
+from .sync_models import SyncModel
 
-class AnalysisResult(models.Model):
+class AnalysisResult(SyncModel):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
     workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='analyses')
@@ -16,7 +17,7 @@ class AnalysisResult(models.Model):
         db_table = "analysis_results"
 
 
-class Visualization(models.Model):
+class Visualization(SyncModel):
     # Store Supabase UUID as CharField
     user_id = models.CharField(max_length=100, db_index=True)
     workspace = models.ForeignKey('Workspace', null=True, blank=True, on_delete=models.CASCADE, related_name='visualizations')
@@ -47,7 +48,7 @@ class Visualization(models.Model):
         db_table = "visualizations"
 
 
-class DraftAnalysis(models.Model):
+class DraftAnalysis(SyncModel):
     """Store in-progress analyses that auto-save as users work"""
     user_id = models.CharField(max_length=100, db_index=True)
     title = models.CharField(max_length=255, default="Untitled Analysis")
@@ -65,7 +66,7 @@ class DraftAnalysis(models.Model):
         ordering = ['-updated_at']
 
 
-class PageSession(models.Model):
+class PageSession(SyncModel):
     """Store user session data for each page to persist state across refreshes"""
     user_id = models.CharField(max_length=100, db_index=True)
     session_id = models.CharField(max_length=100, db_index=True, unique=True)  # Unique session identifier
@@ -89,7 +90,7 @@ class PageSession(models.Model):
         ]
 
 
-class UserHistory(models.Model):
+class UserHistory(SyncModel):
     """Store complete history of all user interactions across all pages"""
     user_id = models.CharField(max_length=100, db_index=True)
     page_type = models.CharField(max_length=50)
@@ -123,7 +124,7 @@ import uuid
 from django.utils import timezone
 from datetime import timedelta
 
-class SharedLink(models.Model):
+class SharedLink(SyncModel):
     analysis = models.ForeignKey(AnalysisResult, on_delete=models.CASCADE, related_name='shared_links')
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -138,11 +139,11 @@ class SharedLink(models.Model):
         return True
 
 
-class Workspace(models.Model):
+class Workspace(SyncModel):
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     
-class WorkspaceMembership(models.Model):
+class WorkspaceMembership(SyncModel):
     user_id = models.CharField(max_length=100, db_index=True)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='members')
     role = models.CharField(max_length=50, choices=[('owner', 'Owner'), ('editor', 'Editor'), ('viewer', 'Viewer')])

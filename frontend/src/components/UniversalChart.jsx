@@ -12,7 +12,7 @@ const COLORS = [
 ];
 
 export const UniversalChart = forwardRef(
-    ({ type, data = [], regression = null, categories = [], onBarClick = null, xAxisKey, dataKeys }, ref) => {
+    ({ type, data = [], regression = null, categories = [], onBarClick = null, xAxisKey, dataKeys, selectedPointIndex }, ref) => {
         const chartContainerRef = useRef(null);
         const { theme } = useTheme();
 
@@ -64,7 +64,7 @@ export const UniversalChart = forwardRef(
         }, [data, categories, xAxisKey, dataKeys]);
 
         if (type === 'regression') {
-            return <DataPlot ref={ref} data={data} regression={regression} />;
+            return <DataPlot ref={ref} data={data} regression={regression} selectedPointIndex={selectedPointIndex} />;
         }
 
         const handleBarClick = (entry) => {
