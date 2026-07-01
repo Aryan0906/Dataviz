@@ -18,7 +18,7 @@ REM Activate virtualenv for dependencies check
 call venv\Scripts\activate
 
 REM Verify backend dependencies are installed
-python -c "import django, django_celery_results" 2>nul
+python -c "import django, django_celery_results, django_ratelimit" 2>nul
 if %errorlevel% neq 0 (
     echo Required python packages are not fully installed. Installing/updating requirements...
     pip install -r backend_django\requirements.txt

@@ -62,7 +62,7 @@ else
 fi
 
 # Verify Python dependencies are installed
-if ! python -c "import django, django_celery_results" 2>/dev/null; then
+if ! python -c "import django, django_celery_results, django_ratelimit" 2>/dev/null; then
   echo -e "${YELLOW}Required python packages are not fully installed. Installing requirements...${NC}"
   pip install -r backend_django/requirements.txt
 fi
