@@ -60,6 +60,8 @@ const DesmosPlot3D = () => {
     const [exportTheme, setExportTheme] = useState(getInitialTheme());
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportFormat, setExportFormat] = useState("png");
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importCode, setImportCode] = useState("");
 
     // Session state - persists live 3D expressions
     const sessionState = useMemo(() => ({
@@ -318,6 +320,22 @@ const DesmosPlot3D = () => {
         } finally {
             setShowExportDialog(false);
         }
+    const handleImportCode = () => {
+        if (!calculatorRef.current || !importCode.trim()) return;
+        const lines = importCode.split('\n').map(l => l.trim()).filter(Boolean);
+        const added = [];
+        lines.forEach((latex) => {
+            try {
+                const id = `expr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+                calculatorRef.current.setExpression({ id, latex });
+                added.push({ id, latex });
+            } catch (err) {
+                console.warn('Skipped invalid expression:', latex, err);
+            }
+        });
+        setImportCode('');
+        setShowImportModal(false);
+        toast.success(`Imported ${added.length} expression(s)`);
     };
 
     return (
@@ -352,6 +370,10 @@ const DesmosPlot3D = () => {
                     <Button onClick={clearAll} variant="outline" size="sm" className="gap-2" title="Clear all expressions">
                         <RefreshCw className="h-4 w-4" />
                         Clear
+                    </Button>
+                    <Button onClick={() => setShowImportModal(true)} variant="outline" size="sm" className="gap-2" title="Import LaTeX expressions from text">
+                        <Upload className="h-4 w-4" />
+                        Import
                     </Button>
 
                     {/* Presets Dropdown */}
@@ -509,6 +531,32 @@ const DesmosPlot3D = () => {
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmExport}>
                             Export as {exportFormat.toUpperCase()}
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Code Import Modal */}
+            <AlertDialog open={showImportModal} onOpenChange={setShowImportModal}>
+                <AlertDialogContent className="max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Import LaTeX Expressions</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Paste newline-separated LaTeX expressions (e.g. z=x^2+y^2).
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="py-2">
+                        <textarea
+                            className="w-full h-40 p-2.5 text-xs font-mono border rounded-md focus:ring-1 focus:ring-primary focus:outline-none"
+                            placeholder="z = x^2 + y^2&#10;z = \sin(x)\cos(y)"
+                            value={importCode}
+                            onChange={(e) => setImportCode(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <AlertDialogCancel onClick={() => setImportCode('')}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleImportCode} disabled={!importCode.trim()}>
+                            Import
                         </AlertDialogAction>
                     </div>
                 </AlertDialogContent>
