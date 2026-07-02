@@ -1286,6 +1286,10 @@ export const EnhancedDataAnalyzer = () => {
                                     <RefreshCw className="h-4 w-4 text-blue-500" />
                                     Normalize Data [0, 1]
                                 </Button>
+                                <Button onClick={clearData} variant="outline" className="gap-2 text-destructive hover:bg-destructive/5 hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                    Clear All Data
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -1419,6 +1423,7 @@ export const EnhancedDataAnalyzer = () => {
                                 onDataChange={setData}
                                 selectedPointIndex={selectedPointIndex}
                                 onRowSelect={setSelectedPointIndex}
+                                onClearAll={clearData}
                             />
                         </CardContent>
                     </Card>
