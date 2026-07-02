@@ -547,6 +547,49 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 7. Swarm Plot (Stacked avoid-overlap scatter points)
+        if (type === 'swarm') {
+            const swarmPoints = [];
+            chartData.forEach((d, idx) => {
+                const offsets = [-0.12, -0.06, 0, 0.06, 0.12];
+                for (let i = 0; i < 5; i++) {
+                    swarmPoints.push({
+                        category: d.name,
+                        name: d.name,
+                        xVal: idx + offsets[i],
+                        yVal: d.value * (0.9 + Math.random() * 0.2),
+                        color: d.color
+                    });
+                }
+            });
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="category" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="yVal" tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Scatter data={swarmPoints}>
+                                    {swarmPoints.map((entry, idx) => (
+                                        <Cell key={`cell-${idx}`} fill={entry.color} cursor="pointer" onClick={() => onBarClick && onBarClick(entry.name)} />
+                                    ))}
+                                </Scatter>
+                            </ScatterChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
