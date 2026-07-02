@@ -42,10 +42,10 @@ const fadeUp = {
 function SectionDivider({ label }) {
     return (
         <div className="flex items-center gap-3 mb-4">
-            <p className="text-[#0F172A]" style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}>
+            <p className="text-luxury-midnight" style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}>
                 {label}
             </p>
-            <div className="flex-1 h-px bg-[#E8E4DC]" />
+            <div className="flex-1 h-px bg-luxury-silk" />
         </div>
     );
 }
@@ -182,7 +182,7 @@ const AIFeatures = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <BarChart {...commonProps}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--luxury-silk)" />
                             <XAxis dataKey={xAxisKey} tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <YAxis tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <Tooltip />
@@ -197,7 +197,7 @@ const AIFeatures = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <LineChart {...commonProps}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--luxury-silk)" />
                             <XAxis dataKey={xAxisKey} tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <YAxis tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <Tooltip />
@@ -212,7 +212,7 @@ const AIFeatures = () => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <ScatterChart {...commonProps}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DC" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--luxury-silk)" />
                             <XAxis dataKey={xAxisKey} tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <YAxis dataKey={dataKeys[0]} tick={{ fill: '#6B6B6B', fontSize: 12 }} />
                             <Tooltip />
@@ -247,12 +247,12 @@ const AIFeatures = () => {
                 {/* ── CSV Upload ── */}
                 <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0}>
                     <SectionDivider label="Upload Data" />
-                    <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
-                        <div className="h-0.5 w-full bg-[#0F172A]" />
+                    <div className="bg-card border border-luxury-silk luxury-card-hover">
+                        <div className="h-0.5 w-full bg-luxury-midnight" />
                         <div className="p-7">
                             <div className="flex items-start justify-between mb-5">
-                                <div className="w-11 h-11 flex items-center justify-center border border-[#0F172A]/30 bg-[#0F172A]/5">
-                                    <Upload className="h-5 w-5 text-[#0F172A]" />
+                                <div className="w-11 h-11 flex items-center justify-center border border-luxury-midnight/30 bg-luxury-midnight/5">
+                                    <Upload className="h-5 w-5 text-luxury-midnight" />
                                 </div>
                                 <span
                                     className="font-bold opacity-10"
@@ -261,17 +261,17 @@ const AIFeatures = () => {
                                     01
                                 </span>
                             </div>
-                            <h3 className="text-lg font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                            <h3 className="text-lg font-bold text-luxury-dark mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
                                 Upload CSV File
                             </h3>
-                            <p className="text-xs text-[#6B6B6B] mb-5" style={{ letterSpacing: "0.05em" }}>
+                            <p className="text-xs text-luxury-stone mb-5" style={{ letterSpacing: "0.05em" }}>
                                 Drag & drop or click to browse — Max 10MB, CSV format only
                             </p>
 
                             {/* Drop zone */}
                             <div
                                 className={`border-2 border-dashed p-10 text-center transition-all duration-300 mb-4 ${
-                                    dragActive ? "border-[#0F172A] bg-[#0F172A]/5" : "border-[#E8E4DC]"
+                                    dragActive ? "border-[#0F172A] bg-luxury-midnight/5" : "border-luxury-silk"
                                 }`}
                                 onDragEnter={handleDrag}
                                 onDragLeave={handleDrag}
@@ -279,17 +279,17 @@ const AIFeatures = () => {
                                 onDrop={handleDrop}
                             >
                                 <FileText className="h-10 w-10 mx-auto text-[#D4AF37]/50 mb-3" />
-                                <p className="text-sm text-[#6B6B6B] mb-3">
+                                <p className="text-sm text-luxury-stone mb-3">
                                     Drag and drop your CSV file here, or click to browse
                                 </p>
                                 <label className="cursor-pointer">
-                                    <span className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest">
+                                    <span className="luxury-link text-xs text-luxury-midnight uppercase tracking-widest">
                                         Browse Files <span className="ml-1 text-base">›</span>
                                     </span>
                                     <input type="file" accept=".csv" onChange={handleFileChange} className="hidden" />
                                 </label>
                                 {file && (
-                                    <p className="text-sm font-semibold mt-3 text-[#0F172A]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                    <p className="text-sm font-semibold mt-3 text-luxury-midnight" style={{ fontFamily: "'Playfair Display', serif" }}>
                                         {file.name}
                                     </p>
                                 )}
@@ -298,7 +298,7 @@ const AIFeatures = () => {
                             <button
                                 onClick={handleUpload}
                                 disabled={!file || uploading}
-                                className="w-full py-3 bg-[#0F172A] text-white disabled:opacity-50 flex items-center justify-center gap-2 transition-colors duration-300 hover:bg-[#0B1120] disabled:cursor-not-allowed"
+                                className="w-full py-3 bg-luxury-midnight text-white disabled:opacity-50 flex items-center justify-center gap-2 transition-colors duration-300 hover:bg-[#0B1120] disabled:cursor-not-allowed"
                                 style={{ fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 600 }}
                             >
                                 {uploading ? (
@@ -321,7 +321,7 @@ const AIFeatures = () => {
                 {cleaningAnalysis && (
                     <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={1}>
                         <SectionDivider label="Data Quality" />
-                        <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
+                        <div className="bg-card border border-luxury-silk luxury-card-hover">
                             <div className="h-0.5 w-full bg-[#D4AF37]" />
                             <div className="p-7">
                                 <div className="flex items-start justify-between mb-5">
@@ -329,10 +329,10 @@ const AIFeatures = () => {
                                         <TrendingUp className="h-5 w-5 text-[#D4AF37]" />
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                <h3 className="text-lg font-bold text-luxury-dark mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
                                     Data Quality Insights
                                 </h3>
-                                <p className="text-sm text-[#6B6B6B] mb-5">{cleaningAnalysis.summary}</p>
+                                <p className="text-sm text-luxury-stone mb-5">{cleaningAnalysis.summary}</p>
 
                                 {/* Stats grid */}
                                 {metadata && (
@@ -342,11 +342,11 @@ const AIFeatures = () => {
                                             { label: "Columns", value: metadata.columns.length },
                                             { label: "Data Types", value: Object.keys(metadata.dtypes).length },
                                         ].map((stat) => (
-                                            <div key={stat.label} className="border border-[#E8E4DC] p-4">
-                                                <p className="text-[#6B6B6B] mb-1" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                                            <div key={stat.label} className="border border-luxury-silk p-4">
+                                                <p className="text-luxury-stone mb-1" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase" }}>
                                                     {stat.label}
                                                 </p>
-                                                <p className="text-3xl font-bold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                                <p className="text-3xl font-bold text-luxury-dark" style={{ fontFamily: "'Playfair Display', serif" }}>
                                                     {stat.value}
                                                 </p>
                                             </div>
@@ -356,12 +356,12 @@ const AIFeatures = () => {
 
                                 {cleaningAnalysis.issues.length > 0 && (
                                     <div className="mb-4">
-                                        <p className="font-semibold text-[#0D1117] mb-2 text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                        <p className="font-semibold text-luxury-dark mb-2 text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
                                             Issues Detected
                                         </p>
                                         <ul className="space-y-1.5">
                                             {cleaningAnalysis.issues.map((issue, idx) => (
-                                                <li key={idx} className="flex items-start gap-2 text-sm text-[#6B6B6B]">
+                                                <li key={idx} className="flex items-start gap-2 text-sm text-luxury-stone">
                                                     <AlertCircle className="h-3.5 w-3.5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
                                                     {issue}
                                                 </li>
@@ -372,13 +372,13 @@ const AIFeatures = () => {
 
                                 {cleaningAnalysis.suggested_actions.length > 0 && (
                                     <div>
-                                        <p className="font-semibold text-[#0D1117] mb-2 text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                        <p className="font-semibold text-luxury-dark mb-2 text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
                                             Suggested Actions
                                         </p>
                                         <ul className="space-y-1.5">
                                             {cleaningAnalysis.suggested_actions.map((action, idx) => (
-                                                <li key={idx} className="flex items-start gap-2 text-sm text-[#6B6B6B]">
-                                                    <ArrowRight className="h-3.5 w-3.5 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                                <li key={idx} className="flex items-start gap-2 text-sm text-luxury-stone">
+                                                    <ArrowRight className="h-3.5 w-3.5 text-luxury-midnight flex-shrink-0 mt-0.5" />
                                                     {action}
                                                 </li>
                                             ))}
@@ -394,18 +394,18 @@ const AIFeatures = () => {
                 {visualizationId && (
                     <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={2}>
                         <SectionDivider label="Generate Chart" />
-                        <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
-                            <div className="h-0.5 w-full bg-[#0D1117]" />
+                        <div className="bg-card border border-luxury-silk luxury-card-hover">
+                            <div className="h-0.5 w-full bg-luxury-dark" />
                             <div className="p-7">
                                 <div className="flex items-start justify-between mb-5">
-                                    <div className="w-11 h-11 flex items-center justify-center border border-[#0D1117]/20 bg-[#0D1117]/5">
-                                        <Sparkles className="h-5 w-5 text-[#0D1117]" />
+                                    <div className="w-11 h-11 flex items-center justify-center border border-[#0D1117]/20 bg-luxury-dark/5">
+                                        <Sparkles className="h-5 w-5 text-luxury-dark" />
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                <h3 className="text-lg font-bold text-luxury-dark mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
                                     Generate Chart with AI
                                 </h3>
-                                <p className="text-xs text-[#6B6B6B] mb-5" style={{ letterSpacing: "0.05em" }}>
+                                <p className="text-xs text-luxury-stone mb-5" style={{ letterSpacing: "0.05em" }}>
                                     Describe the chart you want in natural language
                                 </p>
 
@@ -416,13 +416,13 @@ const AIFeatures = () => {
                                         value={query}
                                         onChange={(e) => setQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleQuery()}
-                                        className="flex-1 h-11 px-4 border border-[#E8E4DC] text-[#0D1117] text-sm focus:outline-none focus:border-[#0F172A] transition-colors rounded-none"
+                                        className="flex-1 h-11 px-4 border border-luxury-silk text-luxury-dark text-sm focus:outline-none focus:border-luxury-midnight transition-colors rounded-none"
                                         style={{ fontFamily: "'Raleway', sans-serif", background: "#FAFAF7" }}
                                     />
                                     <button
                                         onClick={handleQuery}
                                         disabled={!query.trim() || querying}
-                                        className="px-6 bg-[#0F172A] text-white disabled:opacity-50 transition-colors hover:bg-[#0B1120] disabled:cursor-not-allowed"
+                                        className="px-6 bg-luxury-midnight text-white disabled:opacity-50 transition-colors hover:bg-[#0B1120] disabled:cursor-not-allowed"
                                         style={{ fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}
                                     >
                                         {querying ? "Generating..." : "Generate"}
@@ -430,7 +430,7 @@ const AIFeatures = () => {
                                 </div>
 
                                 <div>
-                                    <p className="text-[#6B6B6B] mb-2" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase" }}>
+                                    <p className="text-luxury-stone mb-2" style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase" }}>
                                         Try these examples
                                     </p>
                                     <div className="flex flex-wrap gap-2">
@@ -438,7 +438,7 @@ const AIFeatures = () => {
                                             <button
                                                 key={idx}
                                                 onClick={() => setQuery(example)}
-                                                className="px-3 py-1.5 border border-[#E8E4DC] text-xs text-[#6B6B6B] hover:border-[#0F172A] hover:text-[#0F172A] transition-all duration-200"
+                                                className="px-3 py-1.5 border border-luxury-silk text-xs text-luxury-stone hover:border-[#0F172A] hover:text-luxury-midnight transition-all duration-200"
                                                 style={{ letterSpacing: "0.05em" }}
                                             >
                                                 {example}
@@ -455,22 +455,22 @@ const AIFeatures = () => {
                 {chartConfig && (
                     <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={3}>
                         <SectionDivider label="Visualization" />
-                        <div ref={chartRef} className="bg-white border border-[#E8E4DC] luxury-card-hover">
+                        <div ref={chartRef} className="bg-card border border-luxury-silk luxury-card-hover">
                             <div className="h-0.5 w-full bg-[#D4AF37]" />
                             <div className="p-7">
                                 {/* Header row */}
                                 <div className="flex items-start justify-between mb-6">
                                     <div>
-                                        <h3 className="text-lg font-bold text-[#0D1117] mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                        <h3 className="text-lg font-bold text-luxury-dark mb-1" style={{ fontFamily: "'Playfair Display', serif" }}>
                                             {chartConfig.title}
                                         </h3>
-                                        <p className="text-sm text-[#6B6B6B]">{chartConfig.summary}</p>
+                                        <p className="text-sm text-luxury-stone">{chartConfig.summary}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={handleSaveToHistory}
                                             disabled={saving}
-                                            className="flex items-center gap-1.5 border border-[#E8E4DC] text-[#6B6B6B] px-4 py-2 hover:border-[#0F172A] hover:text-[#0F172A] transition-all duration-200 disabled:opacity-50"
+                                            className="flex items-center gap-1.5 border border-luxury-silk text-luxury-stone px-4 py-2 hover:border-[#0F172A] hover:text-luxury-midnight transition-all duration-200 disabled:opacity-50"
                                             style={{ fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase" }}
                                         >
                                             <Save className="h-3.5 w-3.5" />
@@ -480,20 +480,20 @@ const AIFeatures = () => {
                                             <DropdownMenuTrigger asChild>
                                                 <button
                                                     disabled={exporting}
-                                                    className="flex items-center gap-1.5 border border-[#E8E4DC] text-[#6B6B6B] px-4 py-2 hover:border-[#0F172A] hover:text-[#0F172A] transition-all duration-200 disabled:opacity-50"
+                                                    className="flex items-center gap-1.5 border border-luxury-silk text-luxury-stone px-4 py-2 hover:border-[#0F172A] hover:text-luxury-midnight transition-all duration-200 disabled:opacity-50"
                                                     style={{ fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase" }}
                                                 >
                                                     <Download className="h-3.5 w-3.5" />
                                                     {exporting ? 'Exporting...' : 'Export'}
                                                 </button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="rounded-none border-[#E8E4DC]">
+                                            <DropdownMenuContent align="end" className="rounded-none border-luxury-silk">
                                                 <DropdownMenuItem onClick={handleExportPNG} className="text-sm">
-                                                    <FileImage className="h-4 w-4 mr-2 text-[#0F172A]" />
+                                                    <FileImage className="h-4 w-4 mr-2 text-luxury-midnight" />
                                                     Download as PNG
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem onClick={handleExportPDF} className="text-sm">
-                                                    <FileText className="h-4 w-4 mr-2 text-[#0F172A]" />
+                                                    <FileText className="h-4 w-4 mr-2 text-luxury-midnight" />
                                                     Download as PDF
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
