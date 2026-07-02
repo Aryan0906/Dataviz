@@ -961,6 +961,38 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 18. Radar Chart (Spider Plot)
+        if (type === 'radar') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                                <PolarGrid stroke="hsl(var(--chart-grid))" />
+                                <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fontSize: 10 }} />
+                                <Radar
+                                    name="Value"
+                                    dataKey="value"
+                                    stroke="hsl(var(--chart-primary))"
+                                    fill="hsl(var(--chart-primary))"
+                                    fillOpacity={0.5}
+                                    cursor="pointer"
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
