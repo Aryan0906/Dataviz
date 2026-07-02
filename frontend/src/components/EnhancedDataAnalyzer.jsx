@@ -191,6 +191,89 @@ const fitLocalModel = (points, type, degree = 2) => {
         };
     }
 
+    if (type === 'random_forest') {
+        const trees = [];
+        const numTrees = 5;
+        for (let t = 0; t < numTrees; t++) {
+            const sample = [];
+            for (let i = 0; i < n; i++) {
+                sample.push(points[Math.floor(Math.random() * n)]);
+            }
+            sample.sort((a, b) => a[0] - b[0]);
+            let bestSplitVal = null;
+            let minSse = Infinity;
+            let leftMean = meanY, rightMean = meanY;
+            for (let i = 1; i < sample.length; i++) {
+                const splitVal = (sample[i-1][0] + sample[i][0]) / 2;
+                const left = sample.slice(0, i);
+                const right = sample.slice(i);
+                const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+                const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+                const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                            right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+                if (sse < minSse) {
+                    minSse = sse;
+                    bestSplitVal = splitVal;
+                    leftMean = mLeft;
+                    rightMean = mRight;
+                }
+            }
+            trees.push({ splitVal: bestSplitVal, leftMean, rightMean });
+        }
+        const predictFn = (x) => {
+            const preds = trees.map(tree => {
+                if (tree.splitVal === null) return meanY;
+                return x < tree.splitVal ? tree.leftMean : tree.rightMean;
+            });
+            return preds.reduce((a, b) => a + b, 0) / preds.length;
+        };
+        const predY = dataX.map(x => predictFn(x));
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: predictFn,
+            string: `Random Forest Ensemble (${numTrees} trees)`,
+            r2,
+            name: 'Random Forest Regression'
+        };
+    }
+
+    if (type === 'quantile') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const tau = 0.5;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = 0;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                const g = diff < 0 ? (tau - 1) : tau;
+                gradM -= scaledX[i] * g;
+                gradC -= g;
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)} (τ=0.5)`,
+            r2,
+            name: 'Quantile Regression (Median Fit)'
+        };
+    }
+
     const res = regression.linear(points);
     return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
 };
