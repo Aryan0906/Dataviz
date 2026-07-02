@@ -30,7 +30,9 @@ import {
     Zap,
     BookOpen,
     Activity,
-    Info
+    Info,
+    Edit2,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -92,6 +94,9 @@ export const EnhancedDataAnalyzer = () => {
     });
     const [activeTab, setActiveTab] = useState("input");
     const [selectedPointIndex, setSelectedPointIndex] = useState(null);
+    const [isEditingSelectedPoint, setIsEditingSelectedPoint] = useState(false);
+    const [editSelectedX, setEditSelectedX] = useState("");
+    const [editSelectedY, setEditSelectedY] = useState("");
 
     // Prediction feature state
     const [predictionInput, setPredictionInput] = useState("");
@@ -214,6 +219,15 @@ export const EnhancedDataAnalyzer = () => {
             addPoint();
         }
     };
+
+    const handlePointClick = useCallback((index) => {
+        setSelectedPointIndex(index);
+        setIsEditingSelectedPoint(false);
+        if (data[index]) {
+            setEditSelectedX(data[index].x.toString());
+            setEditSelectedY(data[index].y.toString());
+        }
+    }, [data]);
 
     const analyzeData = useCallback(async (modelTypeOverride) => {
         setError("");
