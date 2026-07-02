@@ -121,6 +121,76 @@ const fitLocalModel = (points, type, degree = 2) => {
         };
     }
 
+    if (type === 'svr') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const C = 1.0;
+        const epsilon = 0.1;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = m;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                if (Math.abs(diff) > epsilon) {
+                    const sign = diff > 0 ? 1 : -1;
+                    gradM -= C * sign * scaledX[i];
+                    gradC -= C * sign;
+                }
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)}`,
+            r2,
+            name: 'Support Vector Regression (SVR)'
+        };
+    }
+
+    if (type === 'decision_tree') {
+        const sortedPoints = [...points].sort((a, b) => a[0] - b[0]);
+        let bestSplitVal = null;
+        let minSse = Infinity;
+        let leftMean = meanY, rightMean = meanY;
+        for (let i = 1; i < n; i++) {
+            const splitVal = (sortedPoints[i-1][0] + sortedPoints[i][0]) / 2;
+            const left = sortedPoints.slice(0, i);
+            const right = sortedPoints.slice(i);
+            const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+            const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+            const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                        right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+            if (sse < minSse) {
+                minSse = sse;
+                bestSplitVal = splitVal;
+                leftMean = mLeft;
+                rightMean = mRight;
+            }
+        }
+        const predY = dataX.map(x => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean,
+            string: bestSplitVal === null ? `y = ${meanY.toFixed(4)}` : `y = ${leftMean.toFixed(2)} (if x < ${bestSplitVal.toFixed(2)}) else ${rightMean.toFixed(2)}`,
+            r2,
+            name: 'Decision Tree Regression'
+        };
+    }
+
     const res = regression.linear(points);
     return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
 };
