@@ -27,6 +27,16 @@ const ALL_PLOT_TYPES = [
     { value: "bubble", label: "Bubble Chart (Categorical)" }
 ];
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +46,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     Sparkles, Send, BarChart3, PieChart as PieIcon, TreePalm, LineChart, AreaChart,
     Download, FileUp, RefreshCw, AlertCircle, Database,
-    TrendingUp, Search, MessageSquare
+    TrendingUp, Search, MessageSquare, Pencil, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -189,6 +199,10 @@ export const CategoricalChatPanel = () => {
     const [aiSummary, setAiSummary] = useState(null);
     const [isGeneratingStory, setIsGeneratingStory] = useState(false);
     const [error, setError] = useState("");
+
+    // === Interactive Item Edit State ===
+    const [selectedChartItem, setSelectedChartItem] = useState(null);
+    const [showEditItemDialog, setShowEditItemDialog] = useState(false);
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
