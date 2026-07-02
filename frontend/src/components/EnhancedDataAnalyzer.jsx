@@ -1174,9 +1174,7 @@ export const EnhancedDataAnalyzer = () => {
                 </TabsList>
 
                 {/* Input Tab */}
-                <TabsContent value="input" className="space-y-6 mt-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="space-y-6">
+                <TabsContent value="input" className="space-y-4 mt-6">
                     <Card className="border-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -1296,42 +1294,6 @@ export const EnhancedDataAnalyzer = () => {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
-
-                {/* Right Column: Live Data Visualization */}
-                <div className="space-y-6">
-                    {data.length > 0 ? (
-                        <Card className="border-2 h-full flex flex-col justify-between">
-                            <CardHeader className="pb-2">
-                                <CardTitle className="flex items-center gap-2">
-                                    <TrendingUp className="h-5 w-5 text-primary" />
-                                    Live Visualization
-                                </CardTitle>
-                                <CardDescription>
-                                    Real-time preview of the {data.length} plotted data points
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
-                                <UniversalChart
-                                    type="regression"
-                                    data={data}
-                                    regression={regressionResult}
-                                    title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
-                                    selectedPointIndex={selectedPointIndex}
-                                />
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
-                            <TrendingUp className="h-12 w-12 text-muted-foreground opacity-30 mb-4 animate-pulse" />
-                            <h3 className="font-semibold text-lg">No Data Points Yet</h3>
-                            <p className="text-sm text-muted-foreground max-w-sm mt-1">
-                                Enter coordinates or upload a CSV file on the left to visualize your data points in real time.
-                            </p>
-                        </Card>
-                    )}
-                </div>
-            </div>
 
                     {/* Bookmarks History */}
                     {bookmarks.length > 0 && (
@@ -1445,27 +1407,61 @@ export const EnhancedDataAnalyzer = () => {
                 </TabsContent>
 
                 {/* Data View Tab */}
-                <TabsContent value="data" className="space-y-4 mt-6">
-                    <Card className="border-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Grid3x3 className="h-5 w-5" />
-                                Data Table
-                            </CardTitle>
-                            <CardDescription>
-                                Review your data points before analysis
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <DataTable
-                                data={data}
-                                onDataChange={setData}
-                                selectedPointIndex={selectedPointIndex}
-                                onRowSelect={setSelectedPointIndex}
-                                onClearAll={clearData}
-                            />
-                        </CardContent>
-                    </Card>
+                <TabsContent value="data" className="space-y-6 mt-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card className="border-2">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Grid3x3 className="h-5 w-5" />
+                                    Data Table
+                                </CardTitle>
+                                <CardDescription>
+                                    Review your data points before analysis
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <DataTable
+                                    data={data}
+                                    onDataChange={setData}
+                                    selectedPointIndex={selectedPointIndex}
+                                    onRowSelect={setSelectedPointIndex}
+                                    onClearAll={clearData}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Live Data Visualization */}
+                        {data.length > 0 ? (
+                            <Card className="border-2 h-full flex flex-col justify-between">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <TrendingUp className="h-5 w-5 text-primary" />
+                                        Live Visualization
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Real-time preview of the {data.length} plotted data points
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
+                                    <UniversalChart
+                                        type="regression"
+                                        data={data}
+                                        regression={regressionResult}
+                                        title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
+                                        selectedPointIndex={selectedPointIndex}
+                                    />
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
+                                <TrendingUp className="h-12 w-12 text-muted-foreground opacity-30 mb-4 animate-pulse" />
+                                <h3 className="font-semibold text-lg">No Data Points Yet</h3>
+                                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                                    Enter coordinates or upload a CSV file on the input tab to visualize your data points here.
+                                </p>
+                            </Card>
+                        )}
+                    </div>
                 </TabsContent>
 
                 {/* Results Tab */}
