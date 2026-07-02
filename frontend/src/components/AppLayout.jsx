@@ -165,7 +165,7 @@ const AppLayout = ({ children }) => {
         <HelpModeContext.Provider value={{ helpMode, setHelpMode }}>
             <SidebarProvider>
                 {/* ── Luxury Sidebar ── */}
-                <Sidebar collapsible="icon" className="border-r border-[#D4AF37]/10">
+                <Sidebar collapsible="offcanvas" className="border-r border-[#D4AF37]/10">
                     {/* Brand Header */}
                     <SidebarHeader className="border-b border-[#D4AF37]/10 pb-3">
                         <div className="flex items-center gap-3 px-3 py-2">
