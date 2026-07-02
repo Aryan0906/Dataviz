@@ -17,10 +17,14 @@ const PRESET_3D_EXPRESSIONS = [
     { label: "Paraboloid", latex: "z = x^2 + y^2" },
     { label: "Saddle", latex: "z = x^2 - y^2" },
     { label: "Sphere", latex: "x^2 + y^2 + z^2 = 25" },
-    { label: "Sine Wave", latex: "z = \\sin(x) \\cdot \\cos(y)" },
+    { label: "Sine Wave Grid", latex: "z = \\sin(x) \\cdot \\cos(y)" },
     { label: "Cone", latex: "z^2 = x^2 + y^2" },
     { label: "Ripple", latex: "z = \\sin(x^2 + y^2)" },
-    { label: "Hyperboloid", latex: "x^2 + y^2 - z^2 = 1" },
+    { label: "Torus", latex: "z^2 + \\left(\\sqrt{x^2 + y^2} - 3\\right)^2 = 1" },
+    { label: "Cylinder", latex: "x^2 + y^2 = 9" },
+    { label: "Monkey Saddle", latex: "z = x^3 - 3xy^2" },
+    { label: "Damped Wave", latex: "z = \\cos(x + y) \\cdot e^{-0.1(x^2 + y^2)}" },
+    { label: "Heart 3D", latex: "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-1\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0" },
     { label: "Helicoid", latex: "z = \\arctan\\left(\\frac{y}{x}\\right)" },
 ];
 
