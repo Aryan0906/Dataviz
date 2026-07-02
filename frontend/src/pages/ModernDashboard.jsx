@@ -71,11 +71,11 @@ function StatCard({ icon: Icon, label, value, loading, accent = false }) {
 
 /* ── Feature Card ── */
 const featureColors = [
-    { bg: "bg-[#0F172A]", accent: "bg-[#0B1120]", icon: "text-[#D4AF37]" },
-    { bg: "bg-[#0D1117]", accent: "bg-[#1A1A1A]", icon: "text-[#D4AF37]" },
-    { bg: "bg-[#0B1120]", accent: "bg-[#0F172A]", icon: "text-white/80" },
-    { bg: "bg-[#1A1A1A]", accent: "bg-[#0D1117]", icon: "text-[#D4AF37]" },
-    { bg: "bg-[#D4AF37]", accent: "bg-[#A8893A]", icon: "text-[#0D1117]" },
+    { bg: "bg-luxury-midnight", accent: "bg-[#0B1120]", icon: "text-[#D4AF37]" },
+    { bg: "bg-luxury-dark", accent: "bg-[#1A1A1A]", icon: "text-[#D4AF37]" },
+    { bg: "bg-[#0B1120]", accent: "bg-luxury-midnight", icon: "text-white/80" },
+    { bg: "bg-[#1A1A1A]", accent: "bg-luxury-dark", icon: "text-[#D4AF37]" },
+    { bg: "bg-[#D4AF37]", accent: "bg-[#A8893A]", icon: "text-luxury-dark" },
     { bg: "bg-[#6B6B6B]", accent: "bg-[#4A4A4A]", icon: "text-white" },
 ];
 
@@ -94,7 +94,7 @@ function FeatureCard({ title, description, icon: Icon, href, badge, index }) {
                             </div>
                             {badge && (
                                 <span
-                                    className="bg-[#D4AF37] text-[#0D1117] px-2 py-0.5 text-[10px] font-semibold"
+                                    className="bg-[#D4AF37] text-luxury-dark px-2 py-0.5 text-[10px] font-semibold"
                                     style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}
                                 >
                                     {badge}
@@ -102,15 +102,15 @@ function FeatureCard({ title, description, icon: Icon, href, badge, index }) {
                             )}
                         </div>
                         <h3
-                            className="text-lg font-semibold text-[#0D1117] mb-2 group-hover:text-[#0F172A] transition-colors duration-300"
+                            className="text-lg font-semibold text-luxury-dark mb-2 group-hover:text-luxury-midnight transition-colors duration-300"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             {title}
                         </h3>
-                        <p className="text-sm text-[#6B6B6B] leading-relaxed mb-4" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                        <p className="text-sm text-luxury-stone leading-relaxed mb-4" style={{ fontFamily: "'Raleway', sans-serif" }}>
                             {description}
                         </p>
-                        <span className="luxury-link text-xs text-[#0F172A] font-medium uppercase tracking-wider">
+                        <span className="luxury-link text-xs text-luxury-midnight font-medium uppercase tracking-wider">
                             Explore <span className="ml-1">›</span>
                         </span>
                     </div>
@@ -129,14 +129,14 @@ function QuickActionCard({ title, description, icon: Icon, action, index }) {
                 onClick={action}
             >
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 border border-[#0F172A]/20 bg-[#0F172A]/5 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-all duration-300">
-                        <Icon className="h-5 w-5 text-[#0F172A] group-hover:text-white transition-colors duration-300" />
+                    <div className="w-10 h-10 border border-luxury-midnight/20 bg-luxury-midnight/5 flex items-center justify-center group-hover:bg-luxury-midnight group-hover:border-luxury-midnight transition-all duration-300">
+                        <Icon className="h-5 w-5 text-luxury-midnight group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        <h3 className="text-sm font-semibold text-luxury-dark" style={{ fontFamily: "'Playfair Display', serif" }}>
                             {title}
                         </h3>
-                        <p className="text-xs text-[#6B6B6B]" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                        <p className="text-xs text-luxury-stone" style={{ fontFamily: "'Raleway', sans-serif" }}>
                             {description}
                         </p>
                     </div>
@@ -220,7 +220,7 @@ const ModernDashboard = () => {
             <div className="bg-luxury-bg-main min-h-[calc(100vh-64px)] pb-24" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
                 {/* ── Luxury Hero Banner ── */}
-                <div className="relative overflow-hidden bg-[#0F172A]">
+                <div className="relative overflow-hidden bg-luxury-midnight">
                     {/* Dot pattern overlay */}
                     <div
                         className="absolute inset-0 opacity-[0.04]"
@@ -267,12 +267,12 @@ const ModernDashboard = () => {
                 <div className="tour-quick-actions">
                     <div className="flex items-center gap-3 mb-4">
                         <p
-                            className="text-[#0F172A]"
+                            className="text-luxury-midnight"
                             style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                         >
                             Quick Actions
                         </p>
-                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                        <div className="flex-1 h-px bg-luxury-silk" />
                     </div>
                     <motion.div
                         initial="hidden"
@@ -290,12 +290,12 @@ const ModernDashboard = () => {
                 <div className="tour-features">
                     <div className="flex items-center gap-3 mb-4">
                         <p
-                            className="text-[#0F172A]"
+                            className="text-luxury-midnight"
                             style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                         >
                             Explore Features
                         </p>
-                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                        <div className="flex-1 h-px bg-luxury-silk" />
                     </div>
                     <motion.div
                         initial="hidden"
@@ -313,12 +313,12 @@ const ModernDashboard = () => {
                 <div>
                     <div className="flex items-center gap-3 mb-4">
                         <p
-                            className="text-[#0F172A]"
+                            className="text-luxury-midnight"
                             style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                         >
                             Recent Work
                         </p>
-                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                        <div className="flex-1 h-px bg-luxury-silk" />
                     </div>
 
                     <Tabs defaultValue="drafts" className="w-full">
@@ -333,7 +333,7 @@ const ModernDashboard = () => {
                                     key={tab.value}
                                     value={tab.value}
                                     id={tab.id}
-                                    className="rounded-none px-6 py-3 text-xs uppercase tracking-wider font-medium data-[state=active]:bg-[#0F172A] data-[state=active]:text-white data-[state=active]:shadow-none border-r border-luxury-silk last:border-r-0"
+                                    className="rounded-none px-6 py-3 text-xs uppercase tracking-wider font-medium data-[state=active]:bg-luxury-midnight data-[state=active]:text-white data-[state=active]:shadow-none border-r border-luxury-silk last:border-r-0"
                                     style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.1em" }}
                                 >
                                     {tab.label}
@@ -350,12 +350,12 @@ const ModernDashboard = () => {
                                         <div className="flex items-start justify-between mb-4">
                                             <div>
                                                 <h3
-                                                    className="text-lg font-semibold text-[#0D1117] mb-1"
+                                                    className="text-lg font-semibold text-luxury-dark mb-1"
                                                     style={{ fontFamily: "'Playfair Display', serif" }}
                                                 >
                                                     Active Draft
                                                 </h3>
-                                                <p className="text-sm text-[#6B6B6B]">
+                                                <p className="text-sm text-luxury-stone">
                                                     {draft.tabType === 'regression' ? 'Regression Analysis' :
                                                         draft.tabType === 'categorical' ? 'Categorical Data' : 'Data Analysis'}
                                                 </p>
@@ -367,7 +367,7 @@ const ModernDashboard = () => {
                                         </div>
                                         <button
                                             onClick={() => navigate('/manual-plot')}
-                                            className="flex items-center gap-2 bg-[#0F172A] text-white px-5 py-2.5 text-xs uppercase tracking-widest hover:bg-[#0B1120] transition-colors duration-300"
+                                            className="flex items-center gap-2 bg-luxury-midnight text-white px-5 py-2.5 text-xs uppercase tracking-widest hover:bg-[#0B1120] transition-colors duration-300"
                                         >
                                             <Play className="h-3.5 w-3.5" />
                                             Continue Working
@@ -377,10 +377,10 @@ const ModernDashboard = () => {
                             ) : (
                                 <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <FileText className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
-                                    <p className="text-[#6B6B6B] text-sm mb-4">No active drafts</p>
+                                    <p className="text-luxury-stone text-sm mb-4">No active drafts</p>
                                     <button
                                         onClick={() => navigate('/manual-plot')}
-                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                        className="luxury-link text-xs text-luxury-midnight uppercase tracking-widest"
                                     >
                                         Start New Analysis <span className="ml-1 text-base">›</span>
                                     </button>
@@ -394,19 +394,19 @@ const ModernDashboard = () => {
                                 {analysisTemplates.map((template) => (
                                     <div key={template.id} className="bg-card border border-luxury-silk p-6 luxury-card-hover group cursor-pointer" onClick={() => navigate('/manual-plot/regression', { state: { template } })}>
                                         <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 rounded-none bg-[#0F172A]/5 border border-[#0F172A]/10 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-colors duration-300">
-                                                {template.icon === 'trending' && <TrendingUp className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
-                                                {template.icon === 'graduation' && <Brain className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
-                                                {template.icon === 'server' && <Activity className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
+                                            <div className="w-10 h-10 rounded-none bg-luxury-midnight/5 border border-luxury-midnight/10 flex items-center justify-center group-hover:bg-luxury-midnight group-hover:border-luxury-midnight transition-colors duration-300">
+                                                {template.icon === 'trending' && <TrendingUp className="h-5 w-5 text-luxury-midnight group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'graduation' && <Brain className="h-5 w-5 text-luxury-midnight group-hover:text-[#D4AF37] transition-colors" />}
+                                                {template.icon === 'server' && <Activity className="h-5 w-5 text-luxury-midnight group-hover:text-[#D4AF37] transition-colors" />}
                                             </div>
-                                            <h4 className="font-semibold text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                            <h4 className="font-semibold text-luxury-dark" style={{ fontFamily: "'Playfair Display', serif" }}>
                                                 {template.title}
                                             </h4>
                                         </div>
-                                        <p className="text-sm text-[#6B6B6B] mb-4 h-10">
+                                        <p className="text-sm text-luxury-stone mb-4 h-10">
                                             {template.description}
                                         </p>
-                                        <button className="flex items-center text-xs font-semibold uppercase tracking-wider text-[#0F172A] group-hover:text-[#D4AF37] transition-colors">
+                                        <button className="flex items-center text-xs font-semibold uppercase tracking-wider text-luxury-midnight group-hover:text-[#D4AF37] transition-colors">
                                             Load Template <ArrowRight className="h-3.5 w-3.5 ml-1" />
                                         </button>
                                     </div>
@@ -417,16 +417,16 @@ const ModernDashboard = () => {
                         {/* Saved Analyses */}
                         <TabsContent value="recent" className="mt-5">
                             {loading ? (
-                                <div className="bg-card border border-luxury-silk p-8 text-center text-[#6B6B6B] text-sm">
+                                <div className="bg-card border border-luxury-silk p-8 text-center text-luxury-stone text-sm">
                                     Loading…
                                 </div>
                             ) : analyses.length === 0 ? (
                                 <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <BarChart3 className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
-                                    <p className="text-[#6B6B6B] text-sm mb-4">No saved analyses yet</p>
+                                    <p className="text-luxury-stone text-sm mb-4">No saved analyses yet</p>
                                     <button
                                         onClick={() => navigate('/manual-plot')}
-                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                        className="luxury-link text-xs text-luxury-midnight uppercase tracking-widest"
                                     >
                                         Create Your First Analysis <span className="ml-1 text-base">›</span>
                                     </button>
@@ -436,19 +436,19 @@ const ModernDashboard = () => {
                                     {analyses.slice(0, 6).map((item) => (
                                         <div key={item.id} className="bg-card border border-luxury-silk p-5 luxury-card-hover group">
                                             <div className="flex items-start gap-3 mb-3">
-                                                <Activity className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                                <Activity className="h-4 w-4 text-luxury-midnight flex-shrink-0 mt-0.5" />
                                                 <div className="min-w-0">
                                                     <h4
-                                                        className="text-sm font-semibold text-[#0D1117] truncate"
+                                                        className="text-sm font-semibold text-luxury-dark truncate"
                                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                                     >
                                                         {item.title || "Untitled Analysis"}
                                                     </h4>
-                                                    <p className="text-xs font-mono text-[#6B6B6B] mt-0.5 truncate">{item.equation}</p>
+                                                    <p className="text-xs font-mono text-luxury-stone mt-0.5 truncate">{item.equation}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center justify-between border-t border-luxury-silk pt-3">
-                                                <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
+                                                <div className="flex items-center gap-4 text-xs text-luxury-stone">
                                                     <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
                                                     <span>{new Date(item.created_at).toLocaleDateString()}</span>
                                                 </div>
@@ -464,7 +464,7 @@ const ModernDashboard = () => {
                                                             })
                                                             .catch(err => toast.error('Failed to create share link'));
                                                     }}
-                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    className="text-luxury-midnight hover:text-[#D4AF37] transition-colors p-1"
                                                     title="Share Analysis"
                                                 >
                                                     <Share2 className="h-4 w-4" />
@@ -481,7 +481,7 @@ const ModernDashboard = () => {
                                                             })
                                                             .catch(err => toast.error('Failed to create embed link'));
                                                     }}
-                                                    className="text-[#0F172A] hover:text-[#D4AF37] transition-colors p-1"
+                                                    className="text-luxury-midnight hover:text-[#D4AF37] transition-colors p-1"
                                                     title="Get Embed Code"
                                                 >
                                                     <Code className="h-4 w-4" />
@@ -498,10 +498,10 @@ const ModernDashboard = () => {
                             {savedSessions.length === 0 ? (
                                 <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <LineChart className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
-                                    <p className="text-[#6B6B6B] text-sm mb-4">No saved charts</p>
+                                    <p className="text-luxury-stone text-sm mb-4">No saved charts</p>
                                     <button
                                         onClick={() => navigate('/manual-plot')}
-                                        className="luxury-link text-xs text-[#0F172A] uppercase tracking-widest"
+                                        className="luxury-link text-xs text-luxury-midnight uppercase tracking-widest"
                                     >
                                         Create Your First Chart <span className="ml-1 text-base">›</span>
                                     </button>
@@ -511,15 +511,15 @@ const ModernDashboard = () => {
                                     {savedSessions.slice(0, 6).map((session) => (
                                         <div key={session.session_id} className="bg-card border border-luxury-silk p-5 luxury-card-hover group">
                                             <div className="flex items-start gap-3 mb-3">
-                                                <LineChart className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                                <LineChart className="h-4 w-4 text-luxury-midnight flex-shrink-0 mt-0.5" />
                                                 <div>
                                                     <h4
-                                                        className="text-sm font-semibold text-[#0D1117]"
+                                                        className="text-sm font-semibold text-luxury-dark"
                                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                                     >
                                                         {session.page_type.charAt(0).toUpperCase() + session.page_type.slice(1)} Chart
                                                     </h4>
-                                                    <p className="text-xs text-[#6B6B6B] mt-0.5">
+                                                    <p className="text-xs text-luxury-stone mt-0.5">
                                                         Last updated: {new Date(session.updated_at).toLocaleDateString()}
                                                     </p>
                                                 </div>
