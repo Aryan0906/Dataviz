@@ -444,19 +444,8 @@ export const CategoricalChatPanel = () => {
             return row;
         });
 
-        const updatedChart = chartData.map(row => {
-            if (String(row.name) === selectedChartItem.originalLabel) {
-                return {
-                    ...row,
-                    name: selectedChartItem.label,
-                    value: Number(selectedChartItem.value)
-                };
-            }
-            return row;
-        });
-
         setCategoricalData(updatedCat);
-        setChartData(updatedChart);
+        setChartData(updatedCat);
         setFilteredData(updatedCat);
 
         setShowEditItemDialog(false);
@@ -469,10 +458,9 @@ export const CategoricalChatPanel = () => {
         const xKey = xAxisKey || 'label';
 
         const updatedCat = categoricalData.filter(row => String(row[xKey]) !== selectedChartItem.originalLabel);
-        const updatedChart = chartData.filter(row => String(row.name) !== selectedChartItem.originalLabel);
 
         setCategoricalData(updatedCat);
-        setChartData(updatedChart);
+        setChartData(updatedCat);
         setFilteredData(updatedCat);
 
         setShowEditItemDialog(false);
