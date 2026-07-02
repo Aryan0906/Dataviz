@@ -1692,53 +1692,72 @@ Generated from DataViz Analytics Platform
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
+import re
+from matplotlib.lines import Line2D
 
-# Define x range
-x = np.linspace(-10, 10, 1000)
+# Setup legend handles
+legend_elements = []
+
+def plot_expression(ax, expr, color):
+    # Convert LaTeX frac{a}{b} to (a)/(b)
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
+    
+    # Strip backslashes and replace braces
+    python_expr = temp.replace('\\\\', '')
+    python_expr = python_expr.replace('{', '(').replace('}', ')')
+    python_expr = python_expr.replace('sin', 'np.sin')
+    python_expr = python_expr.replace('cos', 'np.cos')
+    python_expr = python_expr.replace('tan', 'np.tan')
+    python_expr = python_expr.replace('sqrt', 'np.sqrt')
+    python_expr = python_expr.replace('log', 'np.log')
+    python_expr = python_expr.replace('abs', 'np.abs')
+    python_expr = python_expr.replace('^', '**')
+    python_expr = python_expr.replace('e**', 'np.e**')
+    
+    try:
+        if '=' in python_expr:
+            parts = python_expr.split('=')
+            lhs = parts[0].strip()
+            rhs = parts[1].strip()
+            
+            if lhs == 'y' and 'y' not in rhs:
+                x_vals = np.linspace(-10, 10, 1000)
+                y_vals = eval(rhs, {'x': x_vals, 'np': np})
+                ax.plot(x_vals, y_vals, color=color, linewidth=2)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2, label=expr))
+            elif lhs == 'x' and 'x' not in rhs:
+                y_vals = np.linspace(-10, 10, 1000)
+                x_vals = eval(rhs, {'y': y_vals, 'np': np})
+                ax.plot(x_vals, y_vals, color=color, linewidth=2)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2, label=expr))
+            else:
+                # Implicit function using contour
+                x_grid = np.linspace(-10, 10, 500)
+                y_grid = np.linspace(-10, 10, 500)
+                X, Y = np.meshgrid(x_grid, y_grid)
+                Z = eval(f"({lhs}) - ({rhs})", {'x': X, 'y': Y, 'np': np})
+                ax.contour(X, Y, Z, levels=[0], colors=[color], linewidths=2.5)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2.5, label=expr))
+        else:
+            x_vals = np.linspace(-10, 10, 1000)
+            y_vals = eval(python_expr, {'x': x_vals, 'np': np})
+            ax.plot(x_vals, y_vals, color=color, linewidth=2)
+            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=expr))
+    except Exception as e:
+        print(f"Error plotting expression '{expr}': {e}")
 
 # Create figure
 fig, ax = plt.subplots(figsize=(12, 8))
 
 # Plot each expression
-# Note: LaTeX expressions need to be converted to Python/NumPy syntax
 expressions = ${JSON.stringify(expressions)}
-
-# Color palette for different curves
 colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
 for i, expr in enumerate(expressions):
-    try:
-        # Convert common LaTeX to Python
-        # This is a simplified conversion - complex expressions may need manual adjustment
-        python_expr = expr.replace('\\\\', '')
-        python_expr = python_expr.replace('sin', 'np.sin')
-        python_expr = python_expr.replace('cos', 'np.cos')
-        python_expr = python_expr.replace('tan', 'np.tan')
-        python_expr = python_expr.replace('sqrt', 'np.sqrt')
-        python_expr = python_expr.replace('log', 'np.log')
-        python_expr = python_expr.replace('abs', 'np.abs')
-        python_expr = python_expr.replace('^', '**')
-        python_expr = python_expr.replace('e**', 'np.e**')
-        
-        # Try to evaluate and plot
-        if '=' in python_expr:
-            # Handle equations like y = x^2
-            parts = python_expr.split('=')
-            if len(parts) == 2 and parts[0].strip() == 'y':
-                y_expr = parts[1].strip()
-                y = eval(y_expr)
-                ax.plot(x, y, label=f'Expression {i+1}: {expr}', 
-                       color=colors[i % len(colors)], linewidth=2)
-            else:
-                print(f"Skipping unsupported equation format: {expr}")
-        else:
-            # Handle direct expressions
-            y = eval(python_expr)
-            ax.plot(x, y, label=f'Expression {i+1}: {expr}', 
-                   color=colors[i % len(colors)], linewidth=2)
-    except Exception as e:
-        print(f"Error plotting expression '{expr}': {e}")
-        print(f"You may need to manually adjust the expression syntax")
+    plot_expression(ax, expr, colors[i % len(colors)])
 
 # Customize plot
 ax.set_xlabel('x', fontsize=12, fontweight='bold')
@@ -1747,9 +1766,9 @@ ax.set_title('${chartTitle}', fontsize=14, fontweight='bold', pad=20)
 ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
 ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.5, alpha=0.7)
 ax.grid(True, alpha=0.3)
-ax.legend(fontsize=10)
+if legend_elements:
+    ax.legend(handles=legend_elements, fontsize=10)
 
-# Set reasonable axis limits
 ax.set_xlim(-10, 10)
 ax.set_ylim(-10, 10)
 
@@ -1758,7 +1777,6 @@ plt.savefig('mathematical_curve_plot.png', dpi=300, bbox_inches='tight')
 plt.show()
 
 print("Chart saved as 'mathematical_curve_plot.png'")
-print("Note: Complex LaTeX expressions may require manual adjustment")
 `;
     } else if (library === 'seaborn') {
       return `"""
