@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Edit2, Check, X, Database } from "lucide-react";
 import { toast } from "sonner";
 
-export const DataTable = ({ data, onDataChange, selectedPointIndex, onRowSelect }) => {
+export const DataTable = ({ data, onDataChange, selectedPointIndex, onRowSelect, onClearAll }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const [editX, setEditX] = useState("");
     const [editY, setEditY] = useState("");
@@ -73,7 +73,20 @@ export const DataTable = ({ data, onDataChange, selectedPointIndex, onRowSelect 
                         <Database className="h-5 w-5 text-primary" />
                         Data Table
                     </CardTitle>
-                    <Badge variant="outline">{stats.count} points</Badge>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="outline">{stats.count} points</Badge>
+                        {onClearAll && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={onClearAll}
+                                className="h-8 gap-1.5"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Clear All
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
