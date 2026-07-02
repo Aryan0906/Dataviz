@@ -1468,6 +1468,54 @@ export const EnhancedDataAnalyzer = () => {
                                         />
                                     </CardContent>
                                 </Card>
+
+                                {selectedPointIndex !== null && data[selectedPointIndex] && (
+                                    <Card className="border-2 p-4 bg-muted/30 border-[#D4AF37]/30">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="font-semibold text-sm">
+                                                    Selected Point #{selectedPointIndex + 1}
+                                                </h4>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    X: {data[selectedPointIndex].x.toFixed(4)} • Y: {data[selectedPointIndex].y.toFixed(4)}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="gap-2 h-9 border-2"
+                                                    onClick={() => setIsEditingSelectedPoint(true)}
+                                                >
+                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                    Edit Point
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="destructive" 
+                                                    className="gap-2 h-9"
+                                                    onClick={() => {
+                                                        const newData = data.filter((_, idx) => idx !== selectedPointIndex);
+                                                        setData(newData);
+                                                        setSelectedPointIndex(null);
+                                                        toast.success("Point filtered out (deleted)");
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Filter Out (Delete)
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-9"
+                                                    onClick={() => setSelectedPointIndex(null)}
+                                                >
+                                                    Deselect
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                )}
                             </div>
                         ) : (
                             <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
