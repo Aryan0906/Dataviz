@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-    Sparkles, Send, BarChart3, PieChart as PieIcon, TreePalm,
+    Sparkles, Send, BarChart3, PieChart as PieIcon, TreePalm, LineChart, AreaChart,
     Download, FileUp, RefreshCw, AlertCircle, Database,
     TrendingUp, Search, MessageSquare
 } from "lucide-react";
@@ -17,17 +17,8 @@ import { toast } from "sonner";
 import Papa from "papaparse";
 import { UniversalChart } from "@/components/UniversalChart";
 import { dataAPI } from "@/lib/api";
-import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
-import ChartCodeExportModal from "@/components/ChartCodeExportModal";
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import ChartExportButton from "@/components/ChartExportButton";
+import ExportCodeButton from "@/components/ExportCodeButton";
 import StorySummaryCard from "@/components/StorySummaryCard";
 
 const INITIAL_DATA = [
@@ -172,14 +163,6 @@ export const CategoricalChatPanel = () => {
     const [aiSummary, setAiSummary] = useState(null);
     const [isGeneratingStory, setIsGeneratingStory] = useState(false);
     const [error, setError] = useState("");
-
-    // Export theme dialog state
-    const [showExportDialog, setShowExportDialog] = useState(false);
-    const [exportFormat, setExportFormat] = useState("png");
-    const [exportTheme, setExportTheme] = useState("light");
-
-    // Code export modal state
-    const [showCodeExportModal, setShowCodeExportModal] = useState(false);
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -397,41 +380,9 @@ export const CategoricalChatPanel = () => {
         toast.info(`Filtered table to "${label}"`);
     };
 
-    // Export handler
-    const handleExportChart = () => {
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-        setShowExportDialog(true);
-    };
-
-    const confirmExport = async () => {
-        if (exportFormat === "code") {
-            setShowExportDialog(false);
-            setShowCodeExportModal(true);
-            return;
-        }
-
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const filename = `categorical-${chartType}-${exportTheme}-${timestamp}`;
-
-        try {
-            if (exportFormat === "png") {
-                await exportChartAsPNG(chartContainerRef.current, filename, exportTheme);
-            } else if (exportFormat === "pdf") {
-                await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
-            }
-            logExport(filename, chartData);
-        } catch (error) {
-            console.error("Export failed:", error);
-        }
-        setShowExportDialog(false);
+    // Export handler callback for logging
+    const handleExportLog = ({ filename }) => {
+        logExport(filename, chartData);
     };
 
     // CSV File Import
@@ -577,14 +528,34 @@ export const CategoricalChatPanel = () => {
                                             size="sm"
                                             onClick={() => setChartType('bar')}
                                             className="h-8 w-8 p-0"
+                                            title="Bar Chart"
                                         >
                                             <BarChart3 className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant={chartType === 'line' ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => setChartType('line')}
+                                            className="h-8 w-8 p-0"
+                                            title="Line Chart"
+                                        >
+                                            <LineChart className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant={chartType === 'area' ? 'default' : 'outline'}
+                                            size="sm"
+                                            onClick={() => setChartType('area')}
+                                            className="h-8 w-8 p-0"
+                                            title="Area Chart"
+                                        >
+                                            <AreaChart className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant={chartType === 'pie' ? 'default' : 'outline'}
                                             size="sm"
                                             onClick={() => setChartType('pie')}
                                             className="h-8 w-8 p-0"
+                                            title="Pie Chart"
                                         >
                                             <PieIcon className="h-4 w-4" />
                                         </Button>
@@ -593,18 +564,28 @@ export const CategoricalChatPanel = () => {
                                             size="sm"
                                             onClick={() => setChartType('treemap')}
                                             className="h-8 w-8 p-0"
+                                            title="Treemap Chart"
                                         >
                                             <TreePalm className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    <Button
-                                        onClick={handleExportChart}
-                                        size="sm"
-                                        className="h-8 gap-1.5"
-                                    >
-                                        <Download className="h-3.5 w-3.5" />
-                                        Export
-                                    </Button>
+                                    <ChartExportButton
+                                        elementRef={chartContainerRef}
+                                        filenamePrefix={`categorical-${chartType}`}
+                                        chartTitle={chartTitle}
+                                        chartType={chartType}
+                                        buttonSize="sm"
+                                        buttonClassName="h-8 gap-1.5"
+                                        onExport={handleExportLog}
+                                    />
+                                    <ExportCodeButton
+                                        chartType={chartType}
+                                        categoricalData={chartData}
+                                        chartTitle={chartTitle}
+                                        buttonSize="sm"
+                                        buttonVariant="outline"
+                                        buttonClassName="h-8 gap-1.5"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -854,79 +835,6 @@ export const CategoricalChatPanel = () => {
 
             </div>
 
-            {/* Export Dialog */}
-            <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Export Visualization</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Configure the theme and format for your export.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-4 py-2">
-                        {/* Format Selection */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Format</label>
-                            <div className="grid grid-cols-3 gap-2">
-                                <Button
-                                    variant={exportFormat === "png" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("png")}
-                                >
-                                    PNG
-                                </Button>
-                                <Button
-                                    variant={exportFormat === "pdf" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("pdf")}
-                                >
-                                    PDF
-                                </Button>
-                                <Button
-                                    variant={exportFormat === "code" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("code")}
-                                >
-                                    Code
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Theme Selection */}
-                        {exportFormat !== "code" && (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Theme</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Button
-                                        variant={exportTheme === "light" ? "default" : "outline"}
-                                        onClick={() => setExportTheme("light")}
-                                    >
-                                        Light
-                                    </Button>
-                                    <Button
-                                        variant={exportTheme === "dark" ? "default" : "outline"}
-                                        onClick={() => setExportTheme("dark")}
-                                    >
-                                        Dark
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmExport}>
-                            Export
-                        </AlertDialogAction>
-                    </div>
-                </AlertDialogContent>
-            </AlertDialog>
-
-            {/* Code Export Modal */}
-            <ChartCodeExportModal
-                isOpen={showCodeExportModal}
-                onClose={() => setShowCodeExportModal(false)}
-                chartType={chartType}
-                chartData={chartData}
-                chartTitle={chartTitle}
-            />
         </div>
     );
 };

@@ -1,9 +1,6 @@
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend, Treemap } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend, Treemap, LineChart, Line, AreaChart, Area } from "recharts";
 import { useMemo, forwardRef, useRef, useCallback } from "react";
 import { DataPlot } from "./DataPlot";
-import { Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
 import { useTheme } from "@/components/theme-provider";
 
 const COLORS = [
@@ -15,20 +12,6 @@ export const UniversalChart = forwardRef(
     ({ type, data = [], regression = null, categories = [], onBarClick = null, onPointClick = null, xAxisKey, dataKeys, selectedPointIndex }, ref) => {
         const chartContainerRef = useRef(null);
         const { theme } = useTheme();
-
-        const handleExportSVG = useCallback(() => {
-            const el = chartContainerRef.current;
-            if (!el) return;
-            const currentTheme = theme === 'system'
-                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                : (theme || 'light');
-            const filename = generateFilename(`dataviz-${type}-chart`);
-            exportChartAsSVG(el, filename, currentTheme, {
-                title: `${type.charAt(0).toUpperCase() + type.slice(1)} Chart`,
-                chartType: type,
-                description: `${type} chart exported from DataViz`,
-            });
-        }, [theme, type]);
 
         // Unify raw, new, and old data formats into a single, clean parsed array
         const chartData = useMemo(() => {
@@ -74,26 +57,9 @@ export const UniversalChart = forwardRef(
             }
         };
 
-        // SVG Export button overlay component
-        const SvgExportButton = () => (
-            <div className="flex justify-end mb-1">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportSVG}
-                    className="gap-1.5 text-xs"
-                    title="Export chart as SVG/XML"
-                >
-                    <Download className="h-3.5 w-3.5" />
-                    Export SVG
-                </Button>
-            </div>
-        );
-
         if (type === 'bar') {
             return (
                 <div ref={ref}>
-                    <SvgExportButton />
                     <div ref={chartContainerRef}>
                         <ResponsiveContainer width="100%" height={320}>
                             <BarChart
@@ -133,10 +99,89 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        if (type === 'line') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <LineChart
+                                data={chartData}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis
+                                    dataKey="name"
+                                    tick={{ fontSize: 12 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
+                                />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Legend />
+                                <Line
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="hsl(var(--chart-primary))"
+                                    activeDot={{ r: 8 }}
+                                    cursor="pointer"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
+        if (type === 'area') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <AreaChart
+                                data={chartData}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis
+                                    dataKey="name"
+                                    tick={{ fontSize: 12 }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    height={80}
+                                />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Legend />
+                                <Area
+                                    type="monotone"
+                                    dataKey="value"
+                                    stroke="hsl(var(--chart-primary))"
+                                    fill="hsl(var(--chart-primary))"
+                                    fillOpacity={0.3}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         if (type === 'pie') {
             return (
                 <div ref={ref}>
-                    <SvgExportButton />
                     <div ref={chartContainerRef}>
                         <ResponsiveContainer width="100%" height={320}>
                             <PieChart>
@@ -221,7 +266,6 @@ export const UniversalChart = forwardRef(
 
             return (
                 <div ref={ref}>
-                    <SvgExportButton />
                     <div ref={chartContainerRef}>
                         <ResponsiveContainer width="100%" height={320}>
                             <Treemap

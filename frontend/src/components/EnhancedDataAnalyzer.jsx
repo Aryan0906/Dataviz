@@ -43,7 +43,7 @@ import Papa from "papaparse";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { useAuth } from "@/context/AuthContext";
 import { UniversalChart } from "./UniversalChart";
-import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ChartExportButton from "./ChartExportButton";
 import ExportCodeButton from "./ExportCodeButton";
 import StatsTester from "./StatsTester";
 import {
@@ -322,11 +322,6 @@ export const EnhancedDataAnalyzer = () => {
     const [predictionHistory, setPredictionHistory] = useState([]);
 
     const chartContainerRef = useRef(null);
-
-    // Export theme dialog state
-    const [showExportDialog, setShowExportDialog] = useState(false);
-    const [exportFormat, setExportFormat] = useState("png");
-    const [exportTheme, setExportTheme] = useState("light");
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -1127,44 +1122,16 @@ export const EnhancedDataAnalyzer = () => {
         }
     };
 
-    const handleExportChart = async () => {
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-        setShowExportDialog(true);
-    };
-
-    const confirmExport = async () => {
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const regressionLabel = regressionResult?.type.includes("polynomial")
+    const handleExportLog = ({ format, theme, filename }) => {
+        const regressionLabel = regressionResult?.type?.includes("polynomial")
             ? `polynomial-degree${regressionResult.type.split("-")[1]}`
             : "linear";
-        const filename = `regression-${regressionLabel}-${exportTheme}-${timestamp}`;
-
-        try {
-            if (exportFormat === "png") {
-                await exportChartAsPNG(chartContainerRef.current, filename, exportTheme);
-            } else {
-                await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
-            }
-
-            logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
-                format: exportFormat,
-                theme: exportTheme,
-                filename,
-                regressionType: regressionResult?.type,
-            });
-        } catch (error) {
-            console.error("Export failed:", error);
-        }
-
-        setShowExportDialog(false);
+        logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
+            format,
+            theme,
+            filename,
+            regressionType: regressionResult?.type,
+        });
     };
 
     const dropEmptyValues = () => {
@@ -2071,10 +2038,17 @@ export const EnhancedDataAnalyzer = () => {
                             Save Analysis
                         </Button>
 
-                        <Button onClick={handleExportChart} variant="outline" size="lg" className="gap-2">
-                            <Download className="h-4 w-4" />
-                            Export Chart
-                        </Button>
+                        <ChartExportButton
+                            elementRef={chartContainerRef}
+                            filenamePrefix={`regression-${regressionResult?.type || 'linear'}`}
+                            chartTitle={regressionResult?.title || "Regression Analysis"}
+                            chartType="regression"
+                            buttonSize="lg"
+                            buttonVariant="outline"
+                            buttonClassName="gap-2"
+                            buttonText="Export Chart"
+                            onExport={handleExportLog}
+                        />
 
                         <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2">
                             <FileText className="h-4 w-4" />
@@ -2115,63 +2089,6 @@ export const EnhancedDataAnalyzer = () => {
                 )}
             </div>
 
-            {/* Export Dialog */}
-            <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Export Chart</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Choose format and theme for your export
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Format</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    variant={exportFormat === "png" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("png")}
-                                    className="justify-start gap-2"
-                                >
-                                    <FileImage className="h-4 w-4" />
-                                    PNG Image
-                                </Button>
-                                <Button
-                                    variant={exportFormat === "pdf" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("pdf")}
-                                    className="justify-start gap-2"
-                                >
-                                    <FileText className="h-4 w-4" />
-                                    PDF Document
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Theme</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    variant={exportTheme === "light" ? "default" : "outline"}
-                                    onClick={() => setExportTheme("light")}
-                                >
-                                    Light
-                                </Button>
-                                <Button
-                                    variant={exportTheme === "dark" ? "default" : "outline"}
-                                    onClick={() => setExportTheme("dark")}
-                                >
-                                    Dark
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmExport}>
-                            Export
-                        </AlertDialogAction>
-                    </div>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 };
