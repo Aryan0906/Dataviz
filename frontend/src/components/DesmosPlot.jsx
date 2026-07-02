@@ -406,19 +406,19 @@ const DesmosPlot = () => {
             return;
         }
 
-        try {
-            const id = `expr-${Date.now()}`;
-            calculatorRef.current.setExpression({
-                id,
-                latex: latex,
-            });
-
-            setExpressions([...expressions, { id, latex: latex }]);
-            toast.success("Expression added!");
-        } catch (error) {
-            console.error("Error adding preset:", error);
-            toast.error(`Invalid expression: ${error.message}`);
-        }
+        // Defer mutation until after the Radix DropdownMenu has fully closed
+        // and released its focus trap — otherwise setExpression can silently fail.
+        requestAnimationFrame(() => {
+            try {
+                const id = `expr-${Date.now()}`;
+                calculatorRef.current.setExpression({ id, latex });
+                setExpressions(prev => [...prev, { id, latex }]);
+                toast.success("Expression added!");
+            } catch (error) {
+                console.error("Error adding preset:", error);
+                toast.error(`Invalid expression: ${error.message}`);
+            }
+        });
     };
 
     const clearAll = () => {
@@ -570,7 +570,7 @@ const DesmosPlot = () => {
                             {PRESET_EXPRESSIONS.map((preset) => (
                                 <DropdownMenuItem
                                     key={preset.label}
-                                    onClick={() => addPreset(preset.latex)}
+                                    onSelect={() => addPreset(preset.latex)}
                                 >
                                     <span className="flex-1">{preset.label}</span>
                                     <code className="text-xs text-muted-foreground">{preset.latex}</code>
