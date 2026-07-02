@@ -287,9 +287,45 @@ def analyze(request):
         }, status=202)
         
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({"error": f"Analysis failed to start: {str(e)}"}, status=500)
+        print(f"Celery task dispatch failed: {e}. Running analysis synchronously in fallback mode...")
+        import uuid
+        import json
+        from django.utils import timezone
+        from django_celery_results.models import TaskResult
+        from .tasks import run_comprehensive_analysis
+        
+        task_id = str(uuid.uuid4())
+        model_type = body.get("modelType")
+        
+        try:
+            # Call tasks synchronously (passing None as self to avoid updating task state)
+            response_data = run_comprehensive_analysis(None, data_points, model_type)
+            
+            if response_data and 'error' in response_data:
+                status = 'FAILURE'
+                tb = response_data['error']
+            else:
+                status = 'SUCCESS'
+                tb = None
+                
+            TaskResult.objects.create(
+                task_id=task_id,
+                status=status,
+                content_type='application/json',
+                content_encoding='utf-8',
+                result=json.dumps(response_data),
+                traceback=tb,
+                date_done=timezone.now()
+            )
+            
+            return JsonResponse({
+                'task_id': task_id,
+                'status': 'processing'
+            }, status=202)
+        except Exception as sync_err:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({"error": f"Analysis failed to start: {str(sync_err)}"}, status=500)
 
 
 @csrf_exempt
