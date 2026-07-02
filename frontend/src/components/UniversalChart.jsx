@@ -1071,6 +1071,60 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 21. Waffle Chart (10x10 matrix of 100 square blocks colored proportionally)
+        if (type === 'waffle') {
+            const sumTotal = chartData.reduce((acc, d) => acc + d.value, 0) || 1;
+            
+            // Generate grid array of 100 blocks mapped proportionally
+            const blocks = [];
+            chartData.forEach(d => {
+                const count = Math.round((d.value / sumTotal) * 100);
+                for (let i = 0; i < count; i++) {
+                    blocks.push({
+                        name: d.name,
+                        color: d.color,
+                        value: d.value
+                    });
+                }
+            });
+
+            // Pad or trim to exactly 100 blocks
+            while (blocks.length < 100) {
+                blocks.push({ name: "Other", color: "#e5e7eb", value: 0 });
+            }
+            if (blocks.length > 100) {
+                blocks.length = 100;
+            }
+
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-sm px-4">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">10x10 Category Proportion Waffle Grid</h4>
+                        <div className="grid grid-cols-10 gap-1 w-full h-auto aspect-square">
+                            {blocks.map((b, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{ backgroundColor: b.color }}
+                                    className="w-full h-full rounded-sm cursor-pointer transition hover:scale-115 hover:shadow"
+                                    title={`${b.name}: ${b.value}`}
+                                    onClick={() => b.value > 0 && onBarClick && onBarClick(b.name)}
+                                />
+                            ))}
+                        </div>
+                        {/* Legend */}
+                        <div className="flex flex-wrap justify-center gap-3 mt-4 text-[10px]">
+                            {chartData.map((d, idx) => (
+                                <div key={idx} className="flex items-center gap-1">
+                                    <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: d.color }} />
+                                    <span className="font-medium">{d.name} ({Math.round((d.value / sumTotal) * 100)}%)</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
