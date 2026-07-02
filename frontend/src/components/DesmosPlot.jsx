@@ -73,6 +73,11 @@ export const loadCdnGraph = () =>
     new Promise((resolve, reject) => {
         const existing = document.querySelector("script[data-graph-cdn]");
         if (existing) {
+            if (window.Desmos) {
+                ensureCdnCss();
+                resolve(window.Desmos);
+                return;
+            }
             existing.addEventListener(
                 "load",
                 () => {
