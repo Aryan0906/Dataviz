@@ -461,7 +461,7 @@ export const EnhancedDataAnalyzer = () => {
             modelToRequest = modelTypeOverride;
         }
 
-        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial"];
+        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
         const isStandardModel = standardModels.includes(modelToRequest);
 
         if (isStandardModel) {
@@ -472,33 +472,25 @@ export const EnhancedDataAnalyzer = () => {
                 let typeApplied = modelToRequest || "linear";
 
                 if (typeApplied === "auto") {
-                    const candidates = [
-                        { type: 'linear', res: regression.linear(points) },
-                        { type: 'exponential', res: regression.exponential(points) },
-                        { type: 'logarithmic', res: regression.logarithmic(points) },
-                        { type: 'power', res: regression.power(points) },
-                        { type: 'polynomial', res: regression.polynomial(points, { order: 2 }) }
-                    ];
+                    const modelTypes = ["linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
+                    const candidates = modelTypes.map(t => {
+                        try {
+                            return { type: t, res: fitLocalModel(points, t, polynomialDegree) };
+                        } catch {
+                            return null;
+                        }
+                    }).filter(Boolean);
                     const valid = candidates.filter(c => c.res && !isNaN(c.res.r2));
                     if (valid.length > 0) {
                         const best = valid.reduce((prev, curr) => curr.res.r2 > prev.res.r2 ? curr : prev);
                         bestResult = best.res;
                         typeApplied = best.type;
                     } else {
-                        bestResult = regression.linear(points);
+                        bestResult = fitLocalModel(points, 'linear');
                         typeApplied = 'linear';
                     }
-                } else if (typeApplied === "polynomial") {
-                    bestResult = regression.polynomial(points, { order: polynomialDegree });
                 } else {
-                    if (typeApplied === 'linear') bestResult = regression.linear(points);
-                    else if (typeApplied === 'exponential') bestResult = regression.exponential(points);
-                    else if (typeApplied === 'logarithmic') bestResult = regression.logarithmic(points);
-                    else if (typeApplied === 'power') bestResult = regression.power(points);
-                    else {
-                        bestResult = regression.linear(points);
-                        typeApplied = 'linear';
-                    }
+                    bestResult = fitLocalModel(points, typeApplied, polynomialDegree);
                 }
 
                 if (!bestResult || isNaN(bestResult.r2)) {
@@ -510,7 +502,7 @@ export const EnhancedDataAnalyzer = () => {
                 const maxX = Math.max(...data.map(d => d.x));
                 const step = (maxX - minX) / 100 || 1;
                 for (let x = minX; x <= maxX; x += step) {
-                    const y = bestResult.predict(x)[1];
+                    const y = bestResult.predict(x);
                     if (isFinite(y)) {
                         predictions.push([x, y]);
                     }
@@ -522,14 +514,23 @@ export const EnhancedDataAnalyzer = () => {
                 const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
                 const stdDevY = Math.sqrt(varianceY);
 
+                const yPreds = data.map(d => bestResult.predict(d.x));
+                const sse = data.reduce((sum, d, i) => sum + Math.pow(d.y - yPreds[i], 2), 0);
+                const sst = data.reduce((sum, d) => sum + Math.pow(d.y - meanY, 2), 0);
+                const r2 = sst !== 0 ? 1 - sse / sst : 0;
+                const p = 1;
+                const adjustedR2 = n > p + 1 ? 1 - (1 - r2) * (n - 1) / (n - p - 1) : r2;
+                const rmse = Math.sqrt(sse / n);
+                const mae = data.reduce((sum, d, i) => sum + Math.abs(d.y - yPreds[i]), 0) / n;
+
                 const localResult = {
-                    r2: bestResult.r2,
-                    adjustedR2: bestResult.r2,
-                    rmse: 0,
-                    mae: 0,
-                    modelName: `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
+                    r2: r2,
+                    adjustedR2: adjustedR2,
+                    rmse: rmse,
+                    mae: mae,
+                    modelName: bestResult.name || `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
                     predictions: predictions,
-                    predict: (x) => bestResult.predict(x)[1],
+                    predict: (x) => bestResult.predict(x),
                     type: typeApplied,
                     equation: bestResult.string,
                     details: {
@@ -537,16 +538,16 @@ export const EnhancedDataAnalyzer = () => {
                         stdDevY: stdDevY,
                         varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                         varianceY: varianceY,
-                        adjustedR2: bestResult.r2,
-                        rmse: 0,
-                        mae: 0,
+                        adjustedR2: adjustedR2,
+                        rmse: rmse,
+                        mae: mae,
                         localFallback: true
                     }
                 };
 
                 setRegressionResult(localResult);
                 setLoading(false);
-                toast.success(`Model fitted successfully: ${typeApplied} (Instant Client-Side)`);
+                toast.success(`Model fitted successfully: ${localResult.modelName} (Instant Client-Side)`);
                 return;
             } catch (fallbackErr) {
                 console.error("Local regression fit failed:", fallbackErr);
