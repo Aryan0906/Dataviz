@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
 import { wrapSvgWithXmlMetadata } from "@/lib/chartExport";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
+import ExportCodeButton from "./ExportCodeButton";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -118,7 +119,6 @@ const DesmosPlot = () => {
     const [exportTheme, setExportTheme] = useState(getInitialTheme());
     const [showImportModal, setShowImportModal] = useState(false);
     const [importCode, setImportCode] = useState("");
-    const [showCodeExport, setShowCodeExport] = useState(false);
 
     // Function to extract expressions from calculator
     const _extractExpressionsFromCalculator = () => {
@@ -472,6 +472,19 @@ const DesmosPlot = () => {
         toast.success(`Imported ${added.length} expression(s)`);
     };
 
+    const getExpressionsArray = () => {
+        if (!calculatorRef.current) return [];
+        try {
+            const state = calculatorRef.current.getState();
+            const exprList = state?.expressions?.list || [];
+            const latexLines = [];
+            exprList.forEach(e => { if (e.latex && e.type !== 'folder') latexLines.push(e.latex); });
+            return latexLines;
+        } catch {
+            return [];
+        }
+    };
+
     // Code Export: generate Python matplotlib code
     const getExportedPythonCode = () => {
         if (!calculatorRef.current) return '# Calculator not loaded';
@@ -579,16 +592,16 @@ const DesmosPlot = () => {
                     </Button>
 
                     {/* Code Export */}
-                    <Button
-                        onClick={() => setShowCodeExport(true)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        title="Export as Python code"
-                    >
-                        <Code className="h-4 w-4" />
-                        Code
-                    </Button>
+                    <ExportCodeButton
+                        chartType="curve"
+                        curveData={{
+                            expressions: getExpressionsArray()
+                        }}
+                        chartTitle="Mathematical Curve Plot"
+                        buttonText="Code"
+                        buttonSize="sm"
+                        buttonVariant="outline"
+                    />
                 </div>
                 <div className="flex items-center gap-3">
                     <Button
@@ -770,35 +783,7 @@ const DesmosPlot = () => {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Code Export Modal */}
-            <AlertDialog open={showCodeExport} onOpenChange={setShowCodeExport}>
-                <AlertDialogContent className="max-w-2xl">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            <Code className="h-5 w-5" />
-                            Export as Python Code
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Copy the generated matplotlib code below.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <pre className="w-full max-h-80 overflow-auto p-4 rounded-lg border bg-muted/30 text-xs font-mono whitespace-pre">
-                        {getExportedPythonCode()}
-                    </pre>
-                    <div className="flex justify-end gap-2">
-                        <AlertDialogCancel>Close</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                navigator.clipboard.writeText(getExportedPythonCode());
-                                toast.success('Code copied to clipboard!');
-                            }}
-                        >
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copy Code
-                        </AlertDialogAction>
-                    </div>
-                </AlertDialogContent>
-            </AlertDialog>
+
         </div>
     );
 };
