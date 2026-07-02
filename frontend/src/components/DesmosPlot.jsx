@@ -46,16 +46,16 @@ const PRESET_EXPRESSIONS = [
     { label: "Ellipse", latex: "\\frac{x^2}{9} + \\frac{y^2}{4} = 1" },
 ];
 
-const ensureCdnCss = () => {
+export const ensureCdnCss = () => {
     if (document.querySelector("link[data-graph-cdn-css]")) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://www.desmos.com/api/v1.8/calculator.css";
+    link.href = "https://www.desmos.com/api/v1.13/calculator.css";
     link.dataset.graphCdnCss = "true";
     document.head.appendChild(link);
 };
 
-const loadLocalGraph = async () => {
+export const loadLocalGraph = async () => {
     try {
         if (!desmosPromise) {
             desmosPromise = import("desmos");
@@ -69,7 +69,7 @@ const loadLocalGraph = async () => {
     }
 };
 
-const loadCdnGraph = () =>
+export const loadCdnGraph = () =>
     new Promise((resolve, reject) => {
         const existing = document.querySelector("script[data-graph-cdn]");
         if (existing) {
@@ -85,7 +85,8 @@ const loadCdnGraph = () =>
             return;
         }
         const script = document.createElement("script");
-        script.src = "https://www.desmos.com/api/v1.8/calculator.js";
+        const apiKey = import.meta.env.VITE_DESMOS_API_KEY || "dcb31709b452b1cf9dc26972add0fda6";
+        script.src = `https://www.desmos.com/api/v1.13/calculator.js?apiKey=${apiKey}`;
         script.async = true;
         script.dataset.graphCdn = "true";
         script.onload = () => {
