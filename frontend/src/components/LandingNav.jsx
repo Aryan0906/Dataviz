@@ -27,8 +27,8 @@ const LandingNav = ({ variant: _variant = "dark" }) => {
             {/* ── Main Navbar ── */}
             <nav
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${isScrolled
-                        ? "bg-[#0F172A]/95 backdrop-blur-xl shadow-lg shadow-black/20"
-                        : "bg-[#0F172A]"
+                        ? "bg-luxury-midnight/95 backdrop-blur-xl shadow-lg shadow-black/20"
+                        : "bg-luxury-midnight"
                     }`}
                 style={{ height: "72px" }}
             >
@@ -71,7 +71,7 @@ const LandingNav = ({ variant: _variant = "dark" }) => {
                         </Link>
                         <Link
                             to="/signup"
-                            className="hidden md:flex items-center gap-1.5 border border-white/40 text-white px-4 py-1.5 luxury-label hover:bg-white hover:text-[#0F172A] transition-all duration-300"
+                            className="hidden md:flex items-center gap-1.5 border border-white/40 text-white px-4 py-1.5 luxury-label hover:bg-white hover:text-luxury-midnight transition-all duration-300"
                         >
                             Get Started
                             <ChevronRight className="w-3 h-3" />
@@ -96,7 +96,7 @@ const LandingNav = ({ variant: _variant = "dark" }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className="fixed inset-0 z-[100] bg-[#0F172A]"
+                        className="fixed inset-0 z-[100] bg-luxury-midnight"
                     >
                         {/* Close button */}
                         <div className="flex items-center justify-between px-6 lg:px-12 h-[72px]">
@@ -171,7 +171,7 @@ const LandingNav = ({ variant: _variant = "dark" }) => {
                                 </Link>
                                 <Link
                                     to="/signup"
-                                    className="bg-white text-[#0F172A] text-center px-8 py-3 luxury-label font-semibold hover:bg-white/90 transition-all duration-300"
+                                    className="bg-white text-luxury-midnight text-center px-8 py-3 luxury-label font-semibold hover:bg-white/90 transition-all duration-300"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     Get Started Free

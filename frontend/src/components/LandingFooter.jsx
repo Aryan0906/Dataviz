@@ -58,7 +58,7 @@ const LandingFooter = ({ variant: _variant = "dark" }) => {
     };
 
     return (
-        <footer className="bg-[#0D1117] border-t border-white/5">
+        <footer className="bg-luxury-dark border-t border-white/5">
             {/* CTA stripe */}
             <div className="border-b border-white/5 py-16 px-6 lg:px-12">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
@@ -75,7 +75,7 @@ const LandingFooter = ({ variant: _variant = "dark" }) => {
                     <div className="flex-shrink-0">
                         <Link
                             to="/signup"
-                            className="inline-flex items-center gap-2 bg-[#0F172A] text-white px-8 py-3.5 luxury-label font-semibold hover:bg-[#008A52] transition-colors duration-300"
+                            className="inline-flex items-center gap-2 bg-luxury-midnight text-white px-8 py-3.5 luxury-label font-semibold hover:bg-[#008A52] transition-colors duration-300"
                         >
                             Get Started Free
                         </Link>
