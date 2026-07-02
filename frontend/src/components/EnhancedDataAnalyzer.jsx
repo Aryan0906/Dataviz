@@ -61,6 +61,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+const fitLocalModel = (points, type, degree = 2) => {
+    const dataX = points.map(p => p[0]);
+    const dataY = points.map(p => p[1]);
+    const n = points.length;
+
+    const meanX = dataX.reduce((a, b) => a + b, 0) / n;
+    const meanY = dataY.reduce((a, b) => a + b, 0) / n;
+    
+    let varX = 0;
+    let covXY = 0;
+    for (let i = 0; i < n; i++) {
+        varX += Math.pow(dataX[i] - meanX, 2);
+        covXY += (dataX[i] - meanX) * (dataY[i] - meanY);
+    }
+
+    if (type === 'linear') {
+        const res = regression.linear(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+    }
+    if (type === 'exponential') {
+        const res = regression.exponential(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Exponential Regression' };
+    }
+    if (type === 'logarithmic') {
+        const res = regression.logarithmic(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Logarithmic Regression' };
+    }
+    if (type === 'power') {
+        const res = regression.power(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Power Regression' };
+    }
+    if (type === 'polynomial') {
+        const res = regression.polynomial(points, { order: degree });
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: `Polynomial Regression (Degree ${degree})` };
+    }
+
+    if (type === 'ridge' || type === 'lasso' || type === 'elasticnet') {
+        const alpha = 1.0;
+        let m = 0;
+        if (type === 'ridge') {
+            m = varX + alpha !== 0 ? covXY / (varX + alpha) : 0;
+        } else if (type === 'lasso') {
+            m = varX !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - alpha / 2)) / varX : 0;
+        } else {
+            const l1 = 0.5;
+            m = (varX + alpha * (1 - l1)) !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - (alpha * l1) / 2)) / (varX + alpha * (1 - l1)) : 0;
+        }
+        const c = meanY - m * meanX;
+        const predY = dataX.map(x => m * x + c);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => m * x + c,
+            string: `y = ${m.toFixed(4)}x + ${c.toFixed(4)}`,
+            r2,
+            name: type === 'ridge' ? 'Ridge Regression' : type === 'lasso' ? 'Lasso Regression' : 'Elastic Net Regression'
+        };
+    }
+
+    const res = regression.linear(points);
+    return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+};
+
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
     const { session, isGuest } = useAuth();
