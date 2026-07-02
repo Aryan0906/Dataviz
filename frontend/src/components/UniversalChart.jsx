@@ -993,6 +993,51 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 19. Dumbbell Plot (Category horizontal track connecting Min & Max dots)
+        if (type === 'dumbbell') {
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">Dumbbell Min-Max Range Plot</h4>
+                        <svg viewBox="0 0 500 260" className="w-full h-auto">
+                            {/* Axis lines */}
+                            <line x1="100" y1="20" x2="100" y2="220" stroke="hsl(var(--border))" strokeWidth="1" />
+                            <line x1="100" y1="220" x2="480" y2="220" stroke="hsl(var(--border))" strokeWidth="1" />
+                            
+                            {chartData.map((d, idx) => {
+                                const count = chartData.length;
+                                const y = 35 + idx * (180 / count);
+                                const minVal = d.value * 0.45;
+                                const maxVal = d.value;
+                                
+                                // Map values horizontally (from 100 to 455)
+                                const xMin = 100 + (minVal * 1.5);
+                                const xMax = 100 + (maxVal * 1.5);
+
+                                return (
+                                    <g key={idx} className="cursor-pointer" onClick={() => onBarClick && onBarClick(d.name)}>
+                                        <title>{`${d.name}\nLower: ${Math.round(minVal)}\nUpper: ${Math.round(maxVal)}`}</title>
+                                        {/* Label */}
+                                        <text x="85" y={y + 4} fontSize="9" fontWeight="500" textAnchor="end" className="fill-foreground">{d.name}</text>
+                                        
+                                        {/* Connector track */}
+                                        <line x1="100" y1={y} x2="480" y2={y} stroke="hsl(var(--border))" strokeDasharray="2 2" strokeWidth="0.5" />
+                                        
+                                        {/* Range ribbon line */}
+                                        <line x1={xMin} y1={y} x2={xMax} y2={y} stroke={d.color || "hsl(var(--primary))"} strokeWidth="4" strokeLinecap="round" opacity="0.65" />
+                                        
+                                        {/* Dumbbell dots */}
+                                        <circle cx={xMin} cy={y} r="6" fill="#6b7280" />
+                                        <circle cx={xMax} cy={y} r="7" fill={d.color} />
+                                    </g>
+                                );
+                            })}
+                        </svg>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
