@@ -910,6 +910,67 @@ export const CategoricalChatPanel = () => {
 
             </div>
 
+            {/* Interactive Edit Item Dialog */}
+            <AlertDialog open={showEditItemDialog} onOpenChange={setShowEditItemDialog}>
+                <AlertDialogContent className="sm:max-w-[420px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-4.5 w-4.5 text-indigo-500" />
+                            Category Actions: "{selectedChartItem?.originalLabel}"
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Edit the category name and numerical value, filter the table view, or exclude the category.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    {selectedChartItem && (
+                        <div className="space-y-4 py-2 text-xs">
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-muted-foreground">Category Name</label>
+                                <Input
+                                    value={selectedChartItem.label}
+                                    onChange={(e) => setSelectedChartItem(prev => ({ ...prev, label: e.target.value }))}
+                                    className="h-8 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-muted-foreground">Numerical Value</label>
+                                <Input
+                                    type="number"
+                                    value={selectedChartItem.value}
+                                    onChange={(e) => setSelectedChartItem(prev => ({ ...prev, value: e.target.value }))}
+                                    className="h-8 text-xs"
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleFilterTableItem}
+                                    className="flex-1 gap-1.5 h-8 text-xs"
+                                >
+                                    <Search className="h-3.5 w-3.5" />
+                                    Filter Table
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={handleExcludeChartItem}
+                                    className="flex-1 gap-1.5 h-8 text-xs"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Exclude Item
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex gap-2 justify-end pt-2">
+                        <AlertDialogCancel className="h-8 text-xs">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSaveChartItem} className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700">
+                            Save Changes
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
