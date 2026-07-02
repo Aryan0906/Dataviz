@@ -171,10 +171,12 @@ const DesmosPlot = () => {
     // Holds expressions loaded from a previous session that need to be
     // applied once the calculator finishes initialising.
     const pendingRestoreRef = useRef(null);
+    // Tracks whether the initial restore has been consumed, so auto-save
+    // doesn't fire during the noisy calculator init phase.
+    const readyToSaveRef = useRef(false);
 
     // Session state — persists live expressions (the real calculator truth)
-    // and the chosen export theme.  Gated on !isLoading so the init
-    // change-event noise never clobbers a real saved session.
+    // and the chosen export theme.
     const sessionState = useMemo(() => ({
         expressions: liveExpressions.map(latex => ({ latex })),
         exportTheme,
@@ -186,15 +188,16 @@ const DesmosPlot = () => {
     const restoreState = useCallback((savedState) => {
         console.log('[DesmosPlot] Restoring state (deferred):', savedState);
         if (savedState?.expressions?.length) {
-            pendingRestoreRef.current = savedState.expressions; // stash for post-init
+            pendingRestoreRef.current = savedState.expressions;
         }
         if (savedState?.exportTheme) {
             setExportTheme(savedState.exportTheme);
         }
     }, []);
 
-    // Session persistence hooks
-    const { saveNow } = usePageSession('curve', isLoading ? null : sessionState, restoreState);
+    // Always pass a valid object — never null — to avoid usePageSession crashing
+    // on savePageSession(pageType, null). readyToSaveRef gates writes internally.
+    const { saveNow } = usePageSession('curve', sessionState, restoreState);
     const { logExport } = useHistoryLogger('curve');
 
     // Follow app theme (system aware)
