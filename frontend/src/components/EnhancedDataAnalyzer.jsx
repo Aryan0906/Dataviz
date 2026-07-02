@@ -1438,7 +1438,7 @@ export const EnhancedDataAnalyzer = () => {
                                     data={data}
                                     onDataChange={setData}
                                     selectedPointIndex={selectedPointIndex}
-                                    onRowSelect={setSelectedPointIndex}
+                                    onRowSelect={handlePointClick}
                                     onClearAll={clearData}
                                 />
                             </CardContent>
@@ -1446,26 +1446,29 @@ export const EnhancedDataAnalyzer = () => {
 
                         {/* Live Data Visualization */}
                         {data.length > 0 ? (
-                            <Card className="border-2 h-full flex flex-col justify-between">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <TrendingUp className="h-5 w-5 text-primary" />
-                                        Live Visualization
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Real-time preview of the {data.length} plotted data points
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
-                                    <UniversalChart
-                                        type="regression"
-                                        data={data}
-                                        regression={regressionResult}
-                                        title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
-                                        selectedPointIndex={selectedPointIndex}
-                                    />
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-6">
+                                <Card className="border-2 flex flex-col justify-between">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <TrendingUp className="h-5 w-5 text-primary" />
+                                            Live Visualization
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Real-time preview of the {data.length} plotted data points. Click a point to edit or filter it out.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
+                                        <UniversalChart
+                                            type="regression"
+                                            data={data}
+                                            regression={regressionResult}
+                                            title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
+                                            selectedPointIndex={selectedPointIndex}
+                                            onPointClick={handlePointClick}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </div>
                         ) : (
                             <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
                                 <TrendingUp className="h-12 w-12 text-muted-foreground opacity-30 mb-4 animate-pulse" />
