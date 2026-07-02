@@ -99,12 +99,6 @@ const AppLayout = ({ children }) => {
             icon: TrendingUp,
             description: 'Plot & visualize data',
         },
-        {
-            title: 'Categorical Chat',
-            url: '/categorical',
-            icon: BarChart3,
-            description: 'NLP & manual command chat',
-        },
     ];
 
     const secondaryItems = [
