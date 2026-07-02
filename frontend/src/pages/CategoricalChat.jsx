@@ -414,10 +414,78 @@ export const CategoricalChatPanel = () => {
     // Dynamic coloring for chart bar click
     const handleChartClick = (label) => {
         const xKey = xAxisKey || 'label';
-        const filtered = categoricalData.filter(row => String(row[xKey]) === label);
-        setFilteredData(filtered);
-        setTableSearch(label);
-        toast.info(`Filtered table to "${label}"`);
+        const yKey = dataKeys[0] || 'value';
+        
+        // Find current matching item in categoricalData
+        const match = categoricalData.find(row => String(row[xKey]) === label);
+        const val = match ? Number(match[yKey]) : 0;
+
+        setSelectedChartItem({
+            originalLabel: label,
+            label: label,
+            value: val
+        });
+        setShowEditItemDialog(true);
+    };
+
+    const handleSaveChartItem = () => {
+        if (!selectedChartItem) return;
+        const xKey = xAxisKey || 'label';
+        const yKey = dataKeys[0] || 'value';
+
+        const updatedCat = categoricalData.map(row => {
+            if (String(row[xKey]) === selectedChartItem.originalLabel) {
+                return {
+                    ...row,
+                    [xKey]: selectedChartItem.label,
+                    [yKey]: Number(selectedChartItem.value)
+                };
+            }
+            return row;
+        });
+
+        const updatedChart = chartData.map(row => {
+            if (String(row.name) === selectedChartItem.originalLabel) {
+                return {
+                    ...row,
+                    name: selectedChartItem.label,
+                    value: Number(selectedChartItem.value)
+                };
+            }
+            return row;
+        });
+
+        setCategoricalData(updatedCat);
+        setChartData(updatedChart);
+        setFilteredData(updatedCat);
+
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.success(`Successfully updated category "${selectedChartItem.label}"`);
+    };
+
+    const handleExcludeChartItem = () => {
+        if (!selectedChartItem) return;
+        const xKey = xAxisKey || 'label';
+
+        const updatedCat = categoricalData.filter(row => String(row[xKey]) !== selectedChartItem.originalLabel);
+        const updatedChart = chartData.filter(row => String(row.name) !== selectedChartItem.originalLabel);
+
+        setCategoricalData(updatedCat);
+        setChartData(updatedChart);
+        setFilteredData(updatedCat);
+
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.success(`Excluded category "${selectedChartItem.originalLabel}"`);
+    };
+
+    const handleFilterTableItem = () => {
+        if (!selectedChartItem) return;
+        setTableSearch(selectedChartItem.originalLabel);
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.info(`Filtered table to "${selectedChartItem.originalLabel}"`);
     };
 
     // Export handler callback for logging
