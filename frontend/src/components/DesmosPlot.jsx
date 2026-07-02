@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Sun, Moon, Save, Upload, Copy, Code } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Save, Upload, Copy, Code } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
 import { wrapSvgWithXmlMetadata } from "@/lib/chartExport";
@@ -168,35 +168,33 @@ const DesmosPlot = () => {
         }
     };
 
-    // Session state for persistence
-    const sessionState = useMemo(() => ({
-        expressions,
-        exportTheme,
-    }), [expressions, exportTheme]);
+    // Holds expressions loaded from a previous session that need to be
+    // applied once the calculator finishes initialising.
+    const pendingRestoreRef = useRef(null);
 
-    // Restore state callback
+    // Session state — persists live expressions (the real calculator truth)
+    // and the chosen export theme.  Gated on !isLoading so the init
+    // change-event noise never clobbers a real saved session.
+    const sessionState = useMemo(() => ({
+        expressions: liveExpressions.map(latex => ({ latex })),
+        exportTheme,
+    }), [liveExpressions, exportTheme]);
+
+    // Restore state callback — called by usePageSession on mount.
+    // At this point the calculator is usually not ready yet, so we stash
+    // the data in a ref and apply it after init (see the effect below).
     const restoreState = useCallback((savedState) => {
-        console.log('[DesmosPlot] Restoring state:', savedState);
-        if (savedState.expressions) {
-            setExpressions(savedState.expressions);
-            // Restore expressions to calculator if it's ready
-            if (calculatorRef.current) {
-                savedState.expressions.forEach(expr => {
-                    try {
-                        calculatorRef.current.setExpression(expr);
-                    } catch (error) {
-                        console.error('[DesmosPlot] Error restoring expression:', error);
-                    }
-                });
-            }
+        console.log('[DesmosPlot] Restoring state (deferred):', savedState);
+        if (savedState?.expressions?.length) {
+            pendingRestoreRef.current = savedState.expressions; // stash for post-init
         }
-        if (savedState.exportTheme) {
+        if (savedState?.exportTheme) {
             setExportTheme(savedState.exportTheme);
         }
     }, []);
 
     // Session persistence hooks
-    const { saveNow } = usePageSession('curve', sessionState, restoreState);
+    const { saveNow } = usePageSession('curve', isLoading ? null : sessionState, restoreState);
     const { logExport } = useHistoryLogger('curve');
 
     // Follow app theme (system aware)
@@ -271,6 +269,34 @@ const DesmosPlot = () => {
             cancelled = true;
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Once the calculator is ready, apply any expressions that were saved in
+    // a previous session (stashed in pendingRestoreRef during restoreState).
+    useEffect(() => {
+        if (isLoading || !calculatorRef.current) return;
+        if (!pendingRestoreRef.current?.length) return;
+
+        const toRestore = pendingRestoreRef.current;
+        pendingRestoreRef.current = null; // consume once
+
+        try {
+            // Atomic replace so we don't stack on top of init defaults
+            const currentState = calculatorRef.current.getState();
+            calculatorRef.current.setState({
+                ...currentState,
+                expressions: {
+                    list: toRestore.map((e, i) => ({
+                        type: 'expression',
+                        id: e.id || `restored-${i}`,
+                        latex: e.latex,
+                    })),
+                },
+            });
+            console.log('[DesmosPlot] Session restored into calculator:', toRestore.length, 'expressions');
+        } catch (err) {
+            console.error('[DesmosPlot] Failed to restore session into calculator:', err);
+        }
+    }, [isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Theme updates with retry for DOM readiness
     useEffect(() => {
@@ -609,28 +635,7 @@ const DesmosPlot = () => {
                         buttonVariant="outline"
                     />
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button
-                        onClick={() => {
-                            const newTheme = currentTheme === "dark" ? "light" : "dark";
-                            setCurrentTheme(newTheme);
-                            toast.success(`Switched to ${newTheme} theme`);
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="gap-2"
-                        title="Toggle theme for graph"
-                    >
-                        {currentTheme === "dark" ? (
-                            <Sun className="h-4 w-4" />
-                        ) : (
-                            <Moon className="h-4 w-4" />
-                        )}
-                    </Button>
-                    <div className="text-sm text-muted-foreground">
-                        Theme: <span className="font-semibold capitalize">{currentTheme}</span>
-                    </div>
-                </div>
+
             </div>
 
             {/* Main Layout */}
