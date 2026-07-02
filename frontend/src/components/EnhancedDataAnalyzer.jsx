@@ -61,6 +61,223 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+const fitLocalModel = (points, type, degree = 2) => {
+    const dataX = points.map(p => p[0]);
+    const dataY = points.map(p => p[1]);
+    const n = points.length;
+
+    const meanX = dataX.reduce((a, b) => a + b, 0) / n;
+    const meanY = dataY.reduce((a, b) => a + b, 0) / n;
+    
+    let varX = 0;
+    let covXY = 0;
+    for (let i = 0; i < n; i++) {
+        varX += Math.pow(dataX[i] - meanX, 2);
+        covXY += (dataX[i] - meanX) * (dataY[i] - meanY);
+    }
+
+    if (type === 'linear') {
+        const res = regression.linear(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+    }
+    if (type === 'exponential') {
+        const res = regression.exponential(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Exponential Regression' };
+    }
+    if (type === 'logarithmic') {
+        const res = regression.logarithmic(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Logarithmic Regression' };
+    }
+    if (type === 'power') {
+        const res = regression.power(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Power Regression' };
+    }
+    if (type === 'polynomial') {
+        const res = regression.polynomial(points, { order: degree });
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: `Polynomial Regression (Degree ${degree})` };
+    }
+
+    if (type === 'ridge' || type === 'lasso' || type === 'elasticnet') {
+        const alpha = 1.0;
+        let m = 0;
+        if (type === 'ridge') {
+            m = varX + alpha !== 0 ? covXY / (varX + alpha) : 0;
+        } else if (type === 'lasso') {
+            m = varX !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - alpha / 2)) / varX : 0;
+        } else {
+            const l1 = 0.5;
+            m = (varX + alpha * (1 - l1)) !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - (alpha * l1) / 2)) / (varX + alpha * (1 - l1)) : 0;
+        }
+        const c = meanY - m * meanX;
+        const predY = dataX.map(x => m * x + c);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => m * x + c,
+            string: `y = ${m.toFixed(4)}x + ${c.toFixed(4)}`,
+            r2,
+            name: type === 'ridge' ? 'Ridge Regression' : type === 'lasso' ? 'Lasso Regression' : 'Elastic Net Regression'
+        };
+    }
+
+    if (type === 'svr') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const C = 1.0;
+        const epsilon = 0.1;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = m;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                if (Math.abs(diff) > epsilon) {
+                    const sign = diff > 0 ? 1 : -1;
+                    gradM -= C * sign * scaledX[i];
+                    gradC -= C * sign;
+                }
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)}`,
+            r2,
+            name: 'Support Vector Regression (SVR)'
+        };
+    }
+
+    if (type === 'decision_tree') {
+        const sortedPoints = [...points].sort((a, b) => a[0] - b[0]);
+        let bestSplitVal = null;
+        let minSse = Infinity;
+        let leftMean = meanY, rightMean = meanY;
+        for (let i = 1; i < n; i++) {
+            const splitVal = (sortedPoints[i-1][0] + sortedPoints[i][0]) / 2;
+            const left = sortedPoints.slice(0, i);
+            const right = sortedPoints.slice(i);
+            const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+            const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+            const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                        right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+            if (sse < minSse) {
+                minSse = sse;
+                bestSplitVal = splitVal;
+                leftMean = mLeft;
+                rightMean = mRight;
+            }
+        }
+        const predY = dataX.map(x => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean,
+            string: bestSplitVal === null ? `y = ${meanY.toFixed(4)}` : `y = ${leftMean.toFixed(2)} (if x < ${bestSplitVal.toFixed(2)}) else ${rightMean.toFixed(2)}`,
+            r2,
+            name: 'Decision Tree Regression'
+        };
+    }
+
+    if (type === 'random_forest') {
+        const trees = [];
+        const numTrees = 5;
+        for (let t = 0; t < numTrees; t++) {
+            const sample = [];
+            for (let i = 0; i < n; i++) {
+                sample.push(points[Math.floor(Math.random() * n)]);
+            }
+            sample.sort((a, b) => a[0] - b[0]);
+            let bestSplitVal = null;
+            let minSse = Infinity;
+            let leftMean = meanY, rightMean = meanY;
+            for (let i = 1; i < sample.length; i++) {
+                const splitVal = (sample[i-1][0] + sample[i][0]) / 2;
+                const left = sample.slice(0, i);
+                const right = sample.slice(i);
+                const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+                const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+                const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                            right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+                if (sse < minSse) {
+                    minSse = sse;
+                    bestSplitVal = splitVal;
+                    leftMean = mLeft;
+                    rightMean = mRight;
+                }
+            }
+            trees.push({ splitVal: bestSplitVal, leftMean, rightMean });
+        }
+        const predictFn = (x) => {
+            const preds = trees.map(tree => {
+                if (tree.splitVal === null) return meanY;
+                return x < tree.splitVal ? tree.leftMean : tree.rightMean;
+            });
+            return preds.reduce((a, b) => a + b, 0) / preds.length;
+        };
+        const predY = dataX.map(x => predictFn(x));
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: predictFn,
+            string: `Random Forest Ensemble (${numTrees} trees)`,
+            r2,
+            name: 'Random Forest Regression'
+        };
+    }
+
+    if (type === 'quantile') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const tau = 0.5;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = 0;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                const g = diff < 0 ? (tau - 1) : tau;
+                gradM -= scaledX[i] * g;
+                gradC -= g;
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)} (τ=0.5)`,
+            r2,
+            name: 'Quantile Regression (Median Fit)'
+        };
+    }
+
+    const res = regression.linear(points);
+    return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+};
+
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
     const { session, isGuest } = useAuth();
@@ -244,7 +461,7 @@ export const EnhancedDataAnalyzer = () => {
             modelToRequest = modelTypeOverride;
         }
 
-        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial"];
+        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
         const isStandardModel = standardModels.includes(modelToRequest);
 
         if (isStandardModel) {
@@ -255,33 +472,25 @@ export const EnhancedDataAnalyzer = () => {
                 let typeApplied = modelToRequest || "linear";
 
                 if (typeApplied === "auto") {
-                    const candidates = [
-                        { type: 'linear', res: regression.linear(points) },
-                        { type: 'exponential', res: regression.exponential(points) },
-                        { type: 'logarithmic', res: regression.logarithmic(points) },
-                        { type: 'power', res: regression.power(points) },
-                        { type: 'polynomial', res: regression.polynomial(points, { order: 2 }) }
-                    ];
+                    const modelTypes = ["linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
+                    const candidates = modelTypes.map(t => {
+                        try {
+                            return { type: t, res: fitLocalModel(points, t, polynomialDegree) };
+                        } catch {
+                            return null;
+                        }
+                    }).filter(Boolean);
                     const valid = candidates.filter(c => c.res && !isNaN(c.res.r2));
                     if (valid.length > 0) {
                         const best = valid.reduce((prev, curr) => curr.res.r2 > prev.res.r2 ? curr : prev);
                         bestResult = best.res;
                         typeApplied = best.type;
                     } else {
-                        bestResult = regression.linear(points);
+                        bestResult = fitLocalModel(points, 'linear');
                         typeApplied = 'linear';
                     }
-                } else if (typeApplied === "polynomial") {
-                    bestResult = regression.polynomial(points, { order: polynomialDegree });
                 } else {
-                    if (typeApplied === 'linear') bestResult = regression.linear(points);
-                    else if (typeApplied === 'exponential') bestResult = regression.exponential(points);
-                    else if (typeApplied === 'logarithmic') bestResult = regression.logarithmic(points);
-                    else if (typeApplied === 'power') bestResult = regression.power(points);
-                    else {
-                        bestResult = regression.linear(points);
-                        typeApplied = 'linear';
-                    }
+                    bestResult = fitLocalModel(points, typeApplied, polynomialDegree);
                 }
 
                 if (!bestResult || isNaN(bestResult.r2)) {
@@ -293,7 +502,7 @@ export const EnhancedDataAnalyzer = () => {
                 const maxX = Math.max(...data.map(d => d.x));
                 const step = (maxX - minX) / 100 || 1;
                 for (let x = minX; x <= maxX; x += step) {
-                    const y = bestResult.predict(x)[1];
+                    const y = bestResult.predict(x);
                     if (isFinite(y)) {
                         predictions.push([x, y]);
                     }
@@ -305,14 +514,23 @@ export const EnhancedDataAnalyzer = () => {
                 const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
                 const stdDevY = Math.sqrt(varianceY);
 
+                const yPreds = data.map(d => bestResult.predict(d.x));
+                const sse = data.reduce((sum, d, i) => sum + Math.pow(d.y - yPreds[i], 2), 0);
+                const sst = data.reduce((sum, d) => sum + Math.pow(d.y - meanY, 2), 0);
+                const r2 = sst !== 0 ? 1 - sse / sst : 0;
+                const p = 1;
+                const adjustedR2 = n > p + 1 ? 1 - (1 - r2) * (n - 1) / (n - p - 1) : r2;
+                const rmse = Math.sqrt(sse / n);
+                const mae = data.reduce((sum, d, i) => sum + Math.abs(d.y - yPreds[i]), 0) / n;
+
                 const localResult = {
-                    r2: bestResult.r2,
-                    adjustedR2: bestResult.r2,
-                    rmse: 0,
-                    mae: 0,
-                    modelName: `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
+                    r2: r2,
+                    adjustedR2: adjustedR2,
+                    rmse: rmse,
+                    mae: mae,
+                    modelName: bestResult.name || `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
                     predictions: predictions,
-                    predict: (x) => bestResult.predict(x)[1],
+                    predict: (x) => bestResult.predict(x),
                     type: typeApplied,
                     equation: bestResult.string,
                     details: {
@@ -320,16 +538,16 @@ export const EnhancedDataAnalyzer = () => {
                         stdDevY: stdDevY,
                         varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                         varianceY: varianceY,
-                        adjustedR2: bestResult.r2,
-                        rmse: 0,
-                        mae: 0,
+                        adjustedR2: adjustedR2,
+                        rmse: rmse,
+                        mae: mae,
                         localFallback: true
                     }
                 };
 
                 setRegressionResult(localResult);
                 setLoading(false);
-                toast.success(`Model fitted successfully: ${typeApplied} (Instant Client-Side)`);
+                toast.success(`Model fitted successfully: ${localResult.modelName} (Instant Client-Side)`);
                 return;
             } catch (fallbackErr) {
                 console.error("Local regression fit failed:", fallbackErr);
