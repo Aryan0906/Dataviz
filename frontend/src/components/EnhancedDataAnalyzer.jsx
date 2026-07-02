@@ -468,6 +468,9 @@ export const EnhancedDataAnalyzer = () => {
             try {
                 // Client-side regression fitting
                 const points = data.map(d => [d.x, d.y]);
+                const n = data.length;
+                const ys = data.map(d => d.y);
+                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
                 let bestResult = null;
                 let typeApplied = modelToRequest || "linear";
 
@@ -475,14 +478,56 @@ export const EnhancedDataAnalyzer = () => {
                     const modelTypes = ["linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
                     const candidates = modelTypes.map(t => {
                         try {
-                            return { type: t, res: fitLocalModel(points, t, polynomialDegree) };
+                            const fit = fitLocalModel(points, t, polynomialDegree);
+                            if (!fit || typeof fit.predict !== 'function') return null;
+
+                            // Calculate R2, MAE, RMSE for this fit
+                            const yPreds = data.map(d => fit.predict(d.x));
+                            const sse = data.reduce((sum, d, i) => sum + Math.pow(d.y - yPreds[i], 2), 0);
+                            const sst = data.reduce((sum, d) => sum + Math.pow(d.y - meanY, 2), 0);
+                            const r2 = sst !== 0 ? 1 - sse / sst : 0;
+                            const rmse = Math.sqrt(sse / n);
+                            const mae = data.reduce((sum, d, i) => sum + Math.abs(d.y - yPreds[i]), 0) / n;
+
+                            if (isNaN(r2) || isNaN(rmse) || isNaN(mae)) return null;
+
+                            return {
+                                type: t,
+                                res: {
+                                    ...fit,
+                                    r2,
+                                    rmse,
+                                    mae
+                                }
+                            };
                         } catch {
                             return null;
                         }
                     }).filter(Boolean);
-                    const valid = candidates.filter(c => c.res && !isNaN(c.res.r2));
-                    if (valid.length > 0) {
-                        const best = valid.reduce((prev, curr) => curr.res.r2 > prev.res.r2 ? curr : prev);
+
+                    if (candidates.length > 0) {
+                        const sortedByR2 = [...candidates].sort((a, b) => b.res.r2 - a.res.r2);
+                        const sortedByRMSE = [...candidates].sort((a, b) => a.res.rmse - b.res.rmse);
+                        const sortedByMAE = [...candidates].sort((a, b) => a.res.mae - b.res.mae);
+
+                        const ranks = new Map();
+                        candidates.forEach(c => {
+                            const r2Rank = sortedByR2.findIndex(x => x.type === c.type) + 1;
+                            const rmseRank = sortedByRMSE.findIndex(x => x.type === c.type) + 1;
+                            const maeRank = sortedByMAE.findIndex(x => x.type === c.type) + 1;
+                            ranks.set(c.type, (r2Rank + rmseRank + maeRank) / 3);
+                        });
+
+                        const best = candidates.reduce((prev, curr) => {
+                            const scorePrev = ranks.get(prev.type);
+                            const scoreCurr = ranks.get(curr.type);
+                            if (scoreCurr < scorePrev) return curr;
+                            if (scoreCurr === scorePrev) {
+                                return curr.res.r2 > prev.res.r2 ? curr : prev;
+                            }
+                            return prev;
+                        });
+
                         bestResult = best.res;
                         typeApplied = best.type;
                     } else {
@@ -508,9 +553,6 @@ export const EnhancedDataAnalyzer = () => {
                     }
                 }
 
-                const n = data.length;
-                const ys = data.map(d => d.y);
-                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
                 const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
                 const stdDevY = Math.sqrt(varianceY);
 
