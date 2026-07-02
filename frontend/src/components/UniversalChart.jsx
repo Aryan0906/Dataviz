@@ -775,6 +775,70 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 15. Sunburst Chart (Double-concentric group ring Pie segments)
+        if (type === 'sunburst') {
+            const halfIndex = Math.ceil(chartData.length / 2);
+            const ring1Sum = chartData.slice(0, halfIndex).reduce((acc, d) => acc + d.value, 0);
+            const ring2Sum = chartData.slice(halfIndex).reduce((acc, d) => acc + d.value, 0);
+
+            const innerRingData = [
+                { name: "Cluster Alpha", value: ring1Sum, color: "#4f46e5" },
+                { name: "Cluster Beta", value: ring2Sum, color: "#f97316" }
+            ].filter(r => r.value > 0);
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <PieChart>
+                                {/* Inner Cluster group ring */}
+                                <Pie
+                                    data={innerRingData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={50}
+                                    fill="#8884d8"
+                                    cursor="pointer"
+                                    onClick={(entry) => onBarClick && onBarClick(entry.name)}
+                                >
+                                    {innerRingData.map((entry, index) => (
+                                        <Cell key={`inner-cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                {/* Outer detailed category ring */}
+                                <Pie
+                                    data={chartData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={95}
+                                    label={(entry) => `${entry.name}: ${entry.value}`}
+                                    cursor="pointer"
+                                    onClick={(entry) => onBarClick && onBarClick(entry.name)}
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`outer-cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Legend />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
