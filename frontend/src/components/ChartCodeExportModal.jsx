@@ -1667,8 +1667,250 @@ except Exception as e:
     return generateRegressionCode('matplotlib', regData); // Fallback
   };
 
+  // Curve/Mathematical 3D plot code generator
+  const generate3DCurveCode = (library, curveData) => {
+    const expressions = curveData?.expressions || [];
+
+    if (expressions.length === 0) {
+      return `"""
+Mathematical 3D Curve Plot - ${chartTitle}
+No expressions available
+"""
+
+# Please add mathematical expressions first
+print("No expressions available for plotting")
+`;
+    }
+
+    if (library === 'matplotlib') {
+      return `"""
+Mathematical 3D Curve Plot - ${chartTitle}
+Expressions: ${expressions.join(', ')}
+Generated from DataViz Analytics Platform
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
+import re
+
+# Create 3D figure
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(projection='3d')
+
+def plot_expression_3d(ax, expr, color):
+    # Convert LaTeX frac{a}{b} to (a)/(b)
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
+    
+    # Strip backslashes and replace braces
+    python_expr = temp.replace('\\\\', '')
+    python_expr = python_expr.replace('{', '(').replace('}', ')')
+    python_expr = python_expr.replace('sin', 'np.sin')
+    python_expr = python_expr.replace('cos', 'np.cos')
+    python_expr = python_expr.replace('tan', 'np.tan')
+    python_expr = python_expr.replace('sqrt', 'np.sqrt')
+    python_expr = python_expr.replace('log', 'np.log')
+    python_expr = python_expr.replace('abs', 'np.abs')
+    python_expr = python_expr.replace('^', '**')
+    python_expr = python_expr.replace('e**', 'np.e**')
+    
+    try:
+        x_vals = np.linspace(-5, 5, 100)
+        y_vals = np.linspace(-5, 5, 100)
+        X, Y = np.meshgrid(x_vals, y_vals)
+
+        if '=' in python_expr:
+            parts = python_expr.split('=')
+            lhs = parts[0].strip()
+            rhs = parts[1].strip()
+            
+            if lhs == 'z':
+                Z = eval(rhs, {'x': X, 'y': Y, 'np': np})
+                surf = ax.plot_surface(X, Y, Z, color=color, alpha=0.7, edgecolor='none', label=expr)
+                return surf
+        
+        # Fallback evaluation as explicit z surface
+        Z = eval(python_expr, {'x': X, 'y': Y, 'np': np})
+        surf = ax.plot_surface(X, Y, Z, color=color, alpha=0.7, edgecolor='none', label=expr)
+        return surf
+    except Exception as e:
+        print(f"Error plotting 3D expression '{expr}': {e}")
+        return None
+
+expressions = ${JSON.stringify(expressions)}
+colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+
+for i, expr in enumerate(expressions):
+    plot_expression_3d(ax, expr, colors[i % len(colors)])
+
+ax.set_xlabel('X Label', fontsize=11, fontweight='bold')
+ax.set_ylabel('Y Label', fontsize=11, fontweight='bold')
+ax.set_zlabel('Z Label', fontsize=11, fontweight='bold')
+ax.set_title('${chartTitle}', fontsize=14, fontweight='bold', pad=20)
+
+plt.tight_layout()
+plt.savefig('mathematical_curve_3d_matplotlib.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+print("Chart saved as 'mathematical_curve_3d_matplotlib.png'")
+`;
+    } else if (library === 'seaborn') {
+      return `"""
+Mathematical 3D Curve Plot - ${chartTitle}
+Expressions: ${expressions.join(', ')}
+Generated from DataViz Analytics Platform
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import re
+
+sns.set_theme(style="whitegrid")
+
+# Create 3D figure with Seaborn aesthetics
+fig = plt.figure(figsize=(12, 9))
+ax = fig.add_subplot(projection='3d')
+
+def plot_expression_3d(ax, expr, color):
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
+    
+    python_expr = temp.replace('\\\\', '')
+    python_expr = python_expr.replace('{', '(').replace('}', ')')
+    python_expr = python_expr.replace('sin', 'np.sin')
+    python_expr = python_expr.replace('cos', 'np.cos')
+    python_expr = python_expr.replace('tan', 'np.tan')
+    python_expr = python_expr.replace('sqrt', 'np.sqrt')
+    python_expr = python_expr.replace('log', 'np.log')
+    python_expr = python_expr.replace('abs', 'np.abs')
+    python_expr = python_expr.replace('^', '**')
+    python_expr = python_expr.replace('e**', 'np.e**')
+    
+    try:
+        x_vals = np.linspace(-5, 5, 100)
+        y_vals = np.linspace(-5, 5, 100)
+        X, Y = np.meshgrid(x_vals, y_vals)
+
+        if '=' in python_expr:
+            parts = python_expr.split('=')
+            lhs = parts[0].strip()
+            rhs = parts[1].strip()
+            
+            if lhs == 'z':
+                Z = eval(rhs, {'x': X, 'y': Y, 'np': np})
+                surf = ax.plot_surface(X, Y, Z, color=color, alpha=0.7, edgecolor='none', label=expr)
+                return surf
+        
+        Z = eval(python_expr, {'x': X, 'y': Y, 'np': np})
+        surf = ax.plot_surface(X, Y, Z, color=color, alpha=0.7, edgecolor='none', label=expr)
+        return surf
+    except Exception as e:
+        print(f"Error plotting 3D expression '{expr}': {e}")
+        return None
+
+expressions = ${JSON.stringify(expressions)}
+colors = sns.color_palette("husl", len(expressions))
+
+for i, expr in enumerate(expressions):
+    plot_expression_3d(ax, expr, colors[i])
+
+ax.set_xlabel('X Label', fontsize=11, fontweight='bold')
+ax.set_ylabel('Y Label', fontsize=11, fontweight='bold')
+ax.set_zlabel('Z Label', fontsize=11, fontweight='bold')
+ax.set_title('${chartTitle}', fontsize=14, fontweight='bold', pad=20)
+
+plt.tight_layout()
+plt.savefig('mathematical_curve_3d_seaborn.png', dpi=300, bbox_inches='tight')
+plt.show()
+
+print("Chart saved as 'mathematical_curve_3d_seaborn.png'")
+`;
+    } else if (library === 'plotly') {
+      return `"""
+Mathematical 3D Curve Plot - ${chartTitle}
+Expressions: ${expressions.join(', ')}
+Generated from DataViz Analytics Platform
+"""
+
+import numpy as np
+import plotly.graph_objects as go
+import re
+
+fig = go.Figure()
+colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+
+def convert_latex(expr):
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
+    result = temp.replace('\\\\', '')
+    result = result.replace('{', '(').replace('}', ')')
+    result = result.replace('sin', 'np.sin')
+    result = result.replace('cos', 'np.cos')
+    result = result.replace('tan', 'np.tan')
+    result = result.replace('sqrt', 'np.sqrt')
+    result = result.replace('log', 'np.log')
+    result = result.replace('abs', 'np.abs')
+    result = result.replace('^', '**')
+    result = result.replace('e**', 'np.e**')
+    return result
+
+def plot_expression_3d(fig, expr, color, idx):
+    python_expr = convert_latex(expr)
+    try:
+        x_vals = np.linspace(-5, 5, 100)
+        y_vals = np.linspace(-5, 5, 100)
+        X, Y = np.meshgrid(x_vals, y_vals)
+        
+        if '=' in python_expr:
+            parts = python_expr.split('=')
+            lhs, rhs = parts[0].strip(), parts[1].strip()
+            if lhs == 'z':
+                Z = eval(rhs, {'x': X, 'y': Y, 'np': np})
+                fig.add_trace(go.Surface(x=x_vals, y=y_vals, z=Z, name=expr, showscale=False, colorscale=[[0, color], [1, color]]))
+                return
+                
+        Z = eval(python_expr, {'x': X, 'y': Y, 'np': np})
+        fig.add_trace(go.Surface(x=x_vals, y=y_vals, z=Z, name=expr, showscale=False, colorscale=[[0, color], [1, color]]))
+    except Exception as e:
+        print(f"Error plotting 3D expression '{expr}': {e}")
+
+expressions = ${JSON.stringify(expressions)}
+for i, expr in enumerate(expressions):
+    plot_expression_3d(fig, expr, colors[i % len(colors)], i)
+
+fig.update_layout(
+    title=dict(text='${chartTitle}', x=0.5, xanchor='center',
+        font=dict(size=16, family='Arial, sans-serif')),
+    scene=dict(
+        xaxis_title='X',
+        yaxis_title='Y',
+        zaxis_title='Z'
+    ),
+    width=1200, height=800,
+    template='plotly_white'
+)
+
+fig.show()
+fig.write_html('mathematical_curve_3d_plotly.html')
+print("Interactive 3D chart saved as 'mathematical_curve_3d_plotly.html'")
+`;
+    }
+    return '';
+  };
+
   // Curve/Mathematical plot code generator (for Desmos-style plots)
   const generateCurveCode = (library, curveData) => {
+    if (curveData?.is3d) {
+      return generate3DCurveCode(library, curveData);
+    }
     const expressions = curveData?.expressions || [];
 
     if (expressions.length === 0) {
