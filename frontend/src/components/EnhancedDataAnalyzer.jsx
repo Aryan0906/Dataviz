@@ -30,7 +30,9 @@ import {
     Zap,
     BookOpen,
     Activity,
-    Info
+    Info,
+    Edit2,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
@@ -92,6 +94,9 @@ export const EnhancedDataAnalyzer = () => {
     });
     const [activeTab, setActiveTab] = useState("input");
     const [selectedPointIndex, setSelectedPointIndex] = useState(null);
+    const [isEditingSelectedPoint, setIsEditingSelectedPoint] = useState(false);
+    const [editSelectedX, setEditSelectedX] = useState("");
+    const [editSelectedY, setEditSelectedY] = useState("");
 
     // Prediction feature state
     const [predictionInput, setPredictionInput] = useState("");
@@ -214,6 +219,15 @@ export const EnhancedDataAnalyzer = () => {
             addPoint();
         }
     };
+
+    const handlePointClick = useCallback((index) => {
+        setSelectedPointIndex(index);
+        setIsEditingSelectedPoint(false);
+        if (data[index]) {
+            setEditSelectedX(data[index].x.toString());
+            setEditSelectedY(data[index].y.toString());
+        }
+    }, [data]);
 
     const analyzeData = useCallback(async (modelTypeOverride) => {
         setError("");
@@ -1424,7 +1438,7 @@ export const EnhancedDataAnalyzer = () => {
                                     data={data}
                                     onDataChange={setData}
                                     selectedPointIndex={selectedPointIndex}
-                                    onRowSelect={setSelectedPointIndex}
+                                    onRowSelect={handlePointClick}
                                     onClearAll={clearData}
                                 />
                             </CardContent>
@@ -1432,26 +1446,121 @@ export const EnhancedDataAnalyzer = () => {
 
                         {/* Live Data Visualization */}
                         {data.length > 0 ? (
-                            <Card className="border-2 h-full flex flex-col justify-between">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="flex items-center gap-2">
-                                        <TrendingUp className="h-5 w-5 text-primary" />
-                                        Live Visualization
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Real-time preview of the {data.length} plotted data points
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
-                                    <UniversalChart
-                                        type="regression"
-                                        data={data}
-                                        regression={regressionResult}
-                                        title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
-                                        selectedPointIndex={selectedPointIndex}
-                                    />
-                                </CardContent>
-                            </Card>
+                            <div className="space-y-6">
+                                <Card className="border-2 flex flex-col justify-between">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <TrendingUp className="h-5 w-5 text-primary" />
+                                            Live Visualization
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Real-time preview of the {data.length} plotted data points. Click a point to edit or filter it out.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
+                                        <UniversalChart
+                                            type="regression"
+                                            data={data}
+                                            regression={regressionResult}
+                                            title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
+                                            selectedPointIndex={selectedPointIndex}
+                                            onPointClick={handlePointClick}
+                                        />
+                                    </CardContent>
+                                </Card>
+
+                                {selectedPointIndex !== null && data[selectedPointIndex] && (
+                                    <Card className="border-2 p-4 bg-muted/30 border-[#D4AF37]/30">
+                                        {isEditingSelectedPoint && (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="font-semibold text-sm">Edit Data Point #{selectedPointIndex + 1}</h4>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setIsEditingSelectedPoint(false)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-3 items-end">
+                                                    <div className="space-y-1.5 flex-1 min-w-[120px]">
+                                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">X Value</label>
+                                                        <Input type="number" step="any" value={editSelectedX} onChange={(e) => setEditSelectedX(e.target.value)} className="h-9 bg-card border-2" />
+                                                    </div>
+                                                    <div className="space-y-1.5 flex-1 min-w-[120px]">
+                                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Y Value</label>
+                                                        <Input type="number" step="any" value={editSelectedY} onChange={(e) => setEditSelectedY(e.target.value)} className="h-9 bg-card border-2" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" onClick={() => {
+                                                            const x = parseFloat(editSelectedX);
+                                                            const y = parseFloat(editSelectedY);
+                                                            if (isNaN(x) || isNaN(y)) {
+                                                                toast.error("Please enter valid numbers");
+                                                                return;
+                                                                }
+                                                            const newData = [...data];
+                                                            newData[selectedPointIndex] = { x, y };
+                                                            newData.sort((a, b) => a.x - b.x);
+                                                            setData(newData);
+                                                            setIsEditingSelectedPoint(false);
+                                                            setSelectedPointIndex(null);
+                                                            toast.success("Point updated successfully");
+                                                        }}>
+                                                            Save
+                                                        </Button>
+                                                        <Button size="sm" variant="outline" onClick={() => setIsEditingSelectedPoint(false)}>
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {!isEditingSelectedPoint && (
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="font-semibold text-sm">
+                                                    Selected Point #{selectedPointIndex + 1}
+                                                </h4>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    X: {data[selectedPointIndex].x.toFixed(4)} • Y: {data[selectedPointIndex].y.toFixed(4)}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="gap-2 h-9 border-2"
+                                                    onClick={() => setIsEditingSelectedPoint(true)}
+                                                >
+                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                    Edit Point
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="destructive" 
+                                                    className="gap-2 h-9"
+                                                    onClick={() => {
+                                                        const newData = data.filter((_, idx) => idx !== selectedPointIndex);
+                                                        setData(newData);
+                                                        setSelectedPointIndex(null);
+                                                        toast.success("Point filtered out (deleted)");
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Filter Out (Delete)
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-9"
+                                                    onClick={() => setSelectedPointIndex(null)}
+                                                >
+                                                    Deselect
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        )}
+                                    </Card>
+                                )}
+                            </div>
                         ) : (
                             <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
                                 <TrendingUp className="h-12 w-12 text-muted-foreground opacity-30 mb-4 animate-pulse" />

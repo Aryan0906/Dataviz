@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, ReferenceDot } from "recharts";
 import { TrendingUp } from "lucide-react";
 
-export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, ref) => {
+export const DataPlot = forwardRef(({ data, regression, selectedPointIndex, onPointClick }, ref) => {
   // Create data for the regression line
   const plotData = useMemo(() => {
     if (data.length === 0) return [];
@@ -130,7 +130,21 @@ export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, re
       <CardContent ref={ref}>
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={plotData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <LineChart 
+              data={plotData} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              onClick={(state) => {
+                if (state && state.activePayload && state.activePayload.length > 0 && typeof onPointClick === 'function') {
+                  const clickedPoint = state.activePayload[0].payload;
+                  if (clickedPoint && clickedPoint.y !== undefined) {
+                    const index = data.findIndex(p => p.x === clickedPoint.x && p.y === clickedPoint.y);
+                    if (index !== -1) {
+                      onPointClick(index);
+                    }
+                  }
+                }
+              }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
               <XAxis 
                 dataKey="x" 
@@ -163,7 +177,7 @@ export const DataPlot = forwardRef(({ data, regression, selectedPointIndex }, re
                 dataKey="y"
                 stroke="#0f172a"
                 strokeWidth={0}
-                dot={{ fill: '#0f172a', strokeWidth: 2, r: 4 }}
+                dot={{ fill: '#0f172a', strokeWidth: 2, r: 4, cursor: 'pointer' }}
                 name="Data Points"
                 connectNulls={false}
               />
