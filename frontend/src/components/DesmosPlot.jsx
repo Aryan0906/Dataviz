@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Save, Upload, Copy, Code } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, FileImage, FileText, FileCode, Sun, Moon, Save, Upload, Copy, Code } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
 import { wrapSvgWithXmlMetadata } from "@/lib/chartExport";
