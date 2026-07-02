@@ -504,6 +504,49 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 6. Strip Plot (Jittered scatter points)
+        if (type === 'strip') {
+            const stripPoints = [];
+            chartData.forEach((d, idx) => {
+                const rng = [0.85, 0.95, 1.0, 1.05, 1.15];
+                for (let i = 0; i < 5; i++) {
+                    stripPoints.push({
+                        category: d.name,
+                        name: d.name,
+                        xVal: idx + (i - 2) * 0.05 + (Math.random() - 0.5) * 0.03,
+                        yVal: d.value * rng[i],
+                        color: d.color
+                    });
+                }
+            });
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="category" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="yVal" tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Scatter data={stripPoints} name="Value distribution">
+                                    {stripPoints.map((entry, idx) => (
+                                        <Cell key={`cell-${idx}`} fill={entry.color} cursor="pointer" onClick={() => onBarClick && onBarClick(entry.name)} />
+                                    ))}
+                                </Scatter>
+                            </ScatterChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
