@@ -84,7 +84,7 @@ function FeatureCard({ title, description, icon: Icon, href, badge, index }) {
     return (
         <motion.div variants={fadeUp} custom={index}>
             <Link to={href} className="block group">
-                <div className="bg-white border border-[#E8E4DC] luxury-card-hover h-full">
+                <div className="bg-card border border-luxury-silk luxury-card-hover h-full">
                     {/* Colored top accent bar */}
                     <div className={`h-1 w-full ${colors.bg}`} />
                     <div className="p-7">
@@ -125,7 +125,7 @@ function QuickActionCard({ title, description, icon: Icon, action, index }) {
     return (
         <motion.div variants={fadeUp} custom={index}>
             <div
-                className="bg-white border border-[#E8E4DC] p-5 cursor-pointer group luxury-card-hover"
+                className="bg-card border border-luxury-silk p-5 cursor-pointer group luxury-card-hover"
                 onClick={action}
             >
                 <div className="flex items-center gap-4">
@@ -217,7 +217,7 @@ const ModernDashboard = () => {
     return (
         <AppLayout>
             <DashboardTour />
-            <div className="bg-[#FAFAF7] min-h-[calc(100vh-64px)] pb-24" style={{ fontFamily: "'Raleway', sans-serif" }}>
+            <div className="bg-luxury-bg-main min-h-[calc(100vh-64px)] pb-24" style={{ fontFamily: "'Raleway', sans-serif" }}>
 
                 {/* ── Luxury Hero Banner ── */}
                 <div className="relative overflow-hidden bg-[#0F172A]">
@@ -322,7 +322,7 @@ const ModernDashboard = () => {
                     </div>
 
                     <Tabs defaultValue="drafts" className="w-full">
-                        <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto">
+                        <TabsList className="rounded-none bg-card border border-luxury-silk p-0 h-auto">
                             {[
                                 { value: "drafts", label: "Drafts" },
                                 { value: "templates", label: "Templates" },
@@ -333,7 +333,7 @@ const ModernDashboard = () => {
                                     key={tab.value}
                                     value={tab.value}
                                     id={tab.id}
-                                    className="rounded-none px-6 py-3 text-xs uppercase tracking-wider font-medium data-[state=active]:bg-[#0F172A] data-[state=active]:text-white data-[state=active]:shadow-none border-r border-[#E8E4DC] last:border-r-0"
+                                    className="rounded-none px-6 py-3 text-xs uppercase tracking-wider font-medium data-[state=active]:bg-[#0F172A] data-[state=active]:text-white data-[state=active]:shadow-none border-r border-luxury-silk last:border-r-0"
                                     style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.1em" }}
                                 >
                                     {tab.label}
@@ -344,7 +344,7 @@ const ModernDashboard = () => {
                         {/* Drafts */}
                         <TabsContent value="drafts" className="mt-5 tour-templates">
                             {draft ? (
-                                <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
+                                <div className="bg-card border border-luxury-silk luxury-card-hover">
                                     <div className="h-0.5 w-full bg-[#D4AF37]" />
                                     <div className="p-7">
                                         <div className="flex items-start justify-between mb-4">
@@ -375,7 +375,7 @@ const ModernDashboard = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <FileText className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
                                     <p className="text-[#6B6B6B] text-sm mb-4">No active drafts</p>
                                     <button
@@ -392,7 +392,7 @@ const ModernDashboard = () => {
                         <TabsContent value="templates" className="mt-5 tour-templates">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                                 {analysisTemplates.map((template) => (
-                                    <div key={template.id} className="bg-white border border-[#E8E4DC] p-6 luxury-card-hover group cursor-pointer" onClick={() => navigate('/manual-plot/regression', { state: { template } })}>
+                                    <div key={template.id} className="bg-card border border-luxury-silk p-6 luxury-card-hover group cursor-pointer" onClick={() => navigate('/manual-plot/regression', { state: { template } })}>
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-10 h-10 rounded-none bg-[#0F172A]/5 border border-[#0F172A]/10 flex items-center justify-center group-hover:bg-[#0F172A] group-hover:border-[#0F172A] transition-colors duration-300">
                                                 {template.icon === 'trending' && <TrendingUp className="h-5 w-5 text-[#0F172A] group-hover:text-[#D4AF37] transition-colors" />}
@@ -417,11 +417,11 @@ const ModernDashboard = () => {
                         {/* Saved Analyses */}
                         <TabsContent value="recent" className="mt-5">
                             {loading ? (
-                                <div className="bg-white border border-[#E8E4DC] p-8 text-center text-[#6B6B6B] text-sm">
+                                <div className="bg-card border border-luxury-silk p-8 text-center text-[#6B6B6B] text-sm">
                                     Loading…
                                 </div>
                             ) : analyses.length === 0 ? (
-                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <BarChart3 className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
                                     <p className="text-[#6B6B6B] text-sm mb-4">No saved analyses yet</p>
                                     <button
@@ -434,7 +434,7 @@ const ModernDashboard = () => {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {analyses.slice(0, 6).map((item) => (
-                                        <div key={item.id} className="bg-white border border-[#E8E4DC] p-5 luxury-card-hover group">
+                                        <div key={item.id} className="bg-card border border-luxury-silk p-5 luxury-card-hover group">
                                             <div className="flex items-start gap-3 mb-3">
                                                 <Activity className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
                                                 <div className="min-w-0">
@@ -447,7 +447,7 @@ const ModernDashboard = () => {
                                                     <p className="text-xs font-mono text-[#6B6B6B] mt-0.5 truncate">{item.equation}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between border-t border-[#E8E4DC] pt-3">
+                                            <div className="flex items-center justify-between border-t border-luxury-silk pt-3">
                                                 <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
                                                     <span className="font-medium text-[#D4AF37]">R² = {item.r2?.toFixed(4)}</span>
                                                     <span>{new Date(item.created_at).toLocaleDateString()}</span>
@@ -496,7 +496,7 @@ const ModernDashboard = () => {
                         {/* Saved Charts */}
                         <TabsContent value="charts" className="mt-5">
                             {savedSessions.length === 0 ? (
-                                <div className="bg-white border border-dashed border-[#E8E4DC] p-12 text-center">
+                                <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
                                     <LineChart className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
                                     <p className="text-[#6B6B6B] text-sm mb-4">No saved charts</p>
                                     <button
@@ -509,7 +509,7 @@ const ModernDashboard = () => {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {savedSessions.slice(0, 6).map((session) => (
-                                        <div key={session.session_id} className="bg-white border border-[#E8E4DC] p-5 luxury-card-hover group">
+                                        <div key={session.session_id} className="bg-card border border-luxury-silk p-5 luxury-card-hover group">
                                             <div className="flex items-start gap-3 mb-3">
                                                 <LineChart className="h-4 w-4 text-[#0F172A] flex-shrink-0 mt-0.5" />
                                                 <div>
