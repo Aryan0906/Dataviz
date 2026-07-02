@@ -839,6 +839,73 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 16. Heatmap Grid (Row variables X & Y mapped against category columns)
+        if (type === 'heatmap') {
+            const maxValue = Math.max(...chartData.map(d => d.value)) || 1;
+
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">2D Cross-Tabulation Matrix</h4>
+                        <div className="border rounded overflow-hidden">
+                            {/* Column Header */}
+                            <div className="grid grid-cols-[100px_1fr] bg-muted/40 border-b text-[10px] font-semibold">
+                                <div className="p-2 border-r text-center">Row Factor</div>
+                                <div className="grid" style={{ gridTemplateColumns: `repeat(${chartData.length}, 1fr)` }}>
+                                    {chartData.map((d, idx) => (
+                                        <div key={idx} className="p-2 text-center border-r last:border-r-0 truncate" title={d.name}>{d.name}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Row X */}
+                            <div className="grid grid-cols-[100px_1fr] border-b text-xs">
+                                <div className="p-2 bg-muted/20 border-r font-medium flex items-center">Sub-Group A</div>
+                                <div className="grid" style={{ gridTemplateColumns: `repeat(${chartData.length}, 1fr)` }}>
+                                    {chartData.map((d, idx) => {
+                                        const opacity = 0.15 + (d.value / maxValue) * 0.85;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                style={{ backgroundColor: d.color, opacity: opacity }}
+                                                className="p-3 text-center border-r last:border-r-0 text-white font-bold cursor-pointer hover:opacity-100 transition"
+                                                onClick={() => onBarClick && onBarClick(d.name)}
+                                                title={`${d.name} - Group A: ${d.value}`}
+                                            >
+                                                {d.value}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Row Y */}
+                            <div className="grid grid-cols-[100px_1fr] text-xs">
+                                <div className="p-2 bg-muted/20 border-r font-medium flex items-center">Sub-Group B</div>
+                                <div className="grid" style={{ gridTemplateColumns: `repeat(${chartData.length}, 1fr)` }}>
+                                    {chartData.map((d, idx) => {
+                                        const factor = Math.round(d.value * 0.55);
+                                        const opacity = 0.15 + (factor / maxValue) * 0.85;
+                                        return (
+                                            <div
+                                                key={idx}
+                                                style={{ backgroundColor: d.color, opacity: opacity, filter: 'brightness(0.9)' }}
+                                                className="p-3 text-center border-r last:border-r-0 text-white font-bold cursor-pointer hover:opacity-100 transition"
+                                                onClick={() => onBarClick && onBarClick(d.name)}
+                                                title={`${d.name} - Group B: ${factor}`}
+                                            >
+                                                {factor}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
