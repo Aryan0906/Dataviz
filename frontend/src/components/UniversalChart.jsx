@@ -730,6 +730,51 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 13. Mosaic Plot (Proportional grid map layout using customized HTML block columns)
+        if (type === 'mosaic') {
+            const totalSum = chartData.reduce((acc, d) => acc + d.value, 0) || 1;
+
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">Mosaic Area Proportion Grid</h4>
+                        <div className="relative w-full h-64 border rounded overflow-hidden flex">
+                            {chartData.map((d, idx) => {
+                                const proportion = d.value / totalSum;
+                                const widthPercent = `${proportion * 100}%`;
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        style={{ width: widthPercent }}
+                                        className="h-full border-r last:border-r-0 flex flex-col cursor-pointer transition hover:opacity-90"
+                                        onClick={() => onBarClick && onBarClick(d.name)}
+                                    >
+                                        {/* Top portion (65%) */}
+                                        <div
+                                            className="border-b flex items-center justify-center text-[10px] text-white font-medium p-1 truncate"
+                                            style={{ backgroundColor: d.color, height: '65%' }}
+                                            title={`${d.name} (Primary 65%): ${Math.round(d.value * 0.65)}`}
+                                        >
+                                            {proportion > 0.08 && d.name}
+                                        </div>
+                                        {/* Bottom portion (35%) */}
+                                        <div
+                                            className="flex items-center justify-center text-[9px] text-white font-medium p-1 bg-muted/40 opacity-75 truncate"
+                                            style={{ backgroundColor: d.color, height: '35%', filter: 'brightness(0.8)' }}
+                                            title={`${d.name} (Secondary 35%): ${Math.round(d.value * 0.35)}`}
+                                        >
+                                            {proportion > 0.08 && `${Math.round(proportion * 100)}%`}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
