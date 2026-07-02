@@ -29,7 +29,8 @@ import {
     Beaker,
     Zap,
     BookOpen,
-    Activity
+    Activity,
+    Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
