@@ -27,6 +27,16 @@ const ALL_PLOT_TYPES = [
     { value: "bubble", label: "Bubble Chart (Categorical)" }
 ];
 
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +46,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     Sparkles, Send, BarChart3, PieChart as PieIcon, TreePalm, LineChart, AreaChart,
     Download, FileUp, RefreshCw, AlertCircle, Database,
-    TrendingUp, Search, MessageSquare
+    TrendingUp, Search, MessageSquare, Pencil, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -189,6 +199,10 @@ export const CategoricalChatPanel = () => {
     const [aiSummary, setAiSummary] = useState(null);
     const [isGeneratingStory, setIsGeneratingStory] = useState(false);
     const [error, setError] = useState("");
+
+    // === Interactive Item Edit State ===
+    const [selectedChartItem, setSelectedChartItem] = useState(null);
+    const [showEditItemDialog, setShowEditItemDialog] = useState(false);
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -400,10 +414,78 @@ export const CategoricalChatPanel = () => {
     // Dynamic coloring for chart bar click
     const handleChartClick = (label) => {
         const xKey = xAxisKey || 'label';
-        const filtered = categoricalData.filter(row => String(row[xKey]) === label);
-        setFilteredData(filtered);
-        setTableSearch(label);
-        toast.info(`Filtered table to "${label}"`);
+        const yKey = dataKeys[0] || 'value';
+        
+        // Find current matching item in categoricalData
+        const match = categoricalData.find(row => String(row[xKey]) === label);
+        const val = match ? Number(match[yKey]) : 0;
+
+        setSelectedChartItem({
+            originalLabel: label,
+            label: label,
+            value: val
+        });
+        setShowEditItemDialog(true);
+    };
+
+    const handleSaveChartItem = () => {
+        if (!selectedChartItem) return;
+        const xKey = xAxisKey || 'label';
+        const yKey = dataKeys[0] || 'value';
+
+        const updatedCat = categoricalData.map(row => {
+            if (String(row[xKey]) === selectedChartItem.originalLabel) {
+                return {
+                    ...row,
+                    [xKey]: selectedChartItem.label,
+                    [yKey]: Number(selectedChartItem.value)
+                };
+            }
+            return row;
+        });
+
+        const updatedChart = chartData.map(row => {
+            if (String(row.name) === selectedChartItem.originalLabel) {
+                return {
+                    ...row,
+                    name: selectedChartItem.label,
+                    value: Number(selectedChartItem.value)
+                };
+            }
+            return row;
+        });
+
+        setCategoricalData(updatedCat);
+        setChartData(updatedChart);
+        setFilteredData(updatedCat);
+
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.success(`Successfully updated category "${selectedChartItem.label}"`);
+    };
+
+    const handleExcludeChartItem = () => {
+        if (!selectedChartItem) return;
+        const xKey = xAxisKey || 'label';
+
+        const updatedCat = categoricalData.filter(row => String(row[xKey]) !== selectedChartItem.originalLabel);
+        const updatedChart = chartData.filter(row => String(row.name) !== selectedChartItem.originalLabel);
+
+        setCategoricalData(updatedCat);
+        setChartData(updatedChart);
+        setFilteredData(updatedCat);
+
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.success(`Excluded category "${selectedChartItem.originalLabel}"`);
+    };
+
+    const handleFilterTableItem = () => {
+        if (!selectedChartItem) return;
+        setTableSearch(selectedChartItem.originalLabel);
+        setShowEditItemDialog(false);
+        setSelectedChartItem(null);
+        toast.info(`Filtered table to "${selectedChartItem.originalLabel}"`);
     };
 
     // Export handler callback for logging
@@ -828,6 +910,67 @@ export const CategoricalChatPanel = () => {
 
             </div>
 
+            {/* Interactive Edit Item Dialog */}
+            <AlertDialog open={showEditItemDialog} onOpenChange={setShowEditItemDialog}>
+                <AlertDialogContent className="sm:max-w-[420px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-4.5 w-4.5 text-indigo-500" />
+                            Category Actions: "{selectedChartItem?.originalLabel}"
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Edit the category name and numerical value, filter the table view, or exclude the category.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    {selectedChartItem && (
+                        <div className="space-y-4 py-2 text-xs">
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-muted-foreground">Category Name</label>
+                                <Input
+                                    value={selectedChartItem.label}
+                                    onChange={(e) => setSelectedChartItem(prev => ({ ...prev, label: e.target.value }))}
+                                    className="h-8 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="font-medium text-muted-foreground">Numerical Value</label>
+                                <Input
+                                    type="number"
+                                    value={selectedChartItem.value}
+                                    onChange={(e) => setSelectedChartItem(prev => ({ ...prev, value: e.target.value }))}
+                                    className="h-8 text-xs"
+                                />
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleFilterTableItem}
+                                    className="flex-1 gap-1.5 h-8 text-xs"
+                                >
+                                    <Search className="h-3.5 w-3.5" />
+                                    Filter Table
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    onClick={handleExcludeChartItem}
+                                    className="flex-1 gap-1.5 h-8 text-xs"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Exclude Item
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex gap-2 justify-end pt-2">
+                        <AlertDialogCancel className="h-8 text-xs">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSaveChartItem} className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700">
+                            Save Changes
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
