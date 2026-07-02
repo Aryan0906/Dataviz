@@ -459,6 +459,51 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 5. Boxen Plot (Sequential decreasing boxes)
+        if (type === 'boxen') {
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">Letter-Value Boxen Plot (Quantile Deciles)</h4>
+                        <svg viewBox="0 0 500 280" className="w-full h-auto">
+                            {[50, 100, 150, 200, 250].map((y, idx) => (
+                                <g key={idx}>
+                                    <line x1="40" y1={y} x2="480" y2={y} stroke="hsl(var(--border))" strokeDasharray="3 3" strokeWidth="0.5" />
+                                    <text x="30" y={y + 4} fontSize="9" textAnchor="end" className="fill-muted-foreground">{Math.round((250 - y) * 1.5)}</text>
+                                </g>
+                            ))}
+                            <line x1="40" y1="250" x2="480" y2="250" stroke="hsl(var(--border))" strokeWidth="1" />
+                            
+                            {chartData.map((d, idx) => {
+                                const count = chartData.length;
+                                const width = 440 / count;
+                                const cx = 40 + (idx * width) + (width / 2);
+                                
+                                const val = Math.min(180, d.value * 1.2);
+                                const cy = 250 - val;
+                                const maxW = Math.min(45, width * 0.6);
+                                
+                                return (
+                                    <g key={idx} className="cursor-pointer" onClick={() => onBarClick && onBarClick(d.name)}>
+                                        <title>{`${d.name}\nValue: ${d.value}`}</title>
+                                        {/* Boxen levels */}
+                                        <rect x={cx - maxW / 2} y={cy - 10} width={maxW} height="20" fill={d.color || "hsl(var(--primary))"} fillOpacity="0.7" stroke="white" strokeWidth="0.5" />
+                                        <rect x={cx - maxW * 0.7 / 2} y={cy - 22} width={maxW * 0.7} height="12" fill={d.color || "hsl(var(--primary))"} fillOpacity="0.5" stroke="white" strokeWidth="0.5" />
+                                        <rect x={cx - maxW * 0.7 / 2} y={cy + 10} width={maxW * 0.7} height="12" fill={d.color || "hsl(var(--primary))"} fillOpacity="0.5" stroke="white" strokeWidth="0.5" />
+                                        <rect x={cx - maxW * 0.4 / 2} y={cy - 30} width={maxW * 0.4} height="8" fill={d.color || "hsl(var(--primary))"} fillOpacity="0.3" stroke="white" strokeWidth="0.5" />
+                                        <rect x={cx - maxW * 0.4 / 2} y={cy + 22} width={maxW * 0.4} height="8" fill={d.color || "hsl(var(--primary))"} fillOpacity="0.3" stroke="white" strokeWidth="0.5" />
+                                        
+                                        <line x1={cx - maxW / 2} y1={cy} x2={cx + maxW / 2} y2={cy} stroke="white" strokeWidth="1.5" />
+                                        <text x={cx} y="268" fontSize="9" textAnchor="middle" fontWeight="500" className="fill-foreground">{d.name}</text>
+                                    </g>
+                                );
+                            })}
+                        </svg>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
