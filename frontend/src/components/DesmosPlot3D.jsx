@@ -82,7 +82,8 @@ const DesmosPlot3D = () => {
             setLoadError(false);
             try {
                 let Desmos = await loadLocalGraph();
-                if (!Desmos) {
+                if (!Desmos || !Desmos.Calculator3D) {
+                    console.log("[DesmosPlot3D] Local graph module lacks 3D support, falling back to CDN...");
                     Desmos = await loadCdnGraph();
                 }
                 if (cancelled || !containerRef.current) return;
