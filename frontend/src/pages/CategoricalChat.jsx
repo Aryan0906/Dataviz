@@ -850,15 +850,24 @@ export const CategoricalChatPanel = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {paginatedData.map((row, idx) => (
-                                                <tr key={idx} className="border-b last:border-0 hover:bg-muted/10">
-                                                    {columns.map(col => (
-                                                        <td key={col.name} className="p-2 truncate max-w-[120px]">
-                                                            {String(row[col.name] !== undefined ? row[col.name] : '')}
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                            ))}
+                                            {paginatedData.map((row, idx) => {
+                                                const xKey = xAxisKey || 'label';
+                                                const labelValue = String(row[xKey] !== undefined ? row[xKey] : '');
+                                                return (
+                                                    <tr 
+                                                        key={idx} 
+                                                        className="border-b last:border-0 hover:bg-muted/20 cursor-pointer transition"
+                                                        onClick={() => handleChartClick(labelValue)}
+                                                        title="Click to edit, exclude, or filter this category"
+                                                    >
+                                                        {columns.map(col => (
+                                                            <td key={col.name} className="p-2 truncate max-w-[120px]">
+                                                                {String(row[col.name] !== undefined ? row[col.name] : '')}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
