@@ -1,5 +1,31 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const ALL_PLOT_TYPES = [
+    { value: "bar", label: "Bar Plot" },
+    { value: "count", label: "Count Plot" },
+    { value: "box", label: "Box Plot" },
+    { value: "violin", label: "Violin Plot" },
+    { value: "boxen", label: "Boxen Plot (Letter-Value)" },
+    { value: "strip", label: "Strip Plot" },
+    { value: "swarm", label: "Swarm Plot" },
+    { value: "pie", label: "Pie Chart" },
+    { value: "donut", label: "Donut Chart" },
+    { value: "stacked_bar", label: "Stacked Bar Chart" },
+    { value: "grouped_bar", label: "Grouped Bar Chart" },
+    { value: "percent_stacked_bar", label: "100% Stacked Bar Chart" },
+    { value: "mosaic", label: "Mosaic Plot" },
+    { value: "treemap", label: "Treemap" },
+    { value: "sunburst", label: "Sunburst Chart" },
+    { value: "heatmap", label: "Heatmap (Cross-tabulation)" },
+    { value: "alluvial", label: "Alluvial Diagram (Sankey)" },
+    { value: "radar", label: "Radar Chart (Spider Plot)" },
+    { value: "dumbbell", label: "Dumbbell Plot" },
+    { value: "point", label: "Point Plot (Dot Plot)" },
+    { value: "waffle", label: "Waffle Chart" },
+    { value: "bubble", label: "Bubble Chart (Categorical)" }
+];
 
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -522,52 +548,19 @@ export const CategoricalChatPanel = () => {
                             </CardTitle>
                             {chartData.length > 0 && (
                                 <div className="flex gap-2 items-center">
-                                    <div className="flex gap-1">
-                                        <Button
-                                            variant={chartType === 'bar' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setChartType('bar')}
-                                            className="h-8 w-8 p-0"
-                                            title="Bar Chart"
-                                        >
-                                            <BarChart3 className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={chartType === 'line' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setChartType('line')}
-                                            className="h-8 w-8 p-0"
-                                            title="Line Chart"
-                                        >
-                                            <LineChart className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={chartType === 'area' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setChartType('area')}
-                                            className="h-8 w-8 p-0"
-                                            title="Area Chart"
-                                        >
-                                            <AreaChart className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={chartType === 'pie' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setChartType('pie')}
-                                            className="h-8 w-8 p-0"
-                                            title="Pie Chart"
-                                        >
-                                            <PieIcon className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant={chartType === 'treemap' ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setChartType('treemap')}
-                                            className="h-8 w-8 p-0"
-                                            title="Treemap Chart"
-                                        >
-                                            <TreePalm className="h-4 w-4" />
-                                        </Button>
+                                    <div className="w-[180px]">
+                                        <Select value={chartType} onValueChange={setChartType}>
+                                            <SelectTrigger className="h-8 text-xs">
+                                                <SelectValue placeholder="Select plot type" />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-h-[300px] overflow-y-auto">
+                                                {ALL_PLOT_TYPES.map((pt) => (
+                                                    <SelectItem key={pt.value} value={pt.value} className="text-xs">
+                                                        {pt.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <ChartExportButton
                                         elementRef={chartContainerRef}
