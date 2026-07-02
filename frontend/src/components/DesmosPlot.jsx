@@ -112,6 +112,10 @@ const DesmosPlot = () => {
 
     const [currentTheme, setCurrentTheme] = useState(getInitialTheme());
     const [expressions, setExpressions] = useState([]);
+    // Mirrors the calculator's live expression list for code export.
+    // Updated via observeEvent('change') so it stays correct regardless of
+    // whether expressions come from presets, manual typing, or imports.
+    const [liveExpressions, setLiveExpressions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
@@ -230,6 +234,21 @@ const DesmosPlot = () => {
                 });
 
                 calculatorRef.current = calc;
+
+                // Sync liveExpressions on every calculator state change
+                // (covers presets, manual typing, imports, deletions, etc.)
+                const syncLiveExpressions = () => {
+                    try {
+                        const s = calc.getState();
+                        const list = s?.expressions?.list || [];
+                        setLiveExpressions(
+                            list
+                                .filter(e => e.latex && e.latex.trim() && e.type !== 'folder')
+                                .map(e => e.latex)
+                        );
+                    } catch (_) { /* ignore */ }
+                };
+                calc.observeEvent('change', syncLiveExpressions);
 
                 // Apply theme immediately with current theme state
                 const themeToApply = getInitialTheme();
@@ -591,12 +610,10 @@ const DesmosPlot = () => {
                         Import
                     </Button>
 
-                    {/* Code Export */}
+                    {/* Code Export — always uses the live calculator state */}
                     <ExportCodeButton
                         chartType="curve"
-                        curveData={{
-                            expressions: getExpressionsArray()
-                        }}
+                        curveData={{ expressions: liveExpressions }}
                         chartTitle="Mathematical Curve Plot"
                         buttonText="Code"
                         buttonSize="sm"
