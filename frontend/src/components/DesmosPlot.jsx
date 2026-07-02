@@ -670,10 +670,7 @@ const DesmosPlot = () => {
                         ref={containerRef}
                         id="graph-container"
                         className="w-full h-[600px]"
-                        style={{
-                            backgroundColor: currentTheme === "dark" ? "#1a1a1e" : "#ffffff",
-                            minHeight: "600px"
-                        }}
+                        style={{ minHeight: "600px" }}
                     />
                 </div>
             </div>
