@@ -1,4 +1,4 @@
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend, Treemap, LineChart, Line, AreaChart, Area } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend, Treemap, LineChart, Line, AreaChart, Area, ScatterChart, Scatter, ZAxis, PolarGrid, PolarAngleAxis, PolarRadiusAxis, RadarChart, Radar } from "recharts";
 import { useMemo, forwardRef, useRef, useCallback } from "react";
 import { DataPlot } from "./DataPlot";
 import { useTheme } from "@/components/theme-provider";
