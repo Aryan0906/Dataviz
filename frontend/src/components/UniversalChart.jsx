@@ -1125,6 +1125,44 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 22. Bubble Chart (Scatter plot with size proportional to Z value)
+        if (type === 'bubble') {
+            const bubbleData = chartData.map(d => ({
+                name: d.name,
+                xVal: d.name,
+                yVal: d.value,
+                zVal: d.value * 2,
+                color: d.color
+            }));
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <ScatterChart margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="name" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 12 }} />
+                                <YAxis dataKey="yVal" tick={{ fontSize: 12 }} />
+                                <ZAxis dataKey="zVal" range={[200, 1500]} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Scatter data={bubbleData}>
+                                    {bubbleData.map((entry, idx) => (
+                                        <Cell key={`cell-${idx}`} fill={entry.color} cursor="pointer" onClick={() => onBarClick && onBarClick(entry.name)} />
+                                    ))}
+                                </Scatter>
+                            </ScatterChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
