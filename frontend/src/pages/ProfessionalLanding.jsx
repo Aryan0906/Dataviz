@@ -56,7 +56,7 @@ function RevealSection({ children, className = "", delay = 0 }) {
 
 function LuxuryLabel({ children, light = false }) {
     return (
-        <p className={`luxury-label mb-3 ${light ? "text-white/50" : "text-[#0F172A]"}`}>
+        <p className={`luxury-label mb-3 ${light ? "text-white/50" : "text-luxury-midnight"}`}>
             {children}
         </p>
     );
@@ -66,7 +66,7 @@ function LuxuryLink({ href, children, light = false }) {
     return (
         <Link
             to={href}
-            className={`luxury-link text-sm font-medium ${light ? "text-white/90 hover:text-white" : "text-[#0F172A] hover:text-[#0B1120]"}`}
+            className={`luxury-link text-sm font-medium ${light ? "text-white/90 hover:text-white" : "text-luxury-midnight hover:text-[#0B1120]"}`}
         >
             {children}
             <span className="ml-1 text-base leading-none">›</span>
@@ -111,21 +111,21 @@ function FeatureCard({ icon: Icon, title, description, color, _index }) {
     return (
         <motion.div
             variants={fadeUp}
-            className="flex-none w-72 lg:w-80 bg-white border border-[#E8E4DC] group cursor-default"
+            className="flex-none w-72 lg:w-80 bg-card border border-luxury-silk group cursor-default"
             style={{ scrollSnapAlign: "start" }}
         >
             <div className={`h-2 w-full ${color}`} />
             <div className="p-8">
                 <div className={`inline-flex p-3 mb-5 ${color} bg-opacity-10`}>
-                    <Icon className="w-6 h-6 text-[#0F172A]" />
+                    <Icon className="w-6 h-6 text-luxury-midnight" />
                 </div>
                 <h3
-                    className="text-xl mb-3 font-semibold text-[#0D1117] group-hover:text-[#0F172A] transition-colors duration-300"
+                    className="text-xl mb-3 font-semibold text-luxury-dark group-hover:text-luxury-midnight transition-colors duration-300"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                     {title}
                 </h3>
-                <p className="text-sm text-[#6B6B6B] leading-relaxed font-body">
+                <p className="text-sm text-luxury-stone leading-relaxed font-body">
                     {description}
                 </p>
             </div>
@@ -139,7 +139,7 @@ function ContentSection({ label, title, description, bullets, ctaText, ctaHref, 
     const inView = useInView(ref, { once: true, margin: "-60px" });
 
     return (
-        <div ref={ref} className={`py-24 lg:py-36 ${dark ? "bg-[#0D1117]" : "bg-[#FAFAF7]"}`}>
+        <div ref={ref} className={`py-24 lg:py-36 ${dark ? "bg-luxury-dark" : "bg-luxury-bg-main"}`}>
             <div className="max-w-7xl mx-auto px-6 lg:px-12">
                 <div className={`grid lg:grid-cols-2 gap-12 lg:gap-20 items-center ${reverse ? "lg:grid-flow-col-dense" : ""}`}>
                     {/* Text */}
@@ -151,19 +151,19 @@ function ContentSection({ label, title, description, bullets, ctaText, ctaHref, 
                     >
                         <LuxuryLabel light={dark}>{label}</LuxuryLabel>
                         <h2
-                            className={`text-display-md ${dark ? "text-white" : "text-[#0D1117]"}`}
+                            className={`text-display-md ${dark ? "text-white" : "text-luxury-dark"}`}
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             {title}
                         </h2>
-                        <p className={`text-base leading-relaxed font-body ${dark ? "text-white/60" : "text-[#6B6B6B]"}`}>
+                        <p className={`text-base leading-relaxed font-body ${dark ? "text-white/60" : "text-luxury-stone"}`}>
                             {description}
                         </p>
                         {bullets && (
                             <ul className="space-y-3">
                                 {bullets.map((b, i) => (
                                     <li key={i} className="flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-[#0F172A] flex-shrink-0 mt-0.5" />
+                                        <CheckCircle2 className="w-5 h-5 text-luxury-midnight flex-shrink-0 mt-0.5" />
                                         <span className={`text-sm font-body ${dark ? "text-white/70" : "text-[#4A4A4A]"}`}>{b}</span>
                                     </li>
                                 ))}
@@ -256,7 +256,7 @@ const ProfessionalLanding = () => {
     const carouselRef = useRef(null);
 
     return (
-        <div className="min-h-screen bg-[#FAFAF7]" style={{ fontFamily: "'Raleway', sans-serif" }}>
+        <div className="min-h-screen bg-luxury-bg-main" style={{ fontFamily: "'Raleway', sans-serif" }}>
             <LandingNav variant="dark" />
 
             {/* ══════════════════════════════════════
@@ -279,7 +279,7 @@ const ProfessionalLanding = () => {
                     {/* Dark gradient overlay */}
                     <div className="absolute inset-0 bg-gradient-to-b from-[#0D1117]/70 via-[#0D1117]/60 to-[#0D1117]/80" />
                     {/* Green tint overlay */}
-                    <div className="absolute inset-0 bg-[#0F172A]/15 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-luxury-midnight/15 mix-blend-multiply" />
                 </motion.div>
 
                 {/* Vertical progress indicator (right side, like Rolex) */}
@@ -371,10 +371,10 @@ const ProfessionalLanding = () => {
             {/* ══════════════════════════════════════
                 TRUST STRIP
             ══════════════════════════════════════ */}
-            <section className="bg-white border-b border-[#E8E4DC] py-8">
+            <section className="bg-white border-b border-luxury-silk py-8">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12">
                     <RevealSection className="flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
-                        <p className="luxury-label text-[#6B6B6B]">Trusted by data teams at</p>
+                        <p className="luxury-label text-luxury-stone">Trusted by data teams at</p>
                         {["TechCorp", "DataFlow", "CloudScale", "AnalyticsPro", "InsightHub", "MetricsLab"].map((c) => (
                             <span key={c} className="text-base font-semibold text-[#D4AF37]/60 font-body tracking-wider">{c}</span>
                         ))}
@@ -385,12 +385,12 @@ const ProfessionalLanding = () => {
             {/* ══════════════════════════════════════
                 FEATURE CAROUSEL (Rolex watch grid style)
             ══════════════════════════════════════ */}
-            <section id="features" className="py-24 bg-[#FAFAF7]">
+            <section id="features" className="py-24 bg-luxury-bg-main">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12">
                     <RevealSection className="mb-14">
                         <LuxuryLabel>Capabilities</LuxuryLabel>
                         <h2
-                            className="text-display-md text-[#0D1117] max-w-2xl"
+                            className="text-display-md text-luxury-dark max-w-2xl"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             Everything you need to{" "}
@@ -473,7 +473,7 @@ const ProfessionalLanding = () => {
                     <RevealSection className="mb-20 text-center">
                         <LuxuryLabel>Simple Process</LuxuryLabel>
                         <h2
-                            className="text-display-md text-[#0D1117]"
+                            className="text-display-md text-luxury-dark"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             From raw data to{" "}
@@ -489,7 +489,7 @@ const ProfessionalLanding = () => {
                         className="grid md:grid-cols-3 gap-12 lg:gap-20 relative"
                     >
                         {/* Connecting line */}
-                        <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px bg-[#E8E4DC]" />
+                        <div className="hidden md:block absolute top-8 left-[16%] right-[16%] h-px bg-luxury-silk" />
 
                         {processSteps.map((step, idx) => (
                             <motion.div
@@ -498,9 +498,9 @@ const ProfessionalLanding = () => {
                                 className="text-center group"
                             >
                                 <div className="relative inline-flex mb-8">
-                                    <div className="w-16 h-16 border border-[#0F172A] bg-white flex items-center justify-center relative z-10 group-hover:bg-[#0F172A] transition-colors duration-500">
+                                    <div className="w-16 h-16 border border-[#0F172A] bg-white flex items-center justify-center relative z-10 group-hover:bg-luxury-midnight transition-colors duration-500">
                                         <span
-                                            className="text-2xl font-bold text-[#0F172A] group-hover:text-white transition-colors"
+                                            className="text-2xl font-bold text-luxury-midnight group-hover:text-white transition-colors"
                                             style={{ fontFamily: "'Playfair Display', serif" }}
                                         >
                                             {step.number}
@@ -511,12 +511,12 @@ const ProfessionalLanding = () => {
                                     <step.icon className="w-5 h-5 text-[#D4AF37]" />
                                 </div>
                                 <h3
-                                    className="text-xl font-semibold text-[#0D1117] mb-3"
+                                    className="text-xl font-semibold text-luxury-dark mb-3"
                                     style={{ fontFamily: "'Playfair Display', serif" }}
                                 >
                                     {step.title}
                                 </h3>
-                                <p className="text-sm text-[#6B6B6B] leading-relaxed font-body">
+                                <p className="text-sm text-luxury-stone leading-relaxed font-body">
                                     {step.description}
                                 </p>
                             </motion.div>
@@ -528,7 +528,7 @@ const ProfessionalLanding = () => {
             {/* ══════════════════════════════════════
                 STATS — Dark section
             ══════════════════════════════════════ */}
-            <section className="py-24 lg:py-32 bg-[#0F172A] relative overflow-hidden">
+            <section className="py-24 lg:py-32 bg-luxury-midnight relative overflow-hidden">
                 {/* Decorative pattern */}
                 <div className="absolute inset-0 opacity-5">
                     <div
@@ -596,12 +596,12 @@ const ProfessionalLanding = () => {
             {/* ══════════════════════════════════════
                 TESTIMONIALS
             ══════════════════════════════════════ */}
-            <section id="testimonials" className="py-24 lg:py-36 bg-[#FAFAF7]">
+            <section id="testimonials" className="py-24 lg:py-36 bg-luxury-bg-main">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12">
                     <RevealSection className="mb-16">
                         <LuxuryLabel>Testimonials</LuxuryLabel>
                         <h2
-                            className="text-display-md text-[#0D1117] max-w-xl"
+                            className="text-display-md text-luxury-dark max-w-xl"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             What data teams{" "}
@@ -621,8 +621,8 @@ const ProfessionalLanding = () => {
                                 key={idx}
                                 variants={fadeUp}
                                 className={`p-8 border luxury-card-hover ${idx === 0
-                                        ? "bg-[#0F172A] border-[#0F172A] md:col-span-1"
-                                        : "bg-white border-[#E8E4DC]"
+                                        ? "bg-luxury-midnight border-[#0F172A] md:col-span-1"
+                                        : "bg-card border-luxury-silk"
                                     }`}
                             >
                                 <p
@@ -634,11 +634,11 @@ const ProfessionalLanding = () => {
                                 <p className={`text-base leading-relaxed mb-6 font-body ${idx === 0 ? "text-white/90" : "text-[#4A4A4A]"}`}>
                                     {t.quote}
                                 </p>
-                                <div className={`flex items-center gap-3 pt-4 border-t ${idx === 0 ? "border-white/20" : "border-[#E8E4DC]"}`}>
+                                <div className={`flex items-center gap-3 pt-4 border-t ${idx === 0 ? "border-white/20" : "border-luxury-silk"}`}>
                                     <img src={t.avatar} alt={t.author} className="w-10 h-10 rounded-full" />
                                     <div>
-                                        <p className={`text-sm font-semibold ${idx === 0 ? "text-white" : "text-[#0D1117]"}`}>{t.author}</p>
-                                        <p className={`text-xs font-body ${idx === 0 ? "text-white/60" : "text-[#6B6B6B]"}`}>{t.role}, {t.company}</p>
+                                        <p className={`text-sm font-semibold ${idx === 0 ? "text-white" : "text-luxury-dark"}`}>{t.author}</p>
+                                        <p className={`text-xs font-body ${idx === 0 ? "text-white/60" : "text-luxury-stone"}`}>{t.role}, {t.company}</p>
                                     </div>
                                 </div>
                             </motion.div>
@@ -650,31 +650,31 @@ const ProfessionalLanding = () => {
             {/* ══════════════════════════════════════
                 FINAL CTA — Editorial style
             ══════════════════════════════════════ */}
-            <section className="py-24 lg:py-36 bg-white border-t border-[#E8E4DC]">
+            <section className="py-24 lg:py-36 bg-white border-t border-luxury-silk">
                 <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
                     <RevealSection>
                         <LuxuryLabel>Get Started</LuxuryLabel>
                         <h2
-                            className="text-display-md text-[#0D1117] mb-6"
+                            className="text-display-md text-luxury-dark mb-6"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             Ready to transform{" "}
                             <em style={{ fontStyle: "italic" }}>your data?</em>
                         </h2>
-                        <p className="text-base text-[#6B6B6B] mb-10 font-body max-w-xl mx-auto">
+                        <p className="text-base text-luxury-stone mb-10 font-body max-w-xl mx-auto">
                             Join thousands of teams making better decisions with data. Start your free 14-day trial today.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <Link
                                 to="/signup"
-                                className="bg-[#0F172A] text-white px-8 py-3.5 luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 min-w-[200px] text-center"
+                                className="bg-luxury-midnight text-white px-8 py-3.5 luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 min-w-[200px] text-center"
                             >
                                 Start Free Trial
                             </Link>
                             <Link
                                 to="/documentation"
-                                className="border border-[#E8E4DC] text-[#6B6B6B] px-8 py-3.5 luxury-label hover:border-[#0F172A] hover:text-[#0F172A] transition-all duration-300 min-w-[200px] text-center"
+                                className="border border-luxury-silk text-luxury-stone px-8 py-3.5 luxury-label hover:border-[#0F172A] hover:text-luxury-midnight transition-all duration-300 min-w-[200px] text-center"
                             >
                                 View Documentation
                             </Link>
@@ -683,8 +683,8 @@ const ProfessionalLanding = () => {
                         <div className="flex items-center justify-center gap-8 mt-10">
                             {["Free 14-day trial", "No credit card required", "Cancel anytime"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-[#0F172A]" />
-                                    <span className="text-xs text-[#6B6B6B] font-body">{item}</span>
+                                    <CheckCircle2 className="w-4 h-4 text-luxury-midnight" />
+                                    <span className="text-xs text-luxury-stone font-body">{item}</span>
                                 </div>
                             ))}
                         </div>

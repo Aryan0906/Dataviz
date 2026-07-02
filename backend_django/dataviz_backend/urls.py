@@ -56,6 +56,10 @@ urlpatterns = [
     # Statistical Testing
     path("api/analysis/hypothesis", api.test_hypothesis, name="test_hypothesis"),
 
+    # Dual Database Sync
+    path("api/db/sync-status", api.sync_status, name="sync_status"),
+    path("api/db/sync", api.trigger_sync, name="trigger_sync"),
+
     # Todos API
     path("api/", include("todos.urls")),
 ]

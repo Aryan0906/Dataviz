@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Beaker, Apperture, TrendingUp, BarChart} from "lucide-react";
+import { Beaker, Aperture, TrendingUp, BarChart} from "lucide-react";
 import { dataAPI as api } from "@/lib/api";
 
 export default function StatsTester( { filePath, columns }) {
@@ -13,7 +13,7 @@ export default function StatsTester( { filePath, columns }) {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    const handleRunTest = async () -> {
+    const handleRunTest = async () => {
         if (!filePath || !groupCol || !valueCol) return;
         setIsLoading(true);
         setError(null);
@@ -57,7 +57,7 @@ export default function StatsTester( { filePath, columns }) {
                             <Select value={valueCol} onValueChange={setValueCol}>
                                 <SelectTrigger><SelectValue placeholder="Select values..." /></SelectTrigger>
                                 <SelectContent>
-                                    {columns?.map((col) -> (
+                                    {columns?.map((col) => (
                                         <SelectItem key={col} value={col}>{col}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -82,7 +82,7 @@ export default function StatsTester( { filePath, columns }) {
                 <Card className="border-primary/20 bg-primary/5">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <Apperture className="h-5 w-5" />
+                            <Aperture className="h-5 w-5" />
                             Test Results: {result.test_name}
                         </CardTitle>
                     </CardHeader>
@@ -102,7 +102,7 @@ export default function StatsTester( { filePath, columns }) {
                             </div>
                         </div>
 
-                        <Alert variant="{result.p_value < 0.05 ? 'default' : 'destructive'}">
+                        <Alert variant={result.p_value < 0.05 ? 'default' : 'destructive'}>
                             <AlertTitle>{groupCol} vs {valueCol}</AlertTitle>
 
                             <AlertTitle>Verdict</AlertTitle>

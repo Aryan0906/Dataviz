@@ -26,16 +26,24 @@ import {
     Trash2,
     PlayCircle,
     CheckCircle2,
-    Beaker
+    Beaker,
+    Zap,
+    BookOpen,
+    Activity,
+    Info,
+    Edit2,
+    X
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "./DataTable";
 import { dataAPI } from "@/lib/api";
 import { debounce } from "@/utils/debounce";
+import regression from "regression";
 import Papa from "papaparse";
 import { useWorkspace } from "@/context/WorkspaceContext";
+import { useAuth } from "@/context/AuthContext";
 import { UniversalChart } from "./UniversalChart";
-import { exportChartAsPNG, exportChartAsPDF } from "@/lib/chartExport";
+import ChartExportButton from "./ChartExportButton";
 import ExportCodeButton from "./ExportCodeButton";
 import StatsTester from "./StatsTester";
 import {
@@ -53,6 +61,223 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
+const fitLocalModel = (points, type, degree = 2) => {
+    const dataX = points.map(p => p[0]);
+    const dataY = points.map(p => p[1]);
+    const n = points.length;
+
+    const meanX = dataX.reduce((a, b) => a + b, 0) / n;
+    const meanY = dataY.reduce((a, b) => a + b, 0) / n;
+    
+    let varX = 0;
+    let covXY = 0;
+    for (let i = 0; i < n; i++) {
+        varX += Math.pow(dataX[i] - meanX, 2);
+        covXY += (dataX[i] - meanX) * (dataY[i] - meanY);
+    }
+
+    if (type === 'linear') {
+        const res = regression.linear(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+    }
+    if (type === 'exponential') {
+        const res = regression.exponential(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Exponential Regression' };
+    }
+    if (type === 'logarithmic') {
+        const res = regression.logarithmic(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Logarithmic Regression' };
+    }
+    if (type === 'power') {
+        const res = regression.power(points);
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Power Regression' };
+    }
+    if (type === 'polynomial') {
+        const res = regression.polynomial(points, { order: degree });
+        return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: `Polynomial Regression (Degree ${degree})` };
+    }
+
+    if (type === 'ridge' || type === 'lasso' || type === 'elasticnet') {
+        const alpha = 1.0;
+        let m = 0;
+        if (type === 'ridge') {
+            m = varX + alpha !== 0 ? covXY / (varX + alpha) : 0;
+        } else if (type === 'lasso') {
+            m = varX !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - alpha / 2)) / varX : 0;
+        } else {
+            const l1 = 0.5;
+            m = (varX + alpha * (1 - l1)) !== 0 ? (Math.sign(covXY) * Math.max(0, Math.abs(covXY) - (alpha * l1) / 2)) / (varX + alpha * (1 - l1)) : 0;
+        }
+        const c = meanY - m * meanX;
+        const predY = dataX.map(x => m * x + c);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => m * x + c,
+            string: `y = ${m.toFixed(4)}x + ${c.toFixed(4)}`,
+            r2,
+            name: type === 'ridge' ? 'Ridge Regression' : type === 'lasso' ? 'Lasso Regression' : 'Elastic Net Regression'
+        };
+    }
+
+    if (type === 'svr') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const C = 1.0;
+        const epsilon = 0.1;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = m;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                if (Math.abs(diff) > epsilon) {
+                    const sign = diff > 0 ? 1 : -1;
+                    gradM -= C * sign * scaledX[i];
+                    gradC -= C * sign;
+                }
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)}`,
+            r2,
+            name: 'Support Vector Regression (SVR)'
+        };
+    }
+
+    if (type === 'decision_tree') {
+        const sortedPoints = [...points].sort((a, b) => a[0] - b[0]);
+        let bestSplitVal = null;
+        let minSse = Infinity;
+        let leftMean = meanY, rightMean = meanY;
+        for (let i = 1; i < n; i++) {
+            const splitVal = (sortedPoints[i-1][0] + sortedPoints[i][0]) / 2;
+            const left = sortedPoints.slice(0, i);
+            const right = sortedPoints.slice(i);
+            const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+            const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+            const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                        right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+            if (sse < minSse) {
+                minSse = sse;
+                bestSplitVal = splitVal;
+                leftMean = mLeft;
+                rightMean = mRight;
+            }
+        }
+        const predY = dataX.map(x => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => (bestSplitVal === null || x < bestSplitVal) ? leftMean : rightMean,
+            string: bestSplitVal === null ? `y = ${meanY.toFixed(4)}` : `y = ${leftMean.toFixed(2)} (if x < ${bestSplitVal.toFixed(2)}) else ${rightMean.toFixed(2)}`,
+            r2,
+            name: 'Decision Tree Regression'
+        };
+    }
+
+    if (type === 'random_forest') {
+        const trees = [];
+        const numTrees = 5;
+        for (let t = 0; t < numTrees; t++) {
+            const sample = [];
+            for (let i = 0; i < n; i++) {
+                sample.push(points[Math.floor(Math.random() * n)]);
+            }
+            sample.sort((a, b) => a[0] - b[0]);
+            let bestSplitVal = null;
+            let minSse = Infinity;
+            let leftMean = meanY, rightMean = meanY;
+            for (let i = 1; i < sample.length; i++) {
+                const splitVal = (sample[i-1][0] + sample[i][0]) / 2;
+                const left = sample.slice(0, i);
+                const right = sample.slice(i);
+                const mLeft = left.reduce((sum, p) => sum + p[1], 0) / left.length;
+                const mRight = right.reduce((sum, p) => sum + p[1], 0) / right.length;
+                const sse = left.reduce((sum, p) => sum + Math.pow(p[1] - mLeft, 2), 0) +
+                            right.reduce((sum, p) => sum + Math.pow(p[1] - mRight, 2), 0);
+                if (sse < minSse) {
+                    minSse = sse;
+                    bestSplitVal = splitVal;
+                    leftMean = mLeft;
+                    rightMean = mRight;
+                }
+            }
+            trees.push({ splitVal: bestSplitVal, leftMean, rightMean });
+        }
+        const predictFn = (x) => {
+            const preds = trees.map(tree => {
+                if (tree.splitVal === null) return meanY;
+                return x < tree.splitVal ? tree.leftMean : tree.rightMean;
+            });
+            return preds.reduce((a, b) => a + b, 0) / preds.length;
+        };
+        const predY = dataX.map(x => predictFn(x));
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: predictFn,
+            string: `Random Forest Ensemble (${numTrees} trees)`,
+            r2,
+            name: 'Random Forest Regression'
+        };
+    }
+
+    if (type === 'quantile') {
+        const stdX = Math.sqrt(varX / n) || 1;
+        const stdY = Math.sqrt(dataY.map(y => Math.pow(y - meanY, 2)).reduce((a, b) => a + b, 0) / n) || 1;
+        const scaledX = dataX.map(x => (x - meanX) / stdX);
+        const scaledY = dataY.map(y => (y - meanY) / stdY);
+        let m = 0, c = 0;
+        const learningRate = 0.01;
+        const epochs = 1000;
+        const tau = 0.5;
+        for (let epoch = 0; epoch < epochs; epoch++) {
+            let gradM = 0;
+            let gradC = 0;
+            for (let i = 0; i < n; i++) {
+                const diff = scaledY[i] - (m * scaledX[i] + c);
+                const g = diff < 0 ? (tau - 1) : tau;
+                gradM -= scaledX[i] * g;
+                gradC -= g;
+            }
+            m -= learningRate * (gradM / n);
+            c -= learningRate * (gradC / n);
+        }
+        const mOrig = (m * stdY) / stdX;
+        const cOrig = meanY + stdY * c - (m * stdY * meanX) / stdX;
+        const predY = dataX.map(x => mOrig * x + cOrig);
+        const sse = points.reduce((sum, p, i) => sum + Math.pow(p[1] - predY[i], 2), 0);
+        const sst = points.reduce((sum, p) => sum + Math.pow(p[1] - meanY, 2), 0);
+        const r2 = sst !== 0 ? 1 - sse / sst : 0;
+        return {
+            predict: (x) => mOrig * x + cOrig,
+            string: `y = ${mOrig.toFixed(4)}x + ${cOrig.toFixed(4)} (τ=0.5)`,
+            r2,
+            name: 'Quantile Regression (Median Fit)'
+        };
+    }
+
+    const res = regression.linear(points);
+    return { predict: (x) => res.predict(x)[1], string: res.string, r2: res.r2, name: 'Simple Linear Regression' };
+};
+
 export const EnhancedDataAnalyzer = () => {
     const [_searchParams] = useSearchParams();
     const { session, isGuest } = useAuth();
@@ -63,6 +288,10 @@ export const EnhancedDataAnalyzer = () => {
 
     // State initialization
     const [data, setData] = useState([]);
+    
+    const isMultivariate = useMemo(() => {
+        return data.length > 0 && Array.isArray(data[0].x);
+    }, [data]);
     
     // Polling hook
     const polling = useTaskPolling();
@@ -81,6 +310,10 @@ export const EnhancedDataAnalyzer = () => {
         return saved ? JSON.parse(saved) : [];
     });
     const [activeTab, setActiveTab] = useState("input");
+    const [selectedPointIndex, setSelectedPointIndex] = useState(null);
+    const [isEditingSelectedPoint, setIsEditingSelectedPoint] = useState(false);
+    const [editSelectedX, setEditSelectedX] = useState("");
+    const [editSelectedY, setEditSelectedY] = useState("");
 
     // Prediction feature state
     const [predictionInput, setPredictionInput] = useState("");
@@ -89,11 +322,6 @@ export const EnhancedDataAnalyzer = () => {
     const [predictionHistory, setPredictionHistory] = useState([]);
 
     const chartContainerRef = useRef(null);
-
-    // Export theme dialog state
-    const [showExportDialog, setShowExportDialog] = useState(false);
-    const [exportFormat, setExportFormat] = useState("png");
-    const [exportTheme, setExportTheme] = useState("light");
 
     // Prepare state for session persistence
     const sessionState = useMemo(() => ({
@@ -204,6 +432,15 @@ export const EnhancedDataAnalyzer = () => {
         }
     };
 
+    const handlePointClick = useCallback((index) => {
+        setSelectedPointIndex(index);
+        setIsEditingSelectedPoint(false);
+        if (data[index]) {
+            setEditSelectedX(data[index].x.toString());
+            setEditSelectedY(data[index].y.toString());
+        }
+    }, [data]);
+
     const analyzeData = useCallback(async (modelTypeOverride) => {
         setError("");
         if (data.length < 2) {
@@ -214,30 +451,214 @@ export const EnhancedDataAnalyzer = () => {
         setLoading(true);
         setActiveTab("results");
 
-        try {
-            let modelToRequest = undefined;
-            if (selectedModelType === "polynomial") {
-                modelToRequest = `polynomial-${polynomialDegree}`;
-            } else if (selectedModelType !== "auto") {
-                modelToRequest = selectedModelType;
+        let modelToRequest = selectedModelType;
+        if (modelTypeOverride && typeof modelTypeOverride === "string") {
+            modelToRequest = modelTypeOverride;
+        }
+
+        const standardModels = ["auto", "linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
+        const isStandardModel = standardModels.includes(modelToRequest);
+
+        if (isStandardModel) {
+            try {
+                // Client-side regression fitting
+                const points = data.map(d => [d.x, d.y]);
+                const n = data.length;
+                const ys = data.map(d => d.y);
+                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
+                let bestResult = null;
+                let typeApplied = modelToRequest || "linear";
+
+                if (typeApplied === "auto") {
+                    const modelTypes = ["linear", "exponential", "logarithmic", "power", "polynomial", "ridge", "lasso", "elasticnet", "svr", "decision_tree", "random_forest", "quantile"];
+                    const candidates = modelTypes.map(t => {
+                        try {
+                            const fit = fitLocalModel(points, t, polynomialDegree);
+                            if (!fit || typeof fit.predict !== 'function') return null;
+
+                            // Calculate R2, MAE, RMSE for this fit
+                            const yPreds = data.map(d => fit.predict(d.x));
+                            const sse = data.reduce((sum, d, i) => sum + Math.pow(d.y - yPreds[i], 2), 0);
+                            const sst = data.reduce((sum, d) => sum + Math.pow(d.y - meanY, 2), 0);
+                            const r2 = sst !== 0 ? 1 - sse / sst : 0;
+                            const rmse = Math.sqrt(sse / n);
+                            const mae = data.reduce((sum, d, i) => sum + Math.abs(d.y - yPreds[i]), 0) / n;
+
+                            if (isNaN(r2) || isNaN(rmse) || isNaN(mae)) return null;
+
+                            return {
+                                type: t,
+                                res: {
+                                    ...fit,
+                                    r2,
+                                    rmse,
+                                    mae
+                                }
+                            };
+                        } catch {
+                            return null;
+                        }
+                    }).filter(Boolean);
+
+                    if (candidates.length > 0) {
+                        const sortedByR2 = [...candidates].sort((a, b) => b.res.r2 - a.res.r2);
+                        const sortedByRMSE = [...candidates].sort((a, b) => a.res.rmse - b.res.rmse);
+                        const sortedByMAE = [...candidates].sort((a, b) => a.res.mae - b.res.mae);
+
+                        const ranks = new Map();
+                        candidates.forEach(c => {
+                            const r2Rank = sortedByR2.findIndex(x => x.type === c.type) + 1;
+                            const rmseRank = sortedByRMSE.findIndex(x => x.type === c.type) + 1;
+                            const maeRank = sortedByMAE.findIndex(x => x.type === c.type) + 1;
+                            ranks.set(c.type, (r2Rank + rmseRank + maeRank) / 3);
+                        });
+
+                        const best = candidates.reduce((prev, curr) => {
+                            const scorePrev = ranks.get(prev.type);
+                            const scoreCurr = ranks.get(curr.type);
+                            if (scoreCurr < scorePrev) return curr;
+                            if (scoreCurr === scorePrev) {
+                                return curr.res.r2 > prev.res.r2 ? curr : prev;
+                            }
+                            return prev;
+                        });
+
+                        bestResult = best.res;
+                        typeApplied = best.type;
+                    } else {
+                        bestResult = fitLocalModel(points, 'linear');
+                        typeApplied = 'linear';
+                    }
+                } else {
+                    bestResult = fitLocalModel(points, typeApplied, polynomialDegree);
+                }
+
+                if (!bestResult || isNaN(bestResult.r2)) {
+                    throw new Error("Unable to fit mathematical model with current points.");
+                }
+
+                const predictions = [];
+                const minX = Math.min(...data.map(d => d.x));
+                const maxX = Math.max(...data.map(d => d.x));
+                const step = (maxX - minX) / 100 || 1;
+                for (let x = minX; x <= maxX; x += step) {
+                    const y = bestResult.predict(x);
+                    if (isFinite(y)) {
+                        predictions.push([x, y]);
+                    }
+                }
+
+                const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
+                const stdDevY = Math.sqrt(varianceY);
+
+                const yPreds = data.map(d => bestResult.predict(d.x));
+                const sse = data.reduce((sum, d, i) => sum + Math.pow(d.y - yPreds[i], 2), 0);
+                const sst = data.reduce((sum, d) => sum + Math.pow(d.y - meanY, 2), 0);
+                const r2 = sst !== 0 ? 1 - sse / sst : 0;
+                const p = 1;
+                const adjustedR2 = n > p + 1 ? 1 - (1 - r2) * (n - 1) / (n - p - 1) : r2;
+                const rmse = Math.sqrt(sse / n);
+                const mae = data.reduce((sum, d, i) => sum + Math.abs(d.y - yPreds[i]), 0) / n;
+
+                const localResult = {
+                    r2: r2,
+                    adjustedR2: adjustedR2,
+                    rmse: rmse,
+                    mae: mae,
+                    modelName: bestResult.name || `${typeApplied.charAt(0).toUpperCase() + typeApplied.slice(1)} Regression`,
+                    predictions: predictions,
+                    predict: (x) => bestResult.predict(x),
+                    type: typeApplied,
+                    equation: bestResult.string,
+                    details: {
+                        stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        stdDevY: stdDevY,
+                        varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        varianceY: varianceY,
+                        adjustedR2: adjustedR2,
+                        rmse: rmse,
+                        mae: mae,
+                        localFallback: true
+                    }
+                };
+
+                setRegressionResult(localResult);
+                setLoading(false);
+                toast.success(`Model fitted successfully: ${localResult.modelName} (Instant Client-Side)`);
+                return;
+            } catch (fallbackErr) {
+                console.error("Local regression fit failed:", fallbackErr);
+                setError(fallbackErr.message || "Local analysis failed");
+                setLoading(false);
+                return;
             }
-            if (modelTypeOverride) {
-                modelToRequest = modelTypeOverride;
+        }
+
+        // For non-standard complex ML models, make backend request
+        try {
+            let modelToRequestBackend = modelToRequest;
+            if (modelToRequest === "polynomial") {
+                modelToRequestBackend = `polynomial-${polynomialDegree}`;
             }
 
-            const response = await dataAPI.analyze(data, modelToRequest);
+            const response = await dataAPI.analyze(data, modelToRequestBackend);
 
             if (response && response.task_id) {
                 polling.startPolling(response.task_id);
-                // We don't set loading to false yet; the useEffect will handle the result
             } else {
                 setError("Failed to start analysis task");
                 setLoading(false);
             }
-
         } catch (err) {
-            setError(err.message || "Failed to analyze data");
-            setLoading(false);
+            console.warn("Backend analysis failed. Reverting to local linear fit...", err);
+            // Revert back to local linear fitting
+            try {
+                const points = data.map(d => [d.x, d.y]);
+                const bestResult = regression.linear(points);
+                const predictions = [];
+                const minX = Math.min(...data.map(d => d.x));
+                const maxX = Math.max(...data.map(d => d.x));
+                const step = (maxX - minX) / 100 || 1;
+                for (let x = minX; x <= maxX; x += step) {
+                    const y = bestResult.predict(x)[1];
+                    if (isFinite(y)) {
+                        predictions.push([x, y]);
+                    }
+                }
+                const n = data.length;
+                const ys = data.map(d => d.y);
+                const meanY = ys.reduce((acc, y) => acc + y, 0) / n;
+                const varianceY = n > 1 ? ys.reduce((acc, y) => acc + Math.pow(y - meanY, 2), 0) / (n - 1) : 0;
+                const stdDevY = Math.sqrt(varianceY);
+
+                const localResult = {
+                    r2: bestResult.r2,
+                    adjustedR2: bestResult.r2,
+                    rmse: 0,
+                    mae: 0,
+                    modelName: "Linear Regression",
+                    predictions: predictions,
+                    predict: (x) => bestResult.predict(x)[1],
+                    type: "linear",
+                    equation: bestResult.string,
+                    details: {
+                        stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        stdDevY: stdDevY,
+                        varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                        varianceY: varianceY,
+                        adjustedR2: bestResult.r2,
+                        rmse: 0,
+                        mae: 0,
+                        localFallback: true
+                    }
+                };
+                setRegressionResult(localResult);
+                setLoading(false);
+                toast.success("Local linear fallback model fitted (Offline Mode)");
+            } catch (fallbackErr) {
+                setError(fallbackErr.message || "Failed to analyze data");
+                setLoading(false);
+            }
         }
     }, [data, selectedModelType, polynomialDegree, polling]);
 
@@ -265,11 +686,16 @@ export const EnhancedDataAnalyzer = () => {
 
             setRegressionResult({
                 r2: result.r2,
+                adjustedR2: result.adjusted_r2,
+                rmse: result.rmse,
+                mae: result.mae,
+                modelName: result.model_name || `${modelType.charAt(0).toUpperCase() + modelType.slice(1)} Regression`,
+                predictions: result.predictions || [],
                 predict: (x) => {
                     const predictions = result.predictions || [];
                     if (predictions.length === 0) return null;
 
-                    const sorted = predictions.sort((a, b) => a[0] - b[0]);
+                    const sorted = [...predictions].sort((a, b) => a[0] - b[0]);
                     const exact = sorted.find(p => Math.abs(p[0] - x) < 0.0001);
                     if (exact) return exact[1];
 
@@ -286,9 +712,9 @@ export const EnhancedDataAnalyzer = () => {
                 type: modelType,
                 equation: result.equation,
                 details: {
-                    stdDevX: Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
+                    stdDevX: isMultivariate ? 0 : Math.sqrt(data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                     stdDevY: stdDevY,
-                    varianceX: data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0,
+                    varianceX: isMultivariate ? 0 : (data.length > 1 ? data.map(d => d.x).reduce((acc, x, _, arr) => acc + Math.pow(x - arr.reduce((a, b) => a + b) / arr.length, 2), 0) / (data.length - 1) : 0),
                     varianceY: varianceY,
                     adjustedR2: result.adjusted_r2,
                     rmse: result.rmse,
@@ -687,7 +1113,7 @@ export const EnhancedDataAnalyzer = () => {
             setData([]);
             setRegressionResult(null);
 
-            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, activeModel.name, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
+            const result = await dataAPI.save(regressionResult.title || "Untitled Analysis", data, regressionType, regressionResult.equation, regressionResult.r2, activeWorkspace?.id, isPublic);
             toast.success("Analysis saved successfully!");
         } catch (_err) {
             toast.error("Failed to save analysis");
@@ -696,44 +1122,16 @@ export const EnhancedDataAnalyzer = () => {
         }
     };
 
-    const handleExportChart = async () => {
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-        setShowExportDialog(true);
-    };
-
-    const confirmExport = async () => {
-        if (!chartContainerRef.current) {
-            toast.error("Chart not found");
-            return;
-        }
-
-        const timestamp = new Date().toISOString().slice(0, 10);
-        const regressionLabel = regressionResult?.type.includes("polynomial")
+    const handleExportLog = ({ format, theme, filename }) => {
+        const regressionLabel = regressionResult?.type?.includes("polynomial")
             ? `polynomial-degree${regressionResult.type.split("-")[1]}`
             : "linear";
-        const filename = `regression-${regressionLabel}-${exportTheme}-${timestamp}`;
-
-        try {
-            if (exportFormat === "png") {
-                await exportChartAsPNG(chartContainerRef.current, filename, exportTheme);
-            } else {
-                await exportChartAsPDF(chartContainerRef.current, filename, exportTheme);
-            }
-
-            logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
-                format: exportFormat,
-                theme: exportTheme,
-                filename,
-                regressionType: regressionResult?.type,
-            });
-        } catch (error) {
-            console.error("Export failed:", error);
-        }
-
-        setShowExportDialog(false);
+        logExport(`Regression: ${regressionLabel}`, { data, regressionResult }, {
+            format,
+            theme,
+            filename,
+            regressionType: regressionResult?.type,
+        });
     };
 
     const dropEmptyValues = () => {
@@ -1004,10 +1402,12 @@ export const EnhancedDataAnalyzer = () => {
                         <Grid3x3 className="h-4 w-4" />
                         View Data
                     </TabsTrigger>
-                    <TabsTrigger value="results" className="gap-2" disabled={!regressionResult}>
-                        <BarChart3 className="h-4 w-4" />
-                        Results
-                    </TabsTrigger>
+                    {(regressionResult || loading) && (
+                        <TabsTrigger value="results" className="gap-2">
+                            <BarChart3 className="h-4 w-4" />
+                            Results
+                        </TabsTrigger>
+                    )}
                     <TabsTrigger value="stats" className="gap-2" disabled={data.length === 0}>
                         <Beaker className="h-4 w-4" />
                         Compare Groups
@@ -1128,6 +1528,10 @@ export const EnhancedDataAnalyzer = () => {
                                     <RefreshCw className="h-4 w-4 text-blue-500" />
                                     Normalize Data [0, 1]
                                 </Button>
+                                <Button onClick={clearData} variant="outline" className="gap-2 text-destructive hover:bg-destructive/5 hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                    Clear All Data
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -1171,32 +1575,244 @@ export const EnhancedDataAnalyzer = () => {
                             </CardContent>
                         </Card>
                     )}
-                </TabsContent>
-
-                {/* Data View Tab */}
-                <TabsContent value="data" className="space-y-4 mt-6">
-                    <Card className="border-2">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Grid3x3 className="h-5 w-5" />
-                                Data Table
+                    {/* Curve Plotter Best Practices Reference */}
+                    <Card className="border-2 mt-4">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-primary">
+                                <BookOpen className="h-5 w-5 text-slate-800 dark:text-slate-100" />
+                                Curve Plotter Principles & Best Practices
                             </CardTitle>
                             <CardDescription>
-                                Review your data points before analysis
+                                Key guidelines for constructing mathematical functions that accurately reflect physical or statistical trends.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <DataTable data={data} onDelete={(idx) => {
-                                const newData = data.filter((_, i) => i !== idx);
-                                setData(newData);
-                                toast.success("Data point removed");
-                            }} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Sparkles className="h-4 w-4 text-blue-500" />
+                                        Model Selection
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Choose the simplest equation that adequately explains the data. Avoid overfitting with high-order polynomials unless physically justified.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                        Data Quality
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Ensure variables are truly related. Aim for at least <strong>five or six data points</strong> to establish statistical confidence in the curve fit.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Activity className="h-4 w-4 text-purple-500" />
+                                        Error Handling
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Use weighted least squares for non-uniform errors, assigning higher weights to data points with smaller measurement errors (w<sub>i</sub> = 1/&Delta;Y<sub>i</sub><sup>2</sup>).
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Zap className="h-4 w-4 text-amber-500" />
+                                        Algorithm Choice
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Use direct least-squares for linear models. For non-linear equations, iterative algorithms like Levenberg-Marquardt are preferred but require a close initial guess.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                        Robustness to Outliers
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        If outliers are present, use robust fitting methods like Least Absolute Residuals (LAR) or Bisquare rather than standard ordinary least squares.
+                                    </p>
+                                </div>
+                                <div className="p-3.5 rounded-lg border bg-muted/20 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Info className="h-4 w-4 text-slate-500" />
+                                        Interpretation
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Always transform results back to natural physical units, and verify that the fitted curve aligns with the underlying physical relationship.
+                                    </p>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
+                {/* Data View Tab */}
+                <TabsContent value="data" className="space-y-6 mt-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <Card className="border-2">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Grid3x3 className="h-5 w-5" />
+                                    Data Table
+                                </CardTitle>
+                                <CardDescription>
+                                    Review your data points before analysis
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <DataTable
+                                    data={data}
+                                    onDataChange={setData}
+                                    selectedPointIndex={selectedPointIndex}
+                                    onRowSelect={handlePointClick}
+                                    onClearAll={clearData}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        {/* Live Data Visualization */}
+                        {data.length > 0 ? (
+                            <div className="space-y-6">
+                                <Card className="border-2 flex flex-col justify-between">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <TrendingUp className="h-5 w-5 text-primary" />
+                                            Live Visualization
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Real-time preview of the {data.length} plotted data points. Click a point to edit or filter it out.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 flex flex-col justify-center min-h-[350px]">
+                                        <UniversalChart
+                                            type="regression"
+                                            data={data}
+                                            regression={regressionResult}
+                                            title={regressionResult ? `${regressionResult.modelName} Analysis` : "Data Points Preview"}
+                                            selectedPointIndex={selectedPointIndex}
+                                            onPointClick={handlePointClick}
+                                        />
+                                    </CardContent>
+                                </Card>
+
+                                {selectedPointIndex !== null && data[selectedPointIndex] && (
+                                    <Card className="border-2 p-4 bg-muted/30 border-[#D4AF37]/30">
+                                        {isEditingSelectedPoint && (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="font-semibold text-sm">Edit Data Point #{selectedPointIndex + 1}</h4>
+                                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setIsEditingSelectedPoint(false)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-3 items-end">
+                                                    <div className="space-y-1.5 flex-1 min-w-[120px]">
+                                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">X Value</label>
+                                                        <Input type="number" step="any" value={editSelectedX} onChange={(e) => setEditSelectedX(e.target.value)} className="h-9 bg-card border-2" />
+                                                    </div>
+                                                    <div className="space-y-1.5 flex-1 min-w-[120px]">
+                                                        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Y Value</label>
+                                                        <Input type="number" step="any" value={editSelectedY} onChange={(e) => setEditSelectedY(e.target.value)} className="h-9 bg-card border-2" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" onClick={() => {
+                                                            const x = parseFloat(editSelectedX);
+                                                            const y = parseFloat(editSelectedY);
+                                                            if (isNaN(x) || isNaN(y)) {
+                                                                toast.error("Please enter valid numbers");
+                                                                return;
+                                                                }
+                                                            const newData = [...data];
+                                                            newData[selectedPointIndex] = { x, y };
+                                                            newData.sort((a, b) => a.x - b.x);
+                                                            setData(newData);
+                                                            setIsEditingSelectedPoint(false);
+                                                            setSelectedPointIndex(null);
+                                                            toast.success("Point updated successfully");
+                                                        }}>
+                                                            Save
+                                                        </Button>
+                                                        <Button size="sm" variant="outline" onClick={() => setIsEditingSelectedPoint(false)}>
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {!isEditingSelectedPoint && (
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <div>
+                                                <h4 className="font-semibold text-sm">
+                                                    Selected Point #{selectedPointIndex + 1}
+                                                </h4>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    X: {data[selectedPointIndex].x.toFixed(4)} • Y: {data[selectedPointIndex].y.toFixed(4)}
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="gap-2 h-9 border-2"
+                                                    onClick={() => setIsEditingSelectedPoint(true)}
+                                                >
+                                                    <Edit2 className="h-3.5 w-3.5" />
+                                                    Edit Point
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="destructive" 
+                                                    className="gap-2 h-9"
+                                                    onClick={() => {
+                                                        const newData = data.filter((_, idx) => idx !== selectedPointIndex);
+                                                        setData(newData);
+                                                        setSelectedPointIndex(null);
+                                                        toast.success("Point filtered out (deleted)");
+                                                    }}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    Filter Out (Delete)
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-9"
+                                                    onClick={() => setSelectedPointIndex(null)}
+                                                >
+                                                    Deselect
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        )}
+                                    </Card>
+                                )}
+                            </div>
+                        ) : (
+                            <Card className="border-2 h-full flex flex-col items-center justify-center p-8 text-center bg-muted/10 min-h-[350px]">
+                                <TrendingUp className="h-12 w-12 text-muted-foreground opacity-30 mb-4 animate-pulse" />
+                                <h3 className="font-semibold text-lg">No Data Points Yet</h3>
+                                <p className="text-sm text-muted-foreground max-w-sm mt-1">
+                                    Enter coordinates or upload a CSV file on the input tab to visualize your data points here.
+                                </p>
+                            </Card>
+                        )}
+                    </div>
+                </TabsContent>
+
                 {/* Results Tab */}
                 <TabsContent value="results" className="space-y-4 mt-6">
+                    {loading && !regressionResult && (
+                        <Card className="border-2 p-12 text-center flex flex-col items-center justify-center space-y-4 bg-white dark:bg-slate-950">
+                            <RefreshCw className="h-10 w-10 animate-spin text-primary mx-auto" />
+                            <div>
+                                <h3 className="font-semibold text-lg">Fitting Regression Model...</h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    {polling.status || "Fitting curve parameters. Please wait..."}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
                     {regressionResult && (
                         <>
                             <Card className="border-2">
@@ -1252,6 +1868,7 @@ export const EnhancedDataAnalyzer = () => {
                                             data={data}
                                             regression={regressionResult}
                                             title={`${regressionResult.modelName} Analysis`}
+                                            selectedPointIndex={selectedPointIndex}
                                         />
                                     </div>
                                 </CardContent>
@@ -1356,7 +1973,7 @@ export const EnhancedDataAnalyzer = () => {
                     <div className="flex-1 min-w-[240px] space-y-1.5">
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Regression Model Option</label>
                         <Select value={selectedModelType} onValueChange={setSelectedModelType}>
-                            <SelectTrigger className="bg-white border-2">
+                            <SelectTrigger className="bg-card border-2">
                                 <SelectValue placeholder="Select regression model" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1386,7 +2003,7 @@ export const EnhancedDataAnalyzer = () => {
                                 max={6}
                                 value={polynomialDegree}
                                 onChange={(e) => setPolynomialDegree(Math.max(2, Math.min(6, parseInt(e.target.value) || 2)))}
-                                className="bg-white border-2"
+                                className="bg-card border-2"
                             />
                         </div>
                     )}
@@ -1396,9 +2013,9 @@ export const EnhancedDataAnalyzer = () => {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
                 <Button
-                    onClick={analyzeData}
+                    onClick={() => analyzeData()}
                     disabled={data.length < 2 || loading}
-                    className="gap-2 bg-slate-700 hover:bg-slate-800"
+                    className="gap-2"
                     size="lg"
                 >
                     {loading ? (
@@ -1421,93 +2038,57 @@ export const EnhancedDataAnalyzer = () => {
                             Save Analysis
                         </Button>
 
-                        <Button onClick={handleExportChart} variant="outline" size="lg" className="gap-2">
-                            <Download className="h-4 w-4" />
-                            Export Chart
-                        </Button>
+                        <ChartExportButton
+                            elementRef={chartContainerRef}
+                            filenamePrefix={`regression-${regressionResult?.type || 'linear'}`}
+                            chartTitle={regressionResult?.title || "Regression Analysis"}
+                            chartType="regression"
+                            buttonSize="lg"
+                            buttonVariant="outline"
+                            buttonClassName="gap-2"
+                            buttonText="Export Chart"
+                            onExport={handleExportLog}
+                        />
 
-                        <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950">
+                        <Button onClick={exportDetailedPDFReport} variant="outline" size="lg" className="gap-2">
                             <FileText className="h-4 w-4" />
                             PDF Report
                         </Button>
 
-                        <Button onClick={saveBookmark} variant="outline" size="lg" className="gap-2 border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-950">
+                        <Button onClick={saveBookmark} variant="outline" size="lg" className="gap-2">
                             <Save className="h-4 w-4" />
                             Bookmark Fit
                         </Button>
 
                         <ExportCodeButton
-                            data={data}
-                            regressionResult={regressionResult}
+                            chartType="regression"
+                            regressionData={{
+                                dataPoints: data || [],
+                                equation: regressionResult?.equation || '',
+                                modelType: regressionType || 'linear',
+                                rSquared: regressionResult?.r2 || 0
+                            }}
+                            chartTitle="Regression Analysis"
+                            buttonText="Export Code"
+                            buttonSize="lg"
+                            buttonVariant="outline"
                         />
                     </>
                 )}
 
                 {data.length > 0 && (
-                    <Button onClick={clearData} variant="outline" size="lg" className="gap-2 ml-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950">
+                    <Button 
+                        onClick={clearData} 
+                        variant="ghost" 
+                        size="lg" 
+                        className="gap-2 ml-auto text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                    >
                         <Trash2 className="h-4 w-4" />
                         Clear All Data
                     </Button>
                 )}
             </div>
 
-            {/* Export Dialog */}
-            <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Export Chart</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Choose format and theme for your export
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Format</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    variant={exportFormat === "png" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("png")}
-                                    className="justify-start gap-2"
-                                >
-                                    <FileImage className="h-4 w-4" />
-                                    PNG Image
-                                </Button>
-                                <Button
-                                    variant={exportFormat === "pdf" ? "default" : "outline"}
-                                    onClick={() => setExportFormat("pdf")}
-                                    className="justify-start gap-2"
-                                >
-                                    <FileText className="h-4 w-4" />
-                                    PDF Document
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Theme</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <Button
-                                    variant={exportTheme === "light" ? "default" : "outline"}
-                                    onClick={() => setExportTheme("light")}
-                                >
-                                    Light
-                                </Button>
-                                <Button
-                                    variant={exportTheme === "dark" ? "default" : "outline"}
-                                    onClick={() => setExportTheme("dark")}
-                                >
-                                    Dark
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmExport}>
-                            Export
-                        </AlertDialogAction>
-                    </div>
-                </AlertDialogContent>
-            </AlertDialog>
         </div>
     );
 };

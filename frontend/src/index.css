@@ -13,8 +13,8 @@
 /* ── Design Tokens ── */
 @layer base {
   :root {
-    /* Shadcn/Radix compatible tokens (Ethereal Minimalist) */
-    --background: 210 16% 98%;
+    /* Shadcn/Radix compatible tokens (Monochrome Minimalist) */
+    --background: 0 0% 100%;
     --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
@@ -25,22 +25,22 @@
 
     /* Matte Black primary */
     --primary: 0 0% 10%;
-    --primary-foreground: 210 16% 98%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 10% 92%;
+    --secondary: 0 0% 96%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 210 10% 92%;
-    --muted-foreground: 210 5% 42%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 46 65% 52%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
     --ring: 0 0% 10%;
 
     --chart-1: 0 0% 10%;
@@ -62,16 +62,19 @@
     --sidebar-ring: 0 0% 10%;
 
     /* Custom luxury tokens */
-    --luxury-midnight: #0F172A;
-    --luxury-midnight-dark: #0B1120;
-    --luxury-champagne: #D4AF37;
-    --luxury-champagne-light: #E8C86A;
-    --luxury-offwhite: #F8F9FA;
-    --luxury-bone: #F2F3F4;
-    --luxury-dark: #0D1117;
-    --luxury-obsidian: #1A1A1A;
-    --luxury-stone: #6B6B6B;
-    --luxury-silk: #E8E4DC;
+    --luxury-midnight: 222 47% 11%;
+    --luxury-midnight-dark: 220 54% 8%;
+    --luxury-midnight-light: 215 25% 27%;
+    --luxury-champagne: 46 65% 52%;
+    --luxury-champagne-light: 45 74% 66%;
+    --luxury-champagne-dark: 45 66% 42%;
+    --luxury-offwhite: 210 17% 98%;
+    --luxury-bone: 210 9% 96%;
+    --luxury-dark: 216 28% 7%;
+    --luxury-obsidian: 0 0% 10%;
+    --luxury-stone: 0 0% 42%;
+    --luxury-silk: 38 16% 89%;
+    --luxury-bg-main: 60 13% 97%;
 
     /* Transitions */
     --transition-luxury: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -79,39 +82,54 @@
   }
 
   .dark {
-    /* Dark Mode: Midnight & Champagne */
-    --background: 222 47% 11%;
-    --foreground: 210 16% 98%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 16% 98%;
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 16% 98%;
-    --primary: 46 65% 52%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 210 16% 98%;
-    --muted: 222 30% 16%;
-    --muted-foreground: 210 10% 65%;
-    --accent: 46 65% 52%;
-    --accent-foreground: 222 47% 11%;
+    /* Dark Mode: Pure Obsidian & Chalk */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 98%;
+    --accent-foreground: 0 0% 6%;
     --destructive: 0 62.8% 50.6%;
-    --destructive-foreground: 210 16% 98%;
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 46 65% 52%;
-    --chart-1: 46 65% 52%;
-    --chart-2: 210 16% 98%;
-    --chart-3: 200 70% 55%;
-    --chart-4: 30 90% 60%;
-    --chart-5: 280 70% 55%;
-    --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 210 16% 98%;
-    --sidebar-primary: 46 65% 52%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 30% 16%;
-    --sidebar-accent-foreground: 210 16% 98%;
-    --sidebar-border: 222 30% 18%;
-    --sidebar-ring: 46 65% 52%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 98%;
+    --chart-1: 0 0% 98%;
+    --chart-2: 0 0% 80%;
+    --chart-3: 0 0% 60%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 20%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 98%;
+
+    /* Custom luxury tokens - Dark Mode overrides */
+    --luxury-midnight: 222 47% 12%;
+    --luxury-midnight-dark: 220 54% 8%;
+    --luxury-midnight-light: 215 25% 20%;
+    --luxury-champagne: 46 65% 52%;
+    --luxury-champagne-light: 45 74% 66%;
+    --luxury-champagne-dark: 45 66% 42%;
+    --luxury-offwhite: 216 28% 9%;
+    --luxury-bone: 216 28% 12%;
+    --luxury-dark: 210 17% 98%;
+    --luxury-obsidian: 0 0% 98%;
+    --luxury-stone: 0 0% 65%;
+    --luxury-silk: 215 15% 18%;
+    --luxury-bg-main: 0 0% 6%;
   }
 }
 

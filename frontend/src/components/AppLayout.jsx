@@ -7,7 +7,6 @@ import {
     User,
     Sparkles,
     BarChart3,
-    Database,
     Settings,
     BookOpen,
     Zap,
@@ -18,6 +17,7 @@ import {
 import { useStorytelling } from '@/context/StorytellingContext';
 import NavigationGuide from './NavigationGuide';
 import ProgressTracker from './ProgressTracker';
+import NetworkStatus from './NetworkStatus';
 import AchievementModal from './AchievementModal';
 import {
     Sidebar,
@@ -99,18 +99,6 @@ const AppLayout = ({ children }) => {
             icon: TrendingUp,
             description: 'Plot & visualize data',
         },
-        {
-            title: 'Categorical Data',
-            url: '/categorical',
-            icon: BarChart3,
-            description: 'Analyze categories',
-        },
-        {
-            title: 'NLP Analysis',
-            url: '/categorical-nlp',
-            icon: Database,
-            description: 'Natural language queries',
-        },
     ];
 
     const secondaryItems = [
@@ -171,7 +159,7 @@ const AppLayout = ({ children }) => {
         <HelpModeContext.Provider value={{ helpMode, setHelpMode }}>
             <SidebarProvider>
                 {/* ── Luxury Sidebar ── */}
-                <Sidebar collapsible="icon" className="border-r border-[#D4AF37]/10">
+                <Sidebar collapsible="offcanvas" className="border-r border-[#D4AF37]/10">
                     {/* Brand Header */}
                     <SidebarHeader className="border-b border-[#D4AF37]/10 pb-3">
                         <div className="flex items-center gap-3 px-3 py-2">
@@ -215,8 +203,8 @@ const AppLayout = ({ children }) => {
                                                     isActive={active}
                                                     tooltip={item.description || item.title}
                                                     className={`group relative rounded-none transition-all duration-200 ${active
-                                                            ? "bg-[#0F172A] text-white hover:bg-[#0F172A] hover:text-white border-l-2 border-[#D4AF37]"
-                                                            : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-[#0F172A]/10 border-l-2 border-transparent"
+                                                            ? "bg-luxury-midnight text-white hover:bg-luxury-midnight hover:text-white border-l-2 border-[#D4AF37]"
+                                                            : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-luxury-midnight/10 border-l-2 border-transparent"
                                                         }`}
                                                 >
                                                     <Link to={item.url} className="flex items-center justify-between w-full">
@@ -239,7 +227,7 @@ const AppLayout = ({ children }) => {
                                                         </div>
                                                         {item.badge && (
                                                             <span
-                                                                className="ml-auto text-[10px] px-1.5 py-0.5 bg-[#D4AF37] text-[#0D1117] font-semibold group-data-[collapsible=icon]:hidden"
+                                                                className="ml-auto text-[10px] px-1.5 py-0.5 bg-[#D4AF37] text-luxury-dark font-semibold group-data-[collapsible=icon]:hidden"
                                                                 style={{ letterSpacing: "0.05em" }}
                                                             >
                                                                 {item.badge}
@@ -275,8 +263,8 @@ const AppLayout = ({ children }) => {
                                                     asChild
                                                     tooltip={item.title}
                                                     className={`rounded-none transition-all duration-200 border-l-2 ${active
-                                                            ? "bg-[#0F172A] text-white hover:bg-[#0F172A] border-[#D4AF37]"
-                                                            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-[#0F172A]/10 border-transparent"
+                                                            ? "bg-luxury-midnight text-white hover:bg-luxury-midnight border-[#D4AF37]"
+                                                            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-luxury-midnight/10 border-transparent"
                                                         }`}
                                                 >
                                                     <Link to={item.url} className="flex items-center gap-2.5">
@@ -300,12 +288,12 @@ const AppLayout = ({ children }) => {
                                     <DropdownMenuTrigger asChild>
                                         <SidebarMenuButton
                                             size="lg"
-                                            className="rounded-none hover:bg-[#0F172A]/10 data-[state=open]:bg-[#0F172A]/10 transition-colors"
+                                            className="rounded-none hover:bg-luxury-midnight/10 data-[state=open]:bg-luxury-midnight/10 transition-colors"
                                         >
                                             <Avatar className="h-8 w-8 rounded-none border border-[#D4AF37]/30">
                                                 <AvatarImage src={user?.user_metadata?.avatar_url} alt={userName} />
                                                 <AvatarFallback
-                                                    className="rounded-none bg-[#0F172A] text-white font-bold text-sm"
+                                                    className="rounded-none bg-luxury-midnight text-white font-bold text-sm"
                                                     style={{ fontFamily: "'Playfair Display', serif" }}
                                                 >
                                                     {user?.email?.charAt(0).toUpperCase() || 'U'}
@@ -321,7 +309,7 @@ const AppLayout = ({ children }) => {
                                             </div>
                                         </SidebarMenuButton>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent side="top" align="end" className="w-56 rounded-none border-[#E8E4DC]">
+                                    <DropdownMenuContent side="top" align="end" className="w-56 rounded-none border-luxury-silk">
                                         <DropdownMenuLabel
                                             className="font-semibold"
                                             style={{ fontFamily: "'Playfair Display', serif" }}
@@ -331,12 +319,12 @@ const AppLayout = ({ children }) => {
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
                                             <Link to="/profile" className="cursor-pointer">
-                                                <User className="mr-2 h-4 w-4 text-[#0F172A]" />
+                                                <User className="mr-2 h-4 w-4 text-luxury-midnight" />
                                                 Profile
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem>
-                                            <Settings className="mr-2 h-4 w-4 text-[#6B6B6B]" />
+                                            <Settings className="mr-2 h-4 w-4 text-luxury-stone" />
                                             Settings
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
@@ -358,10 +346,10 @@ const AppLayout = ({ children }) => {
                 {/* ── Main Content Area ── */}
                 <SidebarInset>
                     {/* Top Header Bar */}
-                    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 bg-white border-b border-[#E8E4DC] px-6 transition-all" style={{ boxShadow: '0 1px 0 0 rgba(201,168,76,0.15)' }}>
+                    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 bg-card border-b border-luxury-silk px-6 transition-all" style={{ boxShadow: '0 1px 0 0 rgba(201,168,76,0.15)' }}>
                         <div className="flex items-center gap-2">
-                            <SidebarTrigger className="-ml-1 text-[#6B6B6B] hover:text-[#0F172A] transition-colors" />
-                            <div className="w-px h-4 bg-[#E8E4DC] mx-1" />
+                            <SidebarTrigger className="-ml-1 text-luxury-stone hover:text-luxury-midnight transition-colors" />
+                            <div className="w-px h-4 bg-luxury-silk mx-1" />
 
                             {/* Breadcrumbs */}
                             <nav className="flex items-center space-x-1 text-xs" style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.05em" }}>
@@ -371,8 +359,8 @@ const AppLayout = ({ children }) => {
                                         <Link
                                             to={crumb.url}
                                             className={`transition-colors uppercase tracking-wider ${index === pageInfo.breadcrumbs.length - 1
-                                                    ? 'text-[#0F172A] font-semibold'
-                                                    : 'text-[#6B6B6B] hover:text-[#0D1117]'
+                                                    ? 'text-luxury-midnight font-semibold'
+                                                    : 'text-luxury-stone hover:text-luxury-dark'
                                                 }`}
                                             style={{ fontSize: "0.65rem" }}
                                         >
@@ -393,39 +381,40 @@ const AppLayout = ({ children }) => {
                                 size="sm"
                                 onClick={() => setHelpMode(!helpMode)}
                                 className={`gap-2 rounded-none text-xs ${helpMode
-                                        ? "bg-[#0F172A] text-white hover:bg-[#0B1120]"
-                                        : "text-[#6B6B6B] hover:text-[#0F172A] hover:bg-[#0F172A]/5"
+                                        ? "bg-luxury-midnight text-white hover:bg-[#0B1120]"
+                                        : "text-luxury-stone hover:text-luxury-midnight hover:bg-luxury-midnight/5"
                                     }`}
                                 style={{ letterSpacing: "0.05em" }}
                             >
                                 <HelpCircle className="h-3.5 w-3.5" />
                                 <span className="hidden md:inline uppercase" style={{ fontSize: "0.65rem" }}>Help</span>
                             </Button>
+                            <NetworkStatus />
                             <ThemeToggle />
                         </div>
                     </header>
 
                     {/* Page Content */}
-                    <main className="flex flex-1 flex-col gap-4 p-6 bg-[#FAFAF7] min-h-[calc(100vh-3.5rem)]">
+                    <main className="flex flex-1 flex-col gap-4 p-6 bg-luxury-bg-main min-h-[calc(100vh-3.5rem)]">
                         <NavigationGuide />
 
                         {/* Luxury Page Header */}
-                        <div className="pb-5 mb-2 border-b border-[#E8E4DC]">
+                        <div className="pb-5 mb-2 border-b border-luxury-silk">
                             <p
-                                className="text-[#0F172A] mb-1"
+                                className="text-luxury-midnight mb-1"
                                 style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", fontFamily: "'Raleway', sans-serif" }}
                             >
                                 DataViz Platform
                             </p>
                             <h1
-                                className="text-2xl lg:text-3xl font-bold text-[#0D1117]"
+                                className="text-2xl lg:text-3xl font-bold text-luxury-dark"
                                 style={{ fontFamily: "'Playfair Display', serif", lineHeight: 1.2 }}
                             >
                                 {pageInfo.title}
                             </h1>
                             {pageInfo.description && (
                                 <p
-                                    className="text-[#6B6B6B] text-sm mt-1.5"
+                                    className="text-luxury-stone text-sm mt-1.5"
                                     style={{ fontFamily: "'Raleway', sans-serif" }}
                                 >
                                     {pageInfo.description}

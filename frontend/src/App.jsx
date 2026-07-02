@@ -19,10 +19,11 @@ const JourneyDashboard = lazy(() => import("./pages/JourneyDashboard"));
 const ManualPlot = lazy(() => import("./pages/ManualPlot"));
 const ModernManualPlot = lazy(() => import("./pages/ModernManualPlot"));
 const ManualPlotCurve = lazy(() => import("./pages/ManualPlotCurve"));
+const DesmosPlot = lazy(() => import("./components/DesmosPlot"));
+const DesmosPlot3D = lazy(() => import("./components/DesmosPlot3D"));
 const ManualPlotRegression = lazy(() => import("./pages/ManualPlotRegression"));
 const ManualPlotCategorical = lazy(() => import("./pages/ManualPlotCategorical"));
 const CategoricalChat = lazy(() => import("./pages/CategoricalChat"));
-const CategoricalChatNLP = lazy(() => import("./pages/CategoricalChatNLP"));
 const AIFeatures = lazy(() => import("./pages/AIFeatures"));
 const SmartAnalytics = lazy(() => import("./pages/SmartAnalytics"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -102,7 +103,11 @@ const App = () => (
                                 }
                             >
                                 <Route index element={<Navigate to="regression" replace />} />
-                                <Route path="curve" element={<ManualPlotCurve />} />
+                                <Route path="curve" element={<ManualPlotCurve />}>
+                                    <Route index element={<Navigate to="2d" replace />} />
+                                    <Route path="2d" element={<DesmosPlot />} />
+                                    <Route path="3d" element={<DesmosPlot3D />} />
+                                </Route>
                                 <Route path="regression" element={<ManualPlotRegression />} />
                                 <Route path="categorical" element={<ManualPlotCategorical />} />
                             </Route>
@@ -115,25 +120,21 @@ const App = () => (
                                 }
                             >
                                 <Route index element={<Navigate to="curve" replace />} />
-                                <Route path="curve" element={<ManualPlotCurve />} />
+                                <Route path="curve" element={<ManualPlotCurve />}>
+                                    <Route index element={<Navigate to="2d" replace />} />
+                                    <Route path="2d" element={<DesmosPlot />} />
+                                    <Route path="3d" element={<DesmosPlot3D />} />
+                                </Route>
                                 <Route path="regression" element={<ManualPlotRegression />} />
                                 <Route path="categorical" element={<ManualPlotCategorical />} />
                             </Route>
                             <Route
                                 path="/categorical"
-                                element={
-                                    <ProtectedRoute>
-                                        <CategoricalChat />
-                                    </ProtectedRoute>
-                                }
+                                element={<Navigate to="/manual-plot/categorical" replace />}
                             />
                             <Route
                                 path="/categorical-nlp"
-                                element={
-                                    <ProtectedRoute>
-                                        <CategoricalChatNLP />
-                                    </ProtectedRoute>
-                                }
+                                element={<Navigate to="/manual-plot/categorical" replace />}
                             />
                             <Route
                                 path="/ai"

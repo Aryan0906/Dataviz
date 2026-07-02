@@ -104,7 +104,7 @@ const Dashboard = () => {
 
     const handleEditSession = (sessionData) => {
         const pageTypeMap = {
-            'categorical': '/categorical',
+            'categorical': '/manual-plot/categorical',
             'regression': '/manual-plot/regression',
             'curve': '/manual-plot/curve',
         };
@@ -125,7 +125,7 @@ const Dashboard = () => {
         const routeMap = {
             'curve': '/manual-plot/curve',
             'regression': '/manual-plot/regression',
-            'categorical': '/categorical',
+            'categorical': '/manual-plot/categorical',
         };
         navigate(routeMap[type]);
     };

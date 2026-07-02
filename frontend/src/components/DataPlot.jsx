@@ -1,235 +1,240 @@
-import { useMemo, forwardRef, useRef, useCallback } from "react";
+import { useMemo, forwardRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { TrendingUp, Download, BarChart3 } from "lucide-react";
-import { exportChartAsSVG, generateFilename } from "@/lib/chartExport";
-import { useTheme } from "@/components/theme-provider";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, ReferenceDot } from "recharts";
+import { TrendingUp } from "lucide-react";
 
-export const DataPlot = forwardRef(({ data, regression }, ref) => {
-    const chartContainerRef = useRef(null);
-    const { theme } = useTheme();
-
-    const isMultivariate = useMemo(() => {
-        return data.length > 0 && Array.isArray(data[0].x);
-    }, [data]);
-
-    const handleExportSVG = useCallback(() => {
-        const el = chartContainerRef.current;
-        if (!el) return;
-        const currentTheme = theme === 'system'
-            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-            : (theme || 'light');
-        const filename = generateFilename('dataviz-regression-chart');
-        exportChartAsSVG(el, filename, currentTheme, {
-            title: regression?.equation ? `Regression: ${regression.equation}` : 'Regression Chart',
-            chartType: 'regression',
-            description: `Regression chart with ${data.length} data points${regression ? `, R2=${regression.r2.toFixed(4)}` : ''}`,
-        });
-    }, [theme, data, regression]);
-
-    const regressionPredictor = useMemo(() => {
-        if (typeof regression?.predict== 'function') return regression.predict;
-        if (isMultivariate) return null;
-        
-        const predictions = Array.isArray(regression?.predictions) ? regression.predictions : [];
-        if (predictions.length === 0) return null;
-
-        const sortedPredictions = [...predictions].sort((a, b) => a[0] - b[0]);
-
-        return (x) => {
-            const exact = sortedPredictions.find((point) => Math.abs(point[0] - x) < 0.0001);
-            if (exact) return exact[1];
-
-            for (let index = 0; index < sortedPredictions.length - 1; index += 1) {
-                const current = sortedPredictions[index];
-                const next = sortedPredictions[index + 1];
-
-                if (x >= current[0] && x <= next[0]) {
-                    const ratio = (x - current[0]) / (next[0] - current[0]);
-                    return current[1] + ratio * (next[1] - current[1]);
-                }
-            }
-
-            if (x < sortedPredictions[0][0]) return sortedPredictions[0][1];
-            return sortedPredictions[sortedPredictions.length - 1][1];
-        };
-    }, [regression, isMultivariate]);
-
-    const { combinedData, identityLine, coefficientData } = useMemo(() => {
-        if (data.length === 0) return { combinedData: [], identityLine: [], coefficientData: [] };
-
-        if (isMultivariate) {
-            let predictions = [];
-            if (regression && regression.predictions) {
-                predictions = regression.predictions.map(p => ({
-                    actual: p[0],
-                    predicted: p[1]
-                }));
-            }
-            
-            let minVal = 0;
-            let maxVal = 0;
-            if (predictions.length > 0) {
-                const allVals = predictions.flatMap(p => [p.actual, p.predicted]);
-                minVal = Math.min(...allVals);
-                maxVal = Math.max(...allVals);
-            }
-            
-            const identLine = [
-                { actual: minVal, predicted: minVal },
-                { actual: maxVal, predicted: maxVal }
-            ];
-            
-            const coefs = [];
-            if (regression && regression.coefficients && regression.feature_names) {
-                regression.coefficients.forEach((coef, idx) => {
-                    coefs.push({
-                        feature: regression.feature_names[idx],
-                        coefficient: coef
-                    });
-                });
-            }
-
-            return { combinedData: predictions, identityLine: identLine, coefficientData: coefs };
+export const DataPlot = forwardRef(({ data, regression, selectedPointIndex, onPointClick }, ref) => {
+  // Create data for the regression line
+  const plotData = useMemo(() => {
+    if (data.length === 0) return [];
+    
+    const sortedData = [...data].sort((a, b) => a.x - b.x);
+    const minX = Math.min(...sortedData.map(d => d.x));
+    const maxX = Math.max(...sortedData.map(d => d.x));
+    
+    // Create regression line points
+    const regressionPoints = [];
+    if (regression) {
+      const step = (maxX - minX) / 100 || 1;
+      for (let x = minX; x <= maxX; x += step) {
+        try {
+          const y = typeof regression.predict === "function" 
+              ? regression.predict(x) 
+              : null;
+          
+          if (typeof y === "number" && isFinite(y)) {
+            regressionPoints.push({ x, regressionY: y });
+          }
+        } catch (error) {
+          // Skip invalid points
         }
-
-        const sortedData = [...data].sort((a, b) => a.x - b.x);
-        const minX = Math.min(...sortedData.map(d => d.x));
-        const maxX = Math.max(...sortedData.map(d => d.x));
-        const rangeX = maxX - minX || 1;
-        const plotMinX = minX - rangeX * 0.1;
-        const plotMaxX = maxX + rangeX * 0.1;
-
-        const combined = [];
-        sortedData.forEach(point => {
-            combined.push({
-                x: point.x,
-                y: point.y,
-                regressionY: regressionPredictor ? regressionPredictor(point.x) : undefined
-            });
-        });
-
-        if (regressionPredictor) {
-            const step = (plotMaxX - plotMinX) / 200;
-            for (let x = plotMinX; x <= plotMaxX; x += step) {
-                if (!combined.find(p => Math.abs(p.x - x) < 0.001)) {
-                    try {
-                        const y = regressionPredictor(x);
-                        if (isFinite(y)) {
-                            combined.push({ x, regressionY: y });
-                        }
-                    } catch (e) {}
-                }
-            }
-        }
-        
-        combined.sort((a, b) => a.x - b.x);
-        return { combinedData: combined, identityLine: [], coefficientData: [] };
-    }, [data, regression, regressionPredictor, isMultivariate]);
-
-    if (data.length -== 0) return null;
-
-    if (isMultivariate) {
-        return (
-            <div className="w-full flex flex-col gap-6" ref={ref}>
-                <div className="flex justify-end mb-1">
-                    <Button variant="outline" size="sm" onClick={handleExportSVG} className="gap-1.5 text-xs">
-                        <Download className="h-3.5 w-3.5" />
-                        Export SVG
-                    </Button>
-                </div>
-                
-                <div ref={chartContainerRef} className="flex flex-col gap-8">
-                    <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                        <h4 className="text-sm font-semibold mb-4 text-center">Predicted vs Actual Values</h4>
-                        <ResponsiveContainer width="100%" height={350}>
-                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                <XAxis type="number" dataKey="actual" name="Actual Value" domain={['auto', 'auto']} />
-                                <YAxis type="number" dataKey="predicted" name="Predicted Value" domain={['auto', 'auto']} />
-                                <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                                <Scatter name="Predictions" data={combinedData} fill="#3b82f6" shape="circle" />
-                                <Line dataKey="predicted" data={identityLine} type="monotone" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={false} isAnimationActive={false} />
-                            </ScatterChart>
-                        </ResponsiveContainer>
-                    </div>
-
-                    {coefficientData.length > 0 && (
-                        <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h4 className="text-sm font-semibold mb-4 text-center">Feature Importance / Coefficients</h4>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={coefficientData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                                    <XAxis dataKey="feature" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar dataKey="coefficient" fill="#10b981" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
+      }
     }
+    
+    // Combine original data with regression line
+    const combined = [];
+    
+    // Add all original points
+    sortedData.forEach(point => {
+      let regY = undefined;
+      if (regression) {
+        if (typeof regression.predict === "function") {
+          regY = regression.predict(point.x);
+        } else if (Array.isArray(regression.predictions)) {
+          // Fallback interpolation
+          const exact = regression.predictions.find(p => Math.abs(p[0] - point.x) < 0.0001);
+          if (exact) regY = exact[1];
+        }
+      }
 
-    return (
-        <div className="w-full relative group" ref={ref}>
-            <div className="flex justify-end mb-1">
-                <Button variant="outline" size="sm" onClick={handleExportSVG} className="gap-1.5 text-xs">
-                    <Download className="h-3.5 w-3.5" />
-                    Export SVG
-                </Button>
-            </div>
-            <div ref={chartContainerRef} className="bg-white dark:bg-slate-950 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 se¡dow-sm transition-shadow hover:shadow-md">
-                <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={combinedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                        <XAxis 
-                            dataKey="x" 
-                            type="number" 
-                            domain={['auto', 'auto']} 
-                            tickFormatter={(value) => parseFloat(value).toFixed(2)}
-                            stroke="#94a3b8"
-                        />
-                        <YAxis 
-                            domain={['auto', 'auto']} 
-                            tickFormatter={(value) => parseFloat(value).toFixed(2)}
-                            stroke="#94a3b8"
-                        />
-                        <Tooltip 
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            labelFormatter={(value) => `X: ${parseFloat(value).toFixed(4)}`}
-                            formatter={(value, name) => [
-                                parseFloat(value).toFixed(4), 
-                                name === 'regressionY' ? 'Prediction' : 'Actual'
-                            ]}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="regressionY"
-                            stroke="#3b82f6"
-                            strokeWidth={3}
-                            dot={false}
-                            activeDot={false}
-                            name="regressionY"
-                            isAnimationActive={false}
-                        />
-                        <Line
-                            type="scatter"
-                            dataKey="y"
-                            stroke="#ef4444"
-                            strokeWidth={0}
-                            dot={{ stroke: '#ef4444', strokeWidth: 2, r: 4, fill: '#fff' }}
-                            activeDot={{ r: 6, fill: '#ef4444' }}
-                            name="y"
-                            isAnimationActive=-{false}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
+      combined.push({
+        x: point.x,
+        y: point.y,
+        regressionY: regY
+      });
+    });
+    
+    // Add regression line points that don't have original data
+    regressionPoints.forEach(point => {
+      const existingPoint = combined.find(p => Math.abs(p.x - point.x) < 0.001);
+      if (!existingPoint) {
+        combined.push({
+          x: point.x,
+          y: undefined,
+          regressionY: point.regressionY
+        });
+      }
+    });
+    
+    return combined.sort((a, b) => a.x - b.x);
+  }, [data, regression]);
+
+  const isMultivariate = useMemo(() => {
+    return data.length > 0 && Array.isArray(data[0].x);
+  }, [data]);
+
+  // Find the latest prediction (point with highest x value)
+  const latestPrediction = useMemo(() => {
+    if (data.length < 2 || isMultivariate) return null;
+    const sortedData = [...data].sort((a, b) => a.x - b.x);
+    const latest = sortedData[sortedData.length - 1];
+    
+    // Check if the latest point is likely a prediction (y value matches regression)
+    if (regression && typeof regression.predict === "function") {
+      const predictedY = regression.predict(latest.x);
+      if (typeof predictedY === "number" && isFinite(predictedY)) {
+        const tolerance = Math.max(0.001, Math.abs(predictedY * 0.01)); // 1% tolerance
+        if (Math.abs(latest.y - predictedY) < tolerance) {
+          return latest;
+        }
+      }
+    }
+    
+    return null;
+  }, [data, regression, isMultivariate]);
+
+  const formatTooltip = (value, name) => {
+    if (typeof value === 'number') {
+      return [value.toFixed(4), name === 'y' ? 'Actual' : 'Fitted'];
+    }
+    return [value, name];
+  };
+
+  // Selected point mapping for dot/line overlays
+  const selectedPoint = useMemo(() => {
+    if (selectedPointIndex !== undefined && selectedPointIndex !== null) {
+      return data[selectedPointIndex] || null;
+    }
+    return null;
+  }, [data, selectedPointIndex]);
+
+  return (
+    <Card className="shadow-card">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Data Visualization
+          </CardTitle>
+          <div className="flex gap-2">
+            <Badge variant="outline">{data.length} points</Badge>
+            {regression && (
+              <Badge variant="secondary">
+                RÂ² = {(regression.r2 || 0).toFixed(3)}
+              </Badge>
+            )}
+          </div>
         </div>
-    );
+      </CardHeader>
+      <CardContent ref={ref}>
+        <div className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart 
+              data={plotData} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              onClick={(state) => {
+                if (state && state.activePayload && state.activePayload.length > 0 && typeof onPointClick === 'function') {
+                  const clickedPoint = state.activePayload[0].payload;
+                  if (clickedPoint && clickedPoint.y !== undefined) {
+                    const index = data.findIndex(p => p.x === clickedPoint.x && p.y === clickedPoint.y);
+                    if (index !== -1) {
+                      onPointClick(index);
+                    }
+                  }
+                }
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+              <XAxis 
+                dataKey="x" 
+                type="number"
+                scale="linear"
+                domain={['dataMin', 'dataMax']}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => value.toFixed(2)}
+              />
+              <YAxis 
+                type="number"
+                domain={['dataMin', 'dataMax']}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => value.toFixed(2)}
+              />
+              <Tooltip 
+                formatter={formatTooltip}
+                labelFormatter={(value) => `X: ${parseFloat(value).toFixed(4)}`}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px'
+                }}
+              />
+              <Legend />
+              
+              {/* Original data points */}
+              <Line
+                type="monotone"
+                dataKey="y"
+                stroke="#0f172a"
+                strokeWidth={0}
+                dot={{ fill: '#0f172a', strokeWidth: 2, r: 4, cursor: 'pointer' }}
+                name="Data Points"
+                connectNulls={false}
+              />
+              
+              {/* Regression line */}
+              {regression && (
+                <Line
+                  type="monotone"
+                  dataKey="regressionY"
+                  stroke="#2563eb"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name={`${(regression.type || 'linear').charAt(0).toUpperCase() + (regression.type || 'linear').slice(1)} Fit`}
+                  connectNulls={true}
+                />
+              )}
+              
+              {/* Highlight prediction point */}
+              {latestPrediction && (
+                <ReferenceLine 
+                  x={latestPrediction.x} 
+                  stroke="#10b981" 
+                  strokeDasharray="5 5"
+                  label={{ value: "Prediction", position: "top", fill: "#10b981", fontSize: 10 }}
+                />
+              )}
+
+              {/* Selected point coordinates overlay lines */}
+              {selectedPoint && (
+                <>
+                  <ReferenceLine x={selectedPoint.x} stroke="#D4AF37" strokeDasharray="3 3" />
+                  <ReferenceLine y={selectedPoint.y} stroke="#D4AF37" strokeDasharray="3 3" />
+                  <ReferenceDot
+                    x={selectedPoint.x}
+                    y={selectedPoint.y}
+                    r={6}
+                    fill="#D4AF37"
+                    stroke="#fff"
+                    strokeWidth={2}
+                  />
+                </>
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {regression && (
+          <div className="mt-4 p-3 bg-muted rounded-lg">
+            <div className="text-sm font-medium mb-1">Current Model:</div>
+            <code className="text-xs font-mono text-muted-foreground">
+              {regression.equation}
+            </code>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 });
+
+DataPlot.displayName = "DataPlot";

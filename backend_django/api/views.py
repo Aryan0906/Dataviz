@@ -101,8 +101,12 @@ def _require_auth(request):
         print("DEBUG: No token provided in Authorization header")
         return (None, JsonResponse({"error": "Access token required"}, status=401))
     
+    # Guest mode pass-through
+    if token == 'guest-token':
+        return ('guest-user', None)
+    
     try:
-        # Verify using Supabase JWT Secret
+        # Try Supabase JWT first
         if SUPABASE_JWT_SECRET:
             try:
                 decoded = jwt.decode(
@@ -111,18 +115,28 @@ def _require_auth(request):
                     algorithms=['HS256'],
                     audience="authenticated"
                 )
+                user_id = decoded.get('sub')
+                if user_id:
+                    return (user_id, None)
             except Exception as e:
-                print(f"DEBUG: Token decoding failed: {str(e)}")
-                return (None, JsonResponse({"error": "Invalid token signature"}, status=401))
-            
-            user_id = decoded.get('sub')
-            print(f"DEBUG: Successfully authenticated user: {user_id}")
-        else:
-            # Fallback to custom JWT for backward compatibility
-            print("DEBUG: No Supabase JWT secret, using custom JWT")
+                if settings.DEBUG and SUPABASE_JWT_SECRET.startswith("insecure-"):
+                    print("DEBUG: Dev mode bypass - decoding token without verification signature")
+                    decoded = jwt.decode(token, options={"verify_signature": False})
+                    user_id = decoded.get('sub') or str(decoded.get('userId') or decoded.get('id', ''))
+                    if user_id:
+                        return (user_id, None)
+                # Fall through to custom JWT
+
+        # Fallback to custom JWT (local Django auth)
+        try:
             decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            user_id = str(decoded["userId"])
-        return (user_id, None)
+            user_id = str(decoded.get("userId") or decoded.get("id") or decoded.get("sub", ""))
+            if user_id:
+                return (user_id, None)
+        except Exception:
+            pass
+
+        return (None, JsonResponse({"error": "Invalid token"}, status=401))
     except jwt.ExpiredSignatureError:
         print("DEBUG: Token expired")
         return (None, JsonResponse({"error": "Token expired"}, status=401))
@@ -273,9 +287,45 @@ def analyze(request):
         }, status=202)
         
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({"error": f"Analysis failed to start: {str(e)}"}, status=500)
+        print(f"Celery task dispatch failed: {e}. Running analysis synchronously in fallback mode...")
+        import uuid
+        import json
+        from django.utils import timezone
+        from django_celery_results.models import TaskResult
+        from .tasks import run_comprehensive_analysis
+        
+        task_id = str(uuid.uuid4())
+        model_type = body.get("modelType")
+        
+        try:
+            # Call tasks synchronously (passing None as self to avoid updating task state)
+            response_data = run_comprehensive_analysis(None, data_points, model_type)
+            
+            if response_data and 'error' in response_data:
+                status = 'FAILURE'
+                tb = response_data['error']
+            else:
+                status = 'SUCCESS'
+                tb = None
+                
+            TaskResult.objects.create(
+                task_id=task_id,
+                status=status,
+                content_type='application/json',
+                content_encoding='utf-8',
+                result=json.dumps(response_data),
+                traceback=tb,
+                date_done=timezone.now()
+            )
+            
+            return JsonResponse({
+                'task_id': task_id,
+                'status': 'processing'
+            }, status=202)
+        except Exception as sync_err:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({"error": f"Analysis failed to start: {str(sync_err)}"}, status=500)
 
 
 @csrf_exempt
@@ -1402,31 +1452,64 @@ def export_notebook(request):
 
 @csrf_exempt
 def check_task_status(request, task_id):
-    from celery.result import AsyncResult
+    from django_celery_results.models import TaskResult
+    import json
     
     if request.method != 'GET':
         return HttpResponseNotAllowed(['GET'])
         
-    task = AsyncResult(task_id)
-    
-    if task.state == 'PENDING':
-        response = {'state': task.state, 'status': 'Pending...'}
-    elif task.state == 'PROGRESS':
-        response = {
-            'state': task.state,
-            'current': task.info.get('current', 0) if task.info else 0,
-            'total': task.info.get('total', 100) if task.info else 100,
-            'status': task.info.get('status', '') if task.info else ''
-        }
-    elif task.state == 'SUCCESS':
-        response = {
-            'state': task.state,
-            'result': task.result
-        }
-    else:
-        response = {'state': task.state, 'status': str(task.info)}
-    
-    return JsonResponse(response)
+    # Check manual database task result first (fallback/sync tasks are saved here)
+    try:
+        task_res = TaskResult.objects.filter(task_id=task_id).first()
+        if task_res:
+            if task_res.status == 'SUCCESS':
+                try:
+                    result_data = json.loads(task_res.result)
+                except Exception:
+                    result_data = task_res.result
+                return JsonResponse({
+                    'state': 'SUCCESS',
+                    'result': result_data
+                })
+            elif task_res.status == 'FAILURE':
+                return JsonResponse({
+                    'state': 'FAILURE',
+                    'status': task_res.traceback or 'Task failed'
+                })
+            else:
+                return JsonResponse({
+                    'state': task_res.status,
+                    'status': 'Processing...'
+                })
+    except Exception as e:
+        print(f"Error checking TaskResult model in database: {e}")
+
+    try:
+        from celery.result import AsyncResult
+        task = AsyncResult(task_id)
+        
+        if task.state == 'PENDING':
+            response = {'state': task.state, 'status': 'Pending...'}
+        elif task.state == 'PROGRESS':
+            response = {
+                'state': task.state,
+                'current': task.info.get('current', 0) if task.info else 0,
+                'total': task.info.get('total', 100) if task.info else 100,
+                'status': task.info.get('status', '') if task.info else ''
+            }
+        elif task.state == 'SUCCESS':
+            response = {
+                'state': task.state,
+                'result': task.result
+            }
+        else:
+            response = {'state': task.state, 'status': str(task.info)}
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({
+            'state': 'PENDING',
+            'status': f'Error connecting to background worker: {str(e)}. Retrying...'
+        })
 
 @csrf_exempt
 def test_hypothesis(request):
@@ -1463,3 +1546,52 @@ def test_hypothesis(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ── Dual Database Sync Views ──────────────────────────────────────────────
+
+@csrf_exempt
+def sync_status(request):
+    """Return the current database connection status and pending sync count."""
+    from dataviz_backend.db_router import is_supabase_online, force_db
+    from .sync_models import DeletedSyncRecord
+    from django.apps import apps
+
+    online = is_supabase_online()
+    pending_count = 0
+
+    try:
+        with force_db('sqlite'):
+            for model in apps.get_models():
+                if hasattr(model, 'pending_sync'):
+                    pending_count += model.objects.filter(pending_sync=True).count()
+            pending_count += DeletedSyncRecord.objects.count()
+    except Exception:
+        pass
+
+    return JsonResponse({
+        'online': online,
+        'database': 'supabase' if online else 'sqlite',
+        'pending_sync': pending_count
+    })
+
+
+@csrf_exempt
+def trigger_sync(request):
+    """Manually trigger an offline → Supabase sync."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    from .db_manager import sync_offline_data
+    from dataviz_backend.db_router import is_supabase_online
+
+    if not is_supabase_online():
+        return JsonResponse({'error': 'Supabase is not reachable'}, status=503)
+
+    synced_saves, synced_deletes = sync_offline_data()
+    return JsonResponse({
+        'synced_saves': synced_saves,
+        'synced_deletes': synced_deletes,
+        'message': f'Synced {synced_saves} saves and {synced_deletes} deletes'
+    })
+

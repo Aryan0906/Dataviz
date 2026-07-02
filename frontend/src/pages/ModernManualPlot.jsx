@@ -21,17 +21,17 @@ const ModernManualPlot = () => {
 
                 {/* ── Luxury Tab Navigation ── */}
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-                    <TabsList className="rounded-none bg-white border border-[#E8E4DC] p-0 h-auto w-full">
+                    <TabsList className="rounded-none bg-card border border-luxury-silk p-0 h-auto w-full">
                         {[
                             { value: 'regression', label: 'Regression Analysis', icon: TrendingUp },
-                            { value: 'curve', label: 'Curve Fitting', icon: Sigma },
+                            { value: 'curve', label: 'Curve Plotter', icon: Sigma },
                             { value: 'categorical', label: 'Categorical Plot', icon: BarChart3 },
                         ].map((tab, idx, arr) => (
                             <TabsTrigger
                                 key={tab.value}
                                 value={tab.value}
-                                className={`rounded-none flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-medium data-[state=active]:bg-[#0F172A] data-[state=active]:text-white data-[state=active]:shadow-none ${
-                                    idx < arr.length - 1 ? 'border-r border-[#E8E4DC]' : ''
+                                className={`rounded-none flex-1 flex items-center justify-center gap-2 px-6 py-3 text-xs font-medium data-[state=active]:bg-luxury-midnight data-[state=active]:text-white data-[state=active]:shadow-none ${
+                                    idx < arr.length - 1 ? 'border-r border-luxury-silk' : ''
                                 }`}
                                 style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}
                             >
