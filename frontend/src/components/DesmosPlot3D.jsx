@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, ChevronDown, Save, Upload } from "lucide-react";
+import { Download, RefreshCw, ChevronDown, Save, Upload, FileImage, FileText, FileCode, Sun, Moon } from "lucide-react";
+import jsPDF from "jspdf";
 import { toast } from "@/components/ui/sonner";
+import { wrapSvgWithXmlMetadata, generateFilename } from "@/lib/chartExport";
 import { usePageSession, useHistoryLogger } from "@/hooks/usePageSession";
 import ExportCodeButton from "./ExportCodeButton";
 import {
@@ -11,6 +13,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 import { loadCdnGraph, loadLocalGraph } from "./DesmosPlot";
 
 const PRESET_3D_EXPRESSIONS = [
@@ -46,6 +58,8 @@ const DesmosPlot3D = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [exportTheme, setExportTheme] = useState(getInitialTheme());
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [exportFormat, setExportFormat] = useState("png");
 
     // Session state - persists live 3D expressions
     const sessionState = useMemo(() => ({
@@ -208,25 +222,101 @@ const DesmosPlot3D = () => {
         }
     };
 
-    // Exports screenshot
-    const handleScreenshotExport = () => {
-        if (!calculatorRef.current) return;
+    const handleExportClick = (format) => {
+        setExportFormat(format);
+        setShowExportDialog(true);
+    };
+
+    const takeScreenshot = async (themeChoice) => {
+        if (!calculatorRef.current) throw new Error("Graph not ready");
+        const rect = containerRef.current?.getBoundingClientRect();
+        const width = Math.max(1, Math.floor(rect?.width || 800));
+        const height = Math.max(1, Math.floor(rect?.height || 600));
+        const bg = themeChoice === "dark" ? "#1a1a1e" : "#ffffff";
+        return calculatorRef.current.screenshot({ width, height, backgroundColor: bg });
+    };
+
+    const confirmExport = async () => {
+        if (!containerRef.current) {
+            toast.error("Graph not found");
+            return;
+        }
+
+        const filename = generateFilename("desmos-3d-graph");
         try {
-            const dataUrl = calculatorRef.current.screenshot({
-                width: 1200,
-                height: 800,
-                targetPixelRatio: 2,
+            const dataUrl = await takeScreenshot(exportTheme);
+            if (!dataUrl) throw new Error("Empty screenshot");
+
+            if (exportFormat === "png") {
+                const link = document.createElement("a");
+                link.href = dataUrl;
+                link.download = `${filename}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast.success(`Chart exported as PNG (${exportTheme})`);
+            } else if (exportFormat === "svg") {
+                const rect = containerRef.current?.getBoundingClientRect();
+                const width = Math.max(1, Math.floor(rect?.width || 800));
+                const height = Math.max(1, Math.floor(rect?.height || 600));
+                const bg = exportTheme === "dark" ? "#1a1a1e" : "#ffffff";
+
+                const rawSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="${bg}" />
+  <image href="${dataUrl}" width="${width}" height="${height}" />
+</svg>`;
+
+                const currentExpressions = liveExpressions;
+                const xmlDocument = wrapSvgWithXmlMetadata(rawSvg, {
+                    title: 'Desmos 3D Graph Export',
+                    chartType: 'mathematical-curve-3d',
+                    description: `Desmos 3D graph with ${currentExpressions.length} expression(s): ${currentExpressions.slice(0, 3).join(', ')}${currentExpressions.length > 3 ? '...' : ''}`,
+                });
+
+                const blob = new Blob([xmlDocument], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `${filename}.svg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                toast.success(`Chart exported as SVG/XML (${exportTheme})`);
+            } else {
+                const img = new Image();
+                img.src = dataUrl;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+
+                const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+                const w = img.width * ratio;
+                const h = img.height * ratio;
+                const x = (pageWidth - w) / 2;
+                const y = (pageHeight - h) / 2;
+                pdf.addImage(dataUrl, "PNG", x, y, w, h);
+                pdf.save(`${filename}.pdf`);
+                toast.success(`Chart exported as PDF (${exportTheme})`);
+            }
+
+            logExport({
+                title: 'Desmos 3D Graph Export',
+                metadata: {
+                    expressionCount: liveExpressions.length,
+                    format: exportFormat,
+                    theme: exportTheme,
+                }
             });
-            
-            const link = document.createElement("a");
-            link.download = `desmos-3d-graph-${Date.now()}.png`;
-            link.href = dataUrl;
-            link.click();
-            toast.success("Screenshot downloaded!");
-            logExport("3D Chart Screenshot", dataUrl);
         } catch (err) {
-            console.error("Screenshot failed", err);
-            toast.error("Failed to export image.");
+            console.error("Export failed", err);
+            toast.error("Failed to export graph.");
+        } finally {
+            setShowExportDialog(false);
         }
     };
 
@@ -251,13 +341,13 @@ const DesmosPlot3D = () => {
                         Save Session
                     </Button>
                     <Button
-                        onClick={handleScreenshotExport}
+                        onClick={() => handleExportClick("png")}
                         size="sm"
                         className="gap-2 bg-slate-500 text-white hover:bg-emerald-600"
-                        title="Export 3D graph as image"
+                        title="Export graph as image or PDF"
                     >
                         <Download className="h-4 w-4" />
-                        Export Image
+                        Export
                     </Button>
                     <Button onClick={clearAll} variant="outline" size="sm" className="gap-2" title="Clear all expressions">
                         <RefreshCw className="h-4 w-4" />
@@ -331,6 +421,98 @@ const DesmosPlot3D = () => {
                     />
                 </div>
             </div>
+
+            <AlertDialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+                <AlertDialogContent className="max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Export Chart</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Choose file format and theme for your exported chart
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">File Format</label>
+                            <div className="grid grid-cols-3 gap-3">
+                                <button
+                                    onClick={() => setExportFormat("png")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportFormat === "png"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <FileImage className="h-5 w-5" />
+                                    <span className="text-sm font-medium">PNG</span>
+                                </button>
+                                <button
+                                    onClick={() => setExportFormat("svg")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportFormat === "svg"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <FileCode className="h-5 w-5" />
+                                    <span className="text-sm font-medium">SVG</span>
+                                </button>
+                                <button
+                                    onClick={() => setExportFormat("pdf")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportFormat === "pdf"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <FileText className="h-5 w-5" />
+                                    <span className="text-sm font-medium">PDF</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Theme</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={() => setExportTheme("light")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportTheme === "light"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <Sun className="h-5 w-5" />
+                                    <span className="text-sm font-medium">Light</span>
+                                    <span className="text-xs text-muted-foreground">White bg</span>
+                                </button>
+                                <button
+                                    onClick={() => setExportTheme("dark")}
+                                    className={cn(
+                                        "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition",
+                                        exportTheme === "dark"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <Moon className="h-5 w-5" />
+                                    <span className="text-sm font-medium">Dark</span>
+                                    <span className="text-xs text-muted-foreground">Dark bg</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmExport}>
+                            Export as {exportFormat.toUpperCase()}
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };
