@@ -1788,59 +1788,74 @@ Generated from DataViz Analytics Platform
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
+from matplotlib.lines import Line2D
 
-# Set seaborn style
 sns.set_theme(style="whitegrid")
 
-# Define x range
-x = np.linspace(-10, 10, 1000)
+legend_elements = []
 
-# Create figure
-fig, ax = plt.subplots(figsize=(12, 8))
+def plot_expression(ax, expr, color):
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
 
-# Plot each expression
-expressions = ${JSON.stringify(expressions)}
+    python_expr = temp.replace('\\\\', '')
+    python_expr = python_expr.replace('{', '(').replace('}', ')')
+    python_expr = python_expr.replace('sin', 'np.sin')
+    python_expr = python_expr.replace('cos', 'np.cos')
+    python_expr = python_expr.replace('tan', 'np.tan')
+    python_expr = python_expr.replace('sqrt', 'np.sqrt')
+    python_expr = python_expr.replace('log', 'np.log')
+    python_expr = python_expr.replace('abs', 'np.abs')
+    python_expr = python_expr.replace('^', '**')
+    python_expr = python_expr.replace('e**', 'np.e**')
 
-# Seaborn color palette
-colors = sns.color_palette("husl", len(expressions))
-
-for i, expr in enumerate(expressions):
     try:
-        # Convert common LaTeX to Python
-        python_expr = expr.replace('\\\\', '')
-        python_expr = python_expr.replace('sin', 'np.sin')
-        python_expr = python_expr.replace('cos', 'np.cos')
-        python_expr = python_expr.replace('tan', 'np.tan')
-        python_expr = python_expr.replace('sqrt', 'np.sqrt')
-        python_expr = python_expr.replace('log', 'np.log')
-        python_expr = python_expr.replace('abs', 'np.abs')
-        python_expr = python_expr.replace('^', '**')
-        python_expr = python_expr.replace('e**', 'np.e**')
-        
-        # Try to evaluate and plot
         if '=' in python_expr:
             parts = python_expr.split('=')
-            if len(parts) == 2 and parts[0].strip() == 'y':
-                y_expr = parts[1].strip()
-                y = eval(y_expr)
-                ax.plot(x, y, label=f'{expr}', 
-                       color=colors[i], linewidth=2.5)
+            lhs, rhs = parts[0].strip(), parts[1].strip()
+            if lhs == 'y' and 'y' not in rhs:
+                x_vals = np.linspace(-10, 10, 1000)
+                y_vals = eval(rhs, {'x': x_vals, 'np': np})
+                ax.plot(x_vals, y_vals, color=color, linewidth=2.5)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2.5, label=expr))
+            elif lhs == 'x' and 'x' not in rhs:
+                y_vals = np.linspace(-10, 10, 1000)
+                x_vals = eval(rhs, {'y': y_vals, 'np': np})
+                ax.plot(x_vals, y_vals, color=color, linewidth=2.5)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2.5, label=expr))
             else:
-                print(f"Skipping unsupported equation format: {expr}")
+                x_grid = np.linspace(-10, 10, 500)
+                y_grid = np.linspace(-10, 10, 500)
+                X, Y = np.meshgrid(x_grid, y_grid)
+                Z = eval(f"({lhs}) - ({rhs})", {'x': X, 'y': Y, 'np': np})
+                ax.contour(X, Y, Z, levels=[0], colors=[color], linewidths=2.5)
+                legend_elements.append(Line2D([0], [0], color=color, lw=2.5, label=expr))
         else:
-            y = eval(python_expr)
-            ax.plot(x, y, label=f'{expr}', 
-                   color=colors[i], linewidth=2.5)
+            x_vals = np.linspace(-10, 10, 1000)
+            y_vals = eval(python_expr, {'x': x_vals, 'np': np})
+            ax.plot(x_vals, y_vals, color=color, linewidth=2.5)
+            legend_elements.append(Line2D([0], [0], color=color, lw=2.5, label=expr))
     except Exception as e:
         print(f"Error plotting expression '{expr}': {e}")
 
-# Customize plot
+fig, ax = plt.subplots(figsize=(12, 8))
+
+expressions = ${JSON.stringify(expressions)}
+colors = sns.color_palette("husl", len(expressions))
+
+for i, expr in enumerate(expressions):
+    plot_expression(ax, expr, colors[i])
+
 ax.set_xlabel('x', fontsize=12, fontweight='bold')
 ax.set_ylabel('y', fontsize=12, fontweight='bold')
 ax.set_title('${chartTitle}', fontsize=14, fontweight='bold', pad=20)
 ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
 ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.5)
-ax.legend(fontsize=10, frameon=True, fancybox=True, shadow=True)
+if legend_elements:
+    ax.legend(handles=legend_elements, fontsize=10, frameon=True, fancybox=True, shadow=True)
 ax.set_xlim(-10, 10)
 ax.set_ylim(-10, 10)
 
@@ -1859,105 +1874,99 @@ Generated from DataViz Analytics Platform
 
 import numpy as np
 import plotly.graph_objects as go
+import re
 
-# Define x range
-x = np.linspace(-10, 10, 1000)
-
-# Create figure
 fig = go.Figure()
-
-# Plot each expression
-expressions = ${JSON.stringify(expressions)}
-
-# Color palette
 colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
 
-for i, expr in enumerate(expressions):
+def convert_latex(expr):
+    temp = expr
+    pattern = r'\\\\frac{([^{}]+)}{([^{}]+)}'
+    while re.search(pattern, temp):
+        temp = re.sub(pattern, r'(\\1)/(\\2)', temp)
+    result = temp.replace('\\\\', '')
+    result = result.replace('{', '(').replace('}', ')')
+    result = result.replace('sin', 'np.sin')
+    result = result.replace('cos', 'np.cos')
+    result = result.replace('tan', 'np.tan')
+    result = result.replace('sqrt', 'np.sqrt')
+    result = result.replace('log', 'np.log')
+    result = result.replace('abs', 'np.abs')
+    result = result.replace('^', '**')
+    result = result.replace('e**', 'np.e**')
+    return result
+
+def plot_expression(fig, expr, color, idx):
+    python_expr = convert_latex(expr)
     try:
-        # Convert common LaTeX to Python
-        python_expr = expr.replace('\\\\', '')
-        python_expr = python_expr.replace('sin', 'np.sin')
-        python_expr = python_expr.replace('cos', 'np.cos')
-        python_expr = python_expr.replace('tan', 'np.tan')
-        python_expr = python_expr.replace('sqrt', 'np.sqrt')
-        python_expr = python_expr.replace('log', 'np.log')
-        python_expr = python_expr.replace('abs', 'np.abs')
-        python_expr = python_expr.replace('^', '**')
-        python_expr = python_expr.replace('e**', 'np.e**')
-        
-        # Try to evaluate and plot
         if '=' in python_expr:
             parts = python_expr.split('=')
-            if len(parts) == 2 and parts[0].strip() == 'y':
-                y_expr = parts[1].strip()
-                y = eval(y_expr)
-                
-                fig.add_trace(go.Scatter(
-                    x=x,
-                    y=y,
-                    mode='lines',
-                    name=expr,
-                    line=dict(color=colors[i % len(colors)], width=3)
-                ))
+            lhs, rhs = parts[0].strip(), parts[1].strip()
+            if lhs == 'y' and 'y' not in rhs:
+                x_vals = np.linspace(-10, 10, 1000)
+                y_vals = eval(rhs, {'x': x_vals, 'np': np})
+                fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines',
+                    name=expr, line=dict(color=color, width=3)))
+            elif lhs == 'x' and 'x' not in rhs:
+                y_vals = np.linspace(-10, 10, 1000)
+                x_vals = eval(rhs, {'y': y_vals, 'np': np})
+                fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines',
+                    name=expr, line=dict(color=color, width=3)))
             else:
-                print(f"Skipping unsupported equation format: {expr}")
+                # Implicit: sample grid, find zero-crossings via contour
+                x_grid = np.linspace(-10, 10, 400)
+                y_grid = np.linspace(-10, 10, 400)
+                X, Y = np.meshgrid(x_grid, y_grid)
+                Z = eval(f"({lhs}) - ({rhs})", {'x': X, 'y': Y, 'np': np})
+                # Extract contour level 0 using matplotlib (headless)
+                import matplotlib
+                matplotlib.use('Agg')
+                import matplotlib.pyplot as _plt
+                _fig, _ax = _plt.subplots()
+                cs = _ax.contour(X, Y, Z, levels=[0])
+                _plt.close(_fig)
+                for path in cs.collections[0].get_paths():
+                    verts = path.vertices
+                    fig.add_trace(go.Scatter(x=verts[:, 0], y=verts[:, 1],
+                        mode='lines', name=expr,
+                        line=dict(color=color, width=3),
+                        showlegend=(path == cs.collections[0].get_paths()[0])))
         else:
-            y = eval(python_expr)
-            fig.add_trace(go.Scatter(
-                x=x,
-                y=y,
-                mode='lines',
-                name=expr,
-                line=dict(color=colors[i % len(colors)], width=3)
-            ))
+            x_vals = np.linspace(-10, 10, 1000)
+            y_vals = eval(python_expr, {'x': x_vals, 'np': np})
+            fig.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines',
+                name=expr, line=dict(color=color, width=3)))
     except Exception as e:
         print(f"Error plotting expression '{expr}': {e}")
 
-# Add axis lines
+expressions = ${JSON.stringify(expressions)}
+for i, expr in enumerate(expressions):
+    plot_expression(fig, expr, colors[i % len(colors)], i)
+
 fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
 fig.add_vline(x=0, line_dash="dash", line_color="gray", opacity=0.5)
 
-# Update layout
 fig.update_layout(
-    title=dict(
-        text='${chartTitle}',
-        x=0.5,
-        xanchor='center',
-        font=dict(size=16, family='Arial, sans-serif')
-    ),
-    xaxis_title='x',
-    yaxis_title='y',
-    hovermode='closest',
-    showlegend=True,
-    template='plotly_white',
-    width=1200,
-    height=800,
+    title=dict(text='${chartTitle}', x=0.5, xanchor='center',
+        font=dict(size=16, family='Arial, sans-serif')),
+    xaxis_title='x', yaxis_title='y',
+    hovermode='closest', showlegend=True,
+    template='plotly_white', width=1200, height=800,
     xaxis=dict(range=[-10, 10], gridcolor='lightgray'),
     yaxis=dict(range=[-10, 10], gridcolor='lightgray'),
-    legend=dict(
-        yanchor="top",
-        y=0.99,
-        xanchor="left",
-        x=0.01,
-        bgcolor="rgba(255, 255, 255, 0.8)",
-        bordercolor="gray",
-        borderwidth=1
-    )
+    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01,
+        bgcolor="rgba(255,255,255,0.8)", bordercolor="gray", borderwidth=1)
 )
 
-# Show figure
 fig.show()
-
-# Save as HTML
 fig.write_html('mathematical_curve_plotly.html')
 print("Interactive chart saved as 'mathematical_curve_plotly.html'")
 
-# Save as PNG (requires kaleido: pip install kaleido)
 try:
     fig.write_image('mathematical_curve_plotly.png', width=1200, height=800)
     print("Static chart saved as 'mathematical_curve_plotly.png'")
-except Exception as e:
-    print(f"PNG export requires kaleido: pip install kaleido")
+except Exception:
+    print("PNG export requires kaleido: pip install kaleido")
 `;
     }
 
