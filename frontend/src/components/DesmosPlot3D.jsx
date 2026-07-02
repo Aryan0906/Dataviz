@@ -272,14 +272,17 @@ const DesmosPlot3D = () => {
                                 Presets
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuContent align="start" className="w-[320px] max-h-[300px] overflow-y-auto">
                             {PRESET_3D_EXPRESSIONS.map((preset) => (
                                 <DropdownMenuItem
                                     key={preset.label}
                                     onSelect={() => addPreset(preset.latex)}
+                                    className="flex justify-between items-center gap-3 py-1.5 px-2.5 cursor-pointer"
                                 >
-                                    <span className="flex-1">{preset.label}</span>
-                                    <code className="text-xs text-muted-foreground">{preset.latex}</code>
+                                    <span className="font-medium text-xs text-foreground shrink-0">{preset.label}</span>
+                                    <code className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[180px]" title={preset.latex}>
+                                        {preset.latex}
+                                    </code>
                                 </DropdownMenuItem>
                             ))}
                         </DropdownMenuContent>
