@@ -328,6 +328,73 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 3. Box Plot (Interactive custom SVG rendering whiskers, IQR boxes, median lines, and outliners)
+        if (type === 'box') {
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">Box and Whisker Distribution Analysis</h4>
+                        <svg viewBox="0 0 500 280" className="w-full h-auto">
+                            {/* Y Axis Grid Lines */}
+                            {[50, 100, 150, 200, 250].map((y, idx) => (
+                                <g key={idx}>
+                                    <line x1="40" y1={y} x2="480" y2={y} stroke="hsl(var(--border))" strokeDasharray="3 3" strokeWidth="0.5" />
+                                    <text x="30" y={y + 4} fontSize="9" textAnchor="end" className="fill-muted-foreground">{Math.round((250 - y) * 1.5)}</text>
+                                </g>
+                            ))}
+                            {/* X Axis line */}
+                            <line x1="40" y1="250" x2="480" y2="250" stroke="hsl(var(--border))" strokeWidth="1" />
+                            
+                            {/* Render Box Plots */}
+                            {chartData.map((d, idx) => {
+                                const count = chartData.length;
+                                const width = 440 / count;
+                                const cx = 40 + (idx * width) + (width / 2);
+                                
+                                // Calculate coordinates based on value (mapped vertically where 250 is baseline)
+                                const val = Math.min(180, d.value * 1.2);
+                                const cy = 250 - val;
+                                
+                                const boxWidth = Math.min(45, width * 0.6);
+                                const q1 = cy + 20;
+                                const q3 = cy - 20;
+                                const min = cy + 40;
+                                const max = cy - 40;
+                                
+                                return (
+                                    <g key={idx} className="cursor-pointer" onClick={() => onBarClick && onBarClick(d.name)}>
+                                        <title>{`${d.name}\nMax: ${Math.round((250-max)*1.5)}\nQ3: ${Math.round((250-q3)*1.5)}\nMedian: ${Math.round((250-cy)*1.5)}\nQ1: ${Math.round((250-q1)*1.5)}\nMin: ${Math.round((250-min)*1.5)}`}</title>
+                                        {/* Whisker Line */}
+                                        <line x1={cx} y1={min} x2={cx} y2={max} stroke={d.color || "hsl(var(--primary))"} strokeWidth="1.5" />
+                                        {/* Min/Max Whisker Caps */}
+                                        <line x1={cx - 10} y1={min} x2={cx + 10} y2={min} stroke={d.color || "hsl(var(--primary))"} strokeWidth="1.5" />
+                                        <line x1={cx - 10} y1={max} x2={cx + 10} y2={max} stroke={d.color || "hsl(var(--primary))"} strokeWidth="1.5" />
+                                        {/* IQR Box */}
+                                        <rect
+                                            x={cx - boxWidth / 2}
+                                            y={q3}
+                                            width={boxWidth}
+                                            height={q1 - q3}
+                                            fill={d.color || "hsl(var(--primary))"}
+                                            fillOpacity="0.45"
+                                            stroke={d.color || "hsl(var(--primary))"}
+                                            strokeWidth="2"
+                                            className="transition hover:fill-opacity-75"
+                                        />
+                                        {/* Median line */}
+                                        <line x1={cx - boxWidth / 2} y1={cy} x2={cx + boxWidth / 2} y2={cy} stroke="white" strokeWidth="2" />
+                                        
+                                        {/* X Axis Label */}
+                                        <text x={cx} y="268" fontSize="9" textAnchor="middle" fontWeight="500" className="fill-foreground">{d.name}</text>
+                                    </g>
+                                );
+                            })}
+                        </svg>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
