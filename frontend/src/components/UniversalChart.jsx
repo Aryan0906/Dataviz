@@ -664,6 +664,39 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 11. Grouped Bar Chart
+        if (type === 'grouped_bar') {
+            const groupedData = chartData.map(d => ({
+                name: d.name,
+                "Group Alpha": Math.round(d.value * 0.65),
+                "Group Beta": Math.round(d.value * 0.35),
+            }));
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <BarChart data={groupedData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Legend />
+                                <Bar dataKey="Group Alpha" fill="#8884d8" cursor="pointer" onClick={(data) => onBarClick && onBarClick(data.name)} />
+                                <Bar dataKey="Group Beta" fill="#ff7f50" cursor="pointer" onClick={(data) => onBarClick && onBarClick(data.name)} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
