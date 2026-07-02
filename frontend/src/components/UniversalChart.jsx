@@ -590,6 +590,47 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 9. Donut Chart (Pie ring configuration)
+        if (type === 'donut') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <PieChart>
+                                <Pie
+                                    data={chartData}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={65}
+                                    outerRadius={100}
+                                    label={(entry) => `${entry.name}: ${entry.value}`}
+                                    onClick={(entry) => onBarClick && onBarClick(entry.name)}
+                                    cursor="pointer"
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={entry.color || COLORS[index % COLORS.length]}
+                                        />
+                                    ))}
+                                </Pie>
+                                <Legend />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
