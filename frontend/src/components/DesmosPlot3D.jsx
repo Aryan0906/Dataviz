@@ -320,6 +320,8 @@ const DesmosPlot3D = () => {
         } finally {
             setShowExportDialog(false);
         }
+    };
+
     const handleImportCode = () => {
         if (!calculatorRef.current || !importCode.trim()) return;
         const lines = importCode.split('\n').map(l => l.trim()).filter(Boolean);
