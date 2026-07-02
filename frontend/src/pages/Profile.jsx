@@ -25,10 +25,10 @@ function LuxuryField({ id, label, icon: Icon, value, type = "text" }) {
         <div className="space-y-2">
             <label
                 htmlFor={id}
-                className="flex items-center gap-2 text-[#6B6B6B]"
+                className="flex items-center gap-2 text-luxury-stone"
                 style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Raleway', sans-serif" }}
             >
-                <Icon className="h-3 w-3 text-[#0F172A]" />
+                <Icon className="h-3 w-3 text-luxury-midnight" />
                 {label}
             </label>
             <input
@@ -36,7 +36,7 @@ function LuxuryField({ id, label, icon: Icon, value, type = "text" }) {
                 type={type}
                 value={value}
                 disabled
-                className="w-full h-10 px-3 bg-[#FAFAF7] border border-[#E8E4DC] text-[#0D1117] text-sm rounded-none focus:outline-none disabled:opacity-70"
+                className="w-full h-10 px-3 bg-luxury-bg-main border border-luxury-silk text-luxury-dark text-sm rounded-none focus:outline-none disabled:opacity-70"
                 style={{ fontFamily: "'Raleway', sans-serif" }}
             />
         </div>
@@ -49,25 +49,25 @@ function StatItem({ label, value, loading, badgeText, icon: Icon, highlight = fa
         <div className={`flex items-center justify-between p-5 border transition-all duration-300 ${
             highlight
                 ? "border-[#D4AF37]/30 bg-[#D4AF37]/5"
-                : "border-[#E8E4DC] bg-white hover:border-[#0F172A]/20"
+                : "border-luxury-silk bg-white hover:border-luxury-midnight/20"
         }`}>
             <div>
                 <p
-                    className="text-[#6B6B6B] mb-1"
+                    className="text-luxury-stone mb-1"
                     style={{ fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "'Raleway', sans-serif" }}
                 >
                     {label}
                 </p>
                 <p
-                    className={`text-3xl font-bold ${highlight ? "text-[#D4AF37]" : "text-[#0D1117]"}`}
+                    className={`text-3xl font-bold ${highlight ? "text-[#D4AF37]" : "text-luxury-dark"}`}
                     style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                     {loading ? "—" : value}
                 </p>
             </div>
             {badgeText && (
-                <div className={`flex items-center justify-center w-10 h-10 ${highlight ? "bg-[#D4AF37]/15" : "bg-[#0F172A]/5"}`}>
-                    {Icon && <Icon className={`h-5 w-5 ${highlight ? "text-[#D4AF37]" : "text-[#0F172A]"}`} />}
+                <div className={`flex items-center justify-center w-10 h-10 ${highlight ? "bg-[#D4AF37]/15" : "bg-luxury-midnight/5"}`}>
+                    {Icon && <Icon className={`h-5 w-5 ${highlight ? "text-[#D4AF37]" : "text-luxury-midnight"}`} />}
                 </div>
             )}
         </div>
@@ -120,12 +120,12 @@ const Profile = () => {
                             custom={0}
                             className="lg:col-span-2"
                         >
-                            <div className="bg-white border border-[#E8E4DC]">
-                                <div className="h-0.5 w-full bg-[#0F172A]" />
+                            <div className="bg-card border border-luxury-silk">
+                                <div className="h-0.5 w-full bg-luxury-midnight" />
                                 <div className="p-7">
                                     <div className="flex items-center gap-3 mb-6">
                                         {/* Avatar */}
-                                        <div className="w-14 h-14 bg-[#0F172A] flex items-center justify-center flex-shrink-0">
+                                        <div className="w-14 h-14 bg-luxury-midnight flex items-center justify-center flex-shrink-0">
                                             <span
                                                 className="text-2xl font-bold text-white"
                                                 style={{ fontFamily: "'Playfair Display', serif" }}
@@ -135,22 +135,22 @@ const Profile = () => {
                                         </div>
                                         <div>
                                             <h3
-                                                className="text-xl font-bold text-[#0D1117]"
+                                                className="text-xl font-bold text-luxury-dark"
                                                 style={{ fontFamily: "'Playfair Display', serif" }}
                                             >
                                                 {userName}
                                             </h3>
                                             <p
-                                                className="text-[#6B6B6B]"
+                                                className="text-luxury-stone"
                                                 style={{ fontSize: "0.65rem", letterSpacing: "0.15em", textTransform: "uppercase" }}
                                             >
                                                 DataViz Member
                                             </p>
                                         </div>
-                                        <div className="ml-auto flex items-center gap-1.5 border border-[#0F172A]/30 bg-[#0F172A]/5 px-3 py-1.5">
-                                            <CheckCircle2 className="h-3.5 w-3.5 text-[#0F172A]" />
+                                        <div className="ml-auto flex items-center gap-1.5 border border-luxury-midnight/30 bg-luxury-midnight/5 px-3 py-1.5">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-luxury-midnight" />
                                             <span
-                                                className="text-[#0F172A]"
+                                                className="text-luxury-midnight"
                                                 style={{ fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase" }}
                                             >
                                                 Verified
@@ -177,17 +177,17 @@ const Profile = () => {
                             variants={fadeUp}
                             custom={1}
                         >
-                            <div className="bg-white border border-[#E8E4DC] h-full">
+                            <div className="bg-card border border-luxury-silk h-full">
                                 <div className="h-0.5 w-full bg-[#D4AF37]" />
                                 <div className="p-7">
                                     <p
-                                        className="text-[#0F172A] mb-4"
+                                        className="text-luxury-midnight mb-4"
                                         style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                                     >
                                         Activity
                                     </p>
                                     <h3
-                                        className="text-xl font-bold text-[#0D1117] mb-5"
+                                        className="text-xl font-bold text-luxury-dark mb-5"
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
                                         Your Statistics
@@ -216,11 +216,11 @@ const Profile = () => {
                         className="grid gap-6 lg:grid-cols-2"
                     >
                         {/* Progress Tracker */}
-                        <div className="bg-white border border-[#E8E4DC]">
-                            <div className="h-0.5 bg-[#0F172A]" />
+                        <div className="bg-card border border-luxury-silk">
+                            <div className="h-0.5 bg-luxury-midnight" />
                             <div className="p-7">
                                 <p
-                                    className="text-[#0F172A] mb-2"
+                                    className="text-luxury-midnight mb-2"
                                     style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                                 >
                                     Your Journey
@@ -230,7 +230,7 @@ const Profile = () => {
                         </div>
 
                         {/* Mastery Score */}
-                        <div className="bg-[#0F172A] relative overflow-hidden">
+                        <div className="bg-luxury-midnight relative overflow-hidden">
                             {/* Dot pattern */}
                             <div
                                 className="absolute inset-0 opacity-[0.04]"
@@ -292,19 +292,19 @@ const Profile = () => {
                         variants={fadeUp}
                         custom={3}
                     >
-                        <div className="bg-white border border-[#0F172A]/20 p-6">
+                        <div className="bg-white border border-luxury-midnight/20 p-6">
                             <div className="flex items-start gap-4">
-                                <div className="w-8 h-8 bg-[#0F172A]/10 flex items-center justify-center flex-shrink-0">
-                                    <Database className="h-4 w-4 text-[#0F172A]" />
+                                <div className="w-8 h-8 bg-luxury-midnight/10 flex items-center justify-center flex-shrink-0">
+                                    <Database className="h-4 w-4 text-luxury-midnight" />
                                 </div>
                                 <div>
                                     <p
-                                        className="font-semibold text-[#0D1117] mb-1"
+                                        className="font-semibold text-luxury-dark mb-1"
                                         style={{ fontFamily: "'Playfair Display', serif" }}
                                     >
                                         All your data is automatically saved
                                     </p>
-                                    <p className="text-sm text-[#6B6B6B]">
+                                    <p className="text-sm text-luxury-stone">
                                         Every analysis you create is stored securely and will appear in your dashboard.
                                         Your profile information is automatically synced from your account.
                                     </p>
