@@ -906,6 +906,61 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 17. Alluvial Diagram (Flow pathways connecting Categories to output nodes)
+        if (type === 'alluvial') {
+            return (
+                <div ref={ref} className="w-full flex justify-center bg-card p-4 rounded-lg border">
+                    <div ref={chartContainerRef} className="w-full max-w-xl">
+                        <h4 className="text-xs font-semibold text-muted-foreground text-center mb-3">Sankey Category Flow Pathways</h4>
+                        <svg viewBox="0 0 500 260" className="w-full h-auto">
+                            {/* Left side node list */}
+                            {chartData.map((d, idx) => {
+                                const count = chartData.length;
+                                const nodeH = 180 / count;
+                                const y = 20 + idx * (180 / count) + idx * 8;
+                                const labelY = y + (nodeH / 2) + 3;
+
+                                // Flow lines to right nodes
+                                const rightY1 = 40 + idx * 10;
+                                const rightY2 = 140 + idx * 10;
+                                
+                                return (
+                                    <g key={idx} className="cursor-pointer" onClick={() => onBarClick && onBarClick(d.name)}>
+                                        <title>{`${d.name}: ${d.value} units`}</title>
+                                        
+                                        {/* Sankey Flow paths (Translucent bezier ribbons) */}
+                                        <path
+                                            d={`M 90 ${y + nodeH/4} C 210 ${y + nodeH/4}, 210 ${rightY1}, 410 ${rightY1} L 410 ${rightY1+5} C 210 ${rightY1+5}, 210 ${y + (nodeH * 0.75)}, 90 ${y + (nodeH * 0.75)} Z`}
+                                            fill={d.color || "hsl(var(--primary))"}
+                                            fillOpacity="0.2"
+                                            className="hover:fill-opacity-50 transition"
+                                        />
+                                        <path
+                                            d={`M 90 ${y + nodeH/2} C 210 ${y + nodeH/2}, 210 ${rightY2}, 410 ${rightY2} L 410 ${rightY2+5} C 210 ${rightY2+5}, 210 ${y + nodeH}, 90 ${y + nodeH} Z`}
+                                            fill={d.color || "hsl(var(--primary))"}
+                                            fillOpacity="0.15"
+                                            className="hover:fill-opacity-45 transition"
+                                        />
+
+                                        {/* Left Side Category Nodes */}
+                                        <rect x="30" y={y} width="60" height={nodeH} fill={d.color} rx="2" />
+                                        <text x="60" y={labelY} fontSize="8" fill="white" fontWeight="600" textAnchor="middle">{d.name}</text>
+                                    </g>
+                                );
+                            })}
+                            
+                            {/* Right side group Nodes */}
+                            <rect x="410" y="30" width="60" height="70" fill="hsl(var(--primary))" fillOpacity="0.8" rx="2" />
+                            <text x="440" y="70" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">Output A</text>
+
+                            <rect x="410" y="130" width="60" height="70" fill="hsl(var(--secondary))" rx="2" />
+                            <text x="440" y="170" fontSize="9" fill="white" fontWeight="bold" textAnchor="middle">Output B</text>
+                        </svg>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
