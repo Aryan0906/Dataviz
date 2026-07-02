@@ -697,6 +697,39 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 12. 100% Stacked Bar Chart
+        if (type === 'percent_stacked_bar') {
+            const stackedData = chartData.map(d => ({
+                name: d.name,
+                "Segment X": Math.round(d.value * 0.6),
+                "Segment Y": Math.round(d.value * 0.4),
+            }));
+
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <BarChart data={stackedData} stackOffset="expand" margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                                <YAxis tickFormatter={(val) => `${Math.round(val * 100)}%`} tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Legend />
+                                <Bar dataKey="Segment X" stackId="a" fill="#83a6ed" cursor="pointer" onClick={(data) => onBarClick && onBarClick(data.name)} />
+                                <Bar dataKey="Segment Y" stackId="a" fill="#ffc658" cursor="pointer" onClick={(data) => onBarClick && onBarClick(data.name)} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
