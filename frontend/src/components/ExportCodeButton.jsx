@@ -38,6 +38,7 @@ const ExportCodeButton = ({
   chartData = null,
   categoricalData = null,
   regressionData = null,
+  curveData = null,
   chartTitle = 'Chart',
   buttonText = 'Export Code',
   buttonSize = 'sm',
@@ -100,6 +101,7 @@ const ExportCodeButton = ({
         chartData={chartData}
         categoricalData={categoricalData}
         regressionData={safeRegressionData}
+        curveData={curveData}
         chartTitle={chartTitle}
       />
     </>
