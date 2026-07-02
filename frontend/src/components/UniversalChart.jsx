@@ -1038,6 +1038,39 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 20. Point Plot (Dot Plot)
+        if (type === 'point') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={320}>
+                            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Line
+                                    type="linear"
+                                    dataKey="value"
+                                    stroke="hsl(var(--chart-primary))"
+                                    strokeWidth={3}
+                                    dot={{ r: 7, fill: "hsl(var(--chart-primary))", strokeWidth: 2 }}
+                                    activeDot={{ r: 10 }}
+                                    cursor="pointer"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
