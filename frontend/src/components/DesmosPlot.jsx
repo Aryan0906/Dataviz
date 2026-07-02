@@ -441,35 +441,24 @@ const DesmosPlot = () => {
     };
 
     const clearAll = () => {
-        if (calculatorRef.current) {
-            try {
-                const state = calculatorRef.current.getState();
-                console.log("Current state:", state);
-
-                if (state && state.expressions) {
-                    // expressions is a Map, so we need to iterate using .forEach
-                    const expressionIds = [];
-                    state.expressions.forEach((expr) => {
-                        expressionIds.push(expr.id);
-                    });
-
-                    console.log("Expression IDs to remove:", expressionIds);
-
-                    // Remove each expression by ID
-                    expressionIds.forEach((id) => {
-                        calculatorRef.current.removeExpression({ id });
-                    });
-                }
-
-                setExpressions([]);
-                toast.success("All expressions cleared");
-            } catch (error) {
-                console.error("Error clearing expressions:", error);
-                console.error("Error details:", error.message);
-                toast.error("Failed to clear expressions");
-            }
+        if (!calculatorRef.current) return;
+        try {
+            // Atomically reset the expression list.
+            // state.expressions is { list: [...] }, not a Map — iterating
+            // it directly was silently producing an empty ID array.
+            const currentState = calculatorRef.current.getState();
+            calculatorRef.current.setState({
+                ...currentState,
+                expressions: { list: [] },
+            });
+            setExpressions([]);
+            toast.success("All expressions cleared");
+        } catch (error) {
+            console.error("Error clearing expressions:", error);
+            toast.error("Failed to clear expressions");
         }
     };
+
 
     // Code Import: parse newline-separated LaTeX expressions
     const handleImportCode = () => {
