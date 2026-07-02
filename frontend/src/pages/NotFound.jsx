@@ -5,7 +5,7 @@ import { BarChart3, ChevronRight, Home } from "lucide-react";
 export default function NotFound() {
     return (
         <div
-            className="min-h-screen relative flex flex-col overflow-hidden bg-[#0F172A]"
+            className="min-h-screen relative flex flex-col overflow-hidden bg-luxury-midnight"
             style={{ fontFamily: "'Raleway', sans-serif" }}
         >
             {/* ── Dot pattern overlay ── */}
@@ -111,14 +111,14 @@ export default function NotFound() {
                 >
                     <Link
                         to="/"
-                        className="flex items-center gap-2 border border-white/50 text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-white hover:text-[#0F172A] transition-all duration-300"
+                        className="flex items-center gap-2 border border-white/50 text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-white hover:text-luxury-midnight transition-all duration-300"
                     >
                         <Home className="h-3.5 w-3.5" />
                         Go Home
                     </Link>
                     <Link
                         to="/dashboard"
-                        className="flex items-center gap-2 bg-[#D4AF37] text-[#0D1117] px-8 py-3 text-xs uppercase tracking-widest font-semibold hover:bg-[#E8C86A] transition-all duration-300"
+                        className="flex items-center gap-2 bg-[#D4AF37] text-luxury-dark px-8 py-3 text-xs uppercase tracking-widest font-semibold hover:bg-[#E8C86A] transition-all duration-300"
                     >
                         Dashboard
                         <ChevronRight className="h-3.5 w-3.5" />

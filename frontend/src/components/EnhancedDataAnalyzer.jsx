@@ -1602,7 +1602,7 @@ export const EnhancedDataAnalyzer = () => {
                     <div className="flex-1 min-w-[240px] space-y-1.5">
                         <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Regression Model Option</label>
                         <Select value={selectedModelType} onValueChange={setSelectedModelType}>
-                            <SelectTrigger className="bg-white border-2">
+                            <SelectTrigger className="bg-card border-2">
                                 <SelectValue placeholder="Select regression model" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1632,7 +1632,7 @@ export const EnhancedDataAnalyzer = () => {
                                 max={6}
                                 value={polynomialDegree}
                                 onChange={(e) => setPolynomialDegree(Math.max(2, Math.min(6, parseInt(e.target.value) || 2)))}
-                                className="bg-white border-2"
+                                className="bg-card border-2"
                             />
                         </div>
                     )}

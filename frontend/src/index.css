@@ -62,16 +62,19 @@
     --sidebar-ring: 0 0% 10%;
 
     /* Custom luxury tokens */
-    --luxury-midnight: #0F172A;
-    --luxury-midnight-dark: #0B1120;
-    --luxury-champagne: #D4AF37;
-    --luxury-champagne-light: #E8C86A;
-    --luxury-offwhite: #F8F9FA;
-    --luxury-bone: #F2F3F4;
-    --luxury-dark: #0D1117;
-    --luxury-obsidian: #1A1A1A;
-    --luxury-stone: #6B6B6B;
-    --luxury-silk: #E8E4DC;
+    --luxury-midnight: 222 47% 11%;
+    --luxury-midnight-dark: 220 54% 8%;
+    --luxury-midnight-light: 215 25% 27%;
+    --luxury-champagne: 46 65% 52%;
+    --luxury-champagne-light: 45 74% 66%;
+    --luxury-champagne-dark: 45 66% 42%;
+    --luxury-offwhite: 210 17% 98%;
+    --luxury-bone: 210 9% 96%;
+    --luxury-dark: 216 28% 7%;
+    --luxury-obsidian: 0 0% 10%;
+    --luxury-stone: 0 0% 42%;
+    --luxury-silk: 38 16% 89%;
+    --luxury-bg-main: 60 13% 97%;
 
     /* Transitions */
     --transition-luxury: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -112,6 +115,21 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 18%;
     --sidebar-ring: 0 0% 98%;
+
+    /* Custom luxury tokens - Dark Mode overrides */
+    --luxury-midnight: 222 47% 12%;
+    --luxury-midnight-dark: 220 54% 8%;
+    --luxury-midnight-light: 215 25% 20%;
+    --luxury-champagne: 46 65% 52%;
+    --luxury-champagne-light: 45 74% 66%;
+    --luxury-champagne-dark: 45 66% 42%;
+    --luxury-offwhite: 216 28% 9%;
+    --luxury-bone: 216 28% 12%;
+    --luxury-dark: 210 17% 98%;
+    --luxury-obsidian: 0 0% 98%;
+    --luxury-stone: 0 0% 65%;
+    --luxury-silk: 215 15% 18%;
+    --luxury-bg-main: 0 0% 6%;
   }
 }
 
