@@ -18,7 +18,7 @@ const fadeUp = {
 /* ── Luxury Feature Card ── */
 function FeatureCard({ step, icon: Icon, title, subtitle, items, accentColor = "#0F172A", cta, onCta, disabled, badge, index }) {
     return (
-        <motion.div variants={fadeUp} custom={index} className="bg-white border border-[#E8E4DC] luxury-card-hover group flex flex-col">
+        <motion.div variants={fadeUp} custom={index} className="bg-card border border-luxury-silk luxury-card-hover group flex flex-col">
             <div className="h-0.5 w-full" style={{ backgroundColor: accentColor }} />
             <div className="p-7 flex flex-col flex-1">
                 {/* Icon + Step Number */}
@@ -32,7 +32,7 @@ function FeatureCard({ step, icon: Icon, title, subtitle, items, accentColor = "
                     <div className="flex items-center gap-2">
                         {badge && (
                             <span
-                                className="bg-[#D4AF37] text-[#0D1117] px-2 py-0.5 text-[10px] font-semibold"
+                                className="bg-[#D4AF37] text-luxury-dark px-2 py-0.5 text-[10px] font-semibold"
                                 style={{ letterSpacing: "0.1em", textTransform: "uppercase" }}
                             >
                                 {badge}
@@ -49,12 +49,12 @@ function FeatureCard({ step, icon: Icon, title, subtitle, items, accentColor = "
 
                 {/* Heading */}
                 <h3
-                    className="text-lg font-bold text-[#0D1117] mb-1 group-hover:text-[#0F172A] transition-colors duration-300"
+                    className="text-lg font-bold text-luxury-dark mb-1 group-hover:text-luxury-midnight transition-colors duration-300"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                     {title}
                 </h3>
-                <p className="text-xs text-[#6B6B6B] mb-5" style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.05em" }}>
+                <p className="text-xs text-luxury-stone mb-5" style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.05em" }}>
                     {subtitle}
                 </p>
 
@@ -76,7 +76,7 @@ function FeatureCard({ step, icon: Icon, title, subtitle, items, accentColor = "
                     disabled={disabled}
                     className={`flex items-center justify-center gap-2 w-full py-2.5 transition-colors duration-300 text-xs font-semibold ${
                         disabled
-                            ? "bg-[#E8E4DC] text-[#6B6B6B] cursor-not-allowed"
+                            ? "bg-luxury-silk text-luxury-stone cursor-not-allowed"
                             : "text-white hover:opacity-90"
                     }`}
                     style={
@@ -180,20 +180,20 @@ const SmartAnalytics = () => {
                 >
                     <div className="flex items-center gap-3 mb-5">
                         <p
-                            className="text-[#0F172A]"
+                            className="text-luxury-midnight"
                             style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                         >
                             Live Demo
                         </p>
-                        <div className="flex-1 h-px bg-[#E8E4DC]" />
+                        <div className="flex-1 h-px bg-luxury-silk" />
                     </div>
 
-                    <div className="bg-white border border-[#E8E4DC] luxury-card-hover">
-                        <div className="h-0.5 w-full bg-[#0F172A]" />
+                    <div className="bg-card border border-luxury-silk luxury-card-hover">
+                        <div className="h-0.5 w-full bg-luxury-midnight" />
                         <div className="p-7">
                             <div className="flex items-start justify-between mb-5">
-                                <div className="w-11 h-11 flex items-center justify-center border border-[#0F172A]/30 bg-[#0F172A]/5">
-                                    <TrendingUp className="h-5 w-5 text-[#0F172A]" />
+                                <div className="w-11 h-11 flex items-center justify-center border border-luxury-midnight/30 bg-luxury-midnight/5">
+                                    <TrendingUp className="h-5 w-5 text-luxury-midnight" />
                                 </div>
                                 <span
                                     className="font-bold opacity-10"
@@ -203,12 +203,12 @@ const SmartAnalytics = () => {
                                 </span>
                             </div>
                             <h3
-                                className="text-lg font-bold text-[#0D1117] mb-1"
+                                className="text-lg font-bold text-luxury-dark mb-1"
                                 style={{ fontFamily: "'Playfair Display', serif" }}
                             >
                                 Residual Plot
                             </h3>
-                            <p className="text-xs text-[#6B6B6B] mb-6" style={{ letterSpacing: "0.05em" }}>
+                            <p className="text-xs text-luxury-stone mb-6" style={{ letterSpacing: "0.05em" }}>
                                 Scientific validation of regression model fit
                             </p>
                             <ResidualPlot {...sampleResiduals} />

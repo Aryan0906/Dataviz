@@ -28,7 +28,7 @@ const fadeUp = {
 /* ── Numbered Doc Card ── */
 function DocCard({ step, icon: Icon, title, subtitle, items, accentColor = "#0F172A", index }) {
     return (
-        <motion.div variants={fadeUp} custom={index} className="bg-white border border-[#E8E4DC] luxury-card-hover group">
+        <motion.div variants={fadeUp} custom={index} className="bg-card border border-luxury-silk luxury-card-hover group">
             {/* Colored top bar */}
             <div className="h-0.5 w-full" style={{ backgroundColor: accentColor }} />
             <div className="p-7">
@@ -54,13 +54,13 @@ function DocCard({ step, icon: Icon, title, subtitle, items, accentColor = "#0F1
                 </div>
                 {/* Heading */}
                 <h3
-                    className="text-lg font-bold text-[#0D1117] mb-1"
+                    className="text-lg font-bold text-luxury-dark mb-1"
                     style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                     {title}
                 </h3>
                 <p
-                    className="text-xs text-[#6B6B6B] mb-4"
+                    className="text-xs text-luxury-stone mb-4"
                     style={{ fontFamily: "'Raleway', sans-serif", letterSpacing: "0.05em" }}
                 >
                     {subtitle}
@@ -86,11 +86,11 @@ function QuickLink({ href, icon: Icon, label, _isExternal = false }) {
     return (
         <Link
             to={href}
-            className="flex items-center gap-3 bg-white border border-[#E8E4DC] px-5 py-3.5 group luxury-card-hover"
+            className="flex items-center gap-3 bg-card border border-luxury-silk px-5 py-3.5 group luxury-card-hover"
         >
-            <Icon className="h-4 w-4 text-[#0F172A] group-hover:scale-105 transition-transform" />
+            <Icon className="h-4 w-4 text-luxury-midnight group-hover:scale-105 transition-transform" />
             <span
-                className="text-sm font-medium text-[#0D1117] flex-1"
+                className="text-sm font-medium text-luxury-dark flex-1"
                 style={{ fontFamily: "'Raleway', sans-serif" }}
             >
                 {label}
@@ -175,7 +175,7 @@ const Documentation = () => {
                         animate="visible"
                         variants={fadeUp}
                         custom={3}
-                        className="bg-[#0F172A] relative overflow-hidden"
+                        className="bg-luxury-midnight relative overflow-hidden"
                     >
                         <div
                             className="absolute inset-0 opacity-[0.04]"
@@ -212,12 +212,12 @@ const Documentation = () => {
                     >
                         <div className="flex items-center gap-3 mb-4">
                             <p
-                                className="text-[#0F172A]"
+                                className="text-luxury-midnight"
                                 style={{ fontSize: "0.6rem", letterSpacing: "0.25em", textTransform: "uppercase" }}
                             >
                                 Quick Access
                             </p>
-                            <div className="flex-1 h-px bg-[#E8E4DC]" />
+                            <div className="flex-1 h-px bg-luxury-silk" />
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                             {quickLinks.map((link, index) => (
@@ -233,7 +233,7 @@ const Documentation = () => {
                                     className="flex items-center gap-3 bg-[#D4AF37]/8 border border-[#D4AF37]/30 px-5 py-3.5 group luxury-card-hover"
                                 >
                                     <ExternalLink className="h-4 w-4 text-[#D4AF37]" />
-                                    <span className="text-sm font-medium text-[#0D1117]">
+                                    <span className="text-sm font-medium text-luxury-dark">
                                         Suggested Next:{" "}
                                         <em className="text-[#A8893A]" style={{ fontFamily: "'Playfair Display', serif" }}>
                                             {nextPage.title}
