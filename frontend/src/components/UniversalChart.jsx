@@ -290,6 +290,44 @@ export const UniversalChart = forwardRef(
             );
         }
 
+        // 2. Count Plot (Horizontal bar chart layout)
+        if (type === 'count') {
+            return (
+                <div ref={ref}>
+                    <div ref={chartContainerRef}>
+                        <ResponsiveContainer width="100%" height={Math.max(320, chartData.length * 45)}>
+                            <BarChart
+                                layout="vertical"
+                                data={chartData}
+                                margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
+                                onClick={(data) => data?.activePayload?.[0] && handleBarClick(data.activePayload[0].payload)}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" />
+                                <XAxis type="number" tick={{ fontSize: 12 }} />
+                                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={75} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))',
+                                        borderRadius: '8px'
+                                    }}
+                                />
+                                <Bar
+                                    dataKey="value"
+                                    fill="hsl(var(--chart-primary))"
+                                    cursor="pointer"
+                                >
+                                    {chartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 );
