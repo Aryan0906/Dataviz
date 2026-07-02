@@ -162,9 +162,11 @@ def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
     from api.utils.regression_models import find_best_regression
     from api.utils.classification_models import find_best_classification
     
-    self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'status': 'Loading data...'})
+    if self:
+        self.update_state(state='PROGRESS', meta={'current': 10, 'total': 100, 'status': 'Loading data...'})
     
-    self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'status': 'Training comprehensive models...'})
+    if self:
+        self.update_state(state='PROGRESS', meta={'current': 30, 'total': 100, 'status': 'Training comprehensive models...'})
     
     y = np.array([p['y'] for p in data_points])
     unique_y = np.unique(y)
@@ -179,7 +181,8 @@ def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
     if not result:
         return {'error': 'Could not fit any model'}
         
-    self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'status': 'Calculating predictions...'})
+    if self:
+        self.update_state(state='PROGRESS', meta={'current': 70, 'total': 100, 'status': 'Calculating predictions...'})
     
     # For multivariate, it's better to plot predicted vs actual, but for simplicity, 
     # we return predictions that the frontend can map.
@@ -222,5 +225,6 @@ def run_comprehensive_analysis(self, data_points: list, model_type: str = None):
         "all_models_tested": result['all_models']
     }
     
-    self.update_state(state='PROGRESS', meta={'current': 100, 'total': 100, 'status': 'Complete!'})
+    if self:
+        self.update_state(state='PROGRESS', meta={'current': 100, 'total': 100, 'status': 'Complete!'})
     return response_data
