@@ -130,15 +130,11 @@ const App = () => (
                             </Route>
                             <Route
                                 path="/categorical"
-                                element={
-                                    <ProtectedRoute>
-                                        <CategoricalChat />
-                                    </ProtectedRoute>
-                                }
+                                element={<Navigate to="/manual-plot/categorical" replace />}
                             />
                             <Route
                                 path="/categorical-nlp"
-                                element={<Navigate to="/categorical" replace />}
+                                element={<Navigate to="/manual-plot/categorical" replace />}
                             />
                             <Route
                                 path="/ai"
