@@ -1452,31 +1452,64 @@ def export_notebook(request):
 
 @csrf_exempt
 def check_task_status(request, task_id):
-    from celery.result import AsyncResult
+    from django_celery_results.models import TaskResult
+    import json
     
     if request.method != 'GET':
         return HttpResponseNotAllowed(['GET'])
         
-    task = AsyncResult(task_id)
-    
-    if task.state == 'PENDING':
-        response = {'state': task.state, 'status': 'Pending...'}
-    elif task.state == 'PROGRESS':
-        response = {
-            'state': task.state,
-            'current': task.info.get('current', 0) if task.info else 0,
-            'total': task.info.get('total', 100) if task.info else 100,
-            'status': task.info.get('status', '') if task.info else ''
-        }
-    elif task.state == 'SUCCESS':
-        response = {
-            'state': task.state,
-            'result': task.result
-        }
-    else:
-        response = {'state': task.state, 'status': str(task.info)}
-    
-    return JsonResponse(response)
+    # Check manual database task result first (fallback/sync tasks are saved here)
+    try:
+        task_res = TaskResult.objects.filter(task_id=task_id).first()
+        if task_res:
+            if task_res.status == 'SUCCESS':
+                try:
+                    result_data = json.loads(task_res.result)
+                except Exception:
+                    result_data = task_res.result
+                return JsonResponse({
+                    'state': 'SUCCESS',
+                    'result': result_data
+                })
+            elif task_res.status == 'FAILURE':
+                return JsonResponse({
+                    'state': 'FAILURE',
+                    'status': task_res.traceback or 'Task failed'
+                })
+            else:
+                return JsonResponse({
+                    'state': task_res.status,
+                    'status': 'Processing...'
+                })
+    except Exception as e:
+        print(f"Error checking TaskResult model in database: {e}")
+
+    try:
+        from celery.result import AsyncResult
+        task = AsyncResult(task_id)
+        
+        if task.state == 'PENDING':
+            response = {'state': task.state, 'status': 'Pending...'}
+        elif task.state == 'PROGRESS':
+            response = {
+                'state': task.state,
+                'current': task.info.get('current', 0) if task.info else 0,
+                'total': task.info.get('total', 100) if task.info else 100,
+                'status': task.info.get('status', '') if task.info else ''
+            }
+        elif task.state == 'SUCCESS':
+            response = {
+                'state': task.state,
+                'result': task.result
+            }
+        else:
+            response = {'state': task.state, 'status': str(task.info)}
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({
+            'state': 'PENDING',
+            'status': f'Error connecting to background worker: {str(e)}. Retrying...'
+        })
 
 @csrf_exempt
 def test_hypothesis(request):
