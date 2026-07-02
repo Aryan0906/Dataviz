@@ -150,8 +150,8 @@ const Login = () => {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF7]">
-                <Loader className="h-8 w-8 animate-spin text-[#0F172A]" />
+            <div className="min-h-screen flex items-center justify-center bg-luxury-bg-main">
+                <Loader className="h-8 w-8 animate-spin text-luxury-midnight" />
             </div>
         );
     }
@@ -165,7 +165,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex" style={{ fontFamily: "'Raleway', sans-serif" }}>
             {/* ── LEFT PANEL: Brand / cinematic ── */}
-            <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative flex-col justify-between bg-[#0F172A] overflow-hidden">
+            <div className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative flex-col justify-between bg-luxury-midnight overflow-hidden">
                 {/* Background texture */}
                 <div
                     className="absolute inset-0 opacity-5"
@@ -245,14 +245,14 @@ const Login = () => {
             </div>
 
             {/* ── RIGHT PANEL: Form ── */}
-            <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-16 bg-[#FAFAF7]">
+            <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-16 bg-luxury-bg-main">
                 {/* Mobile logo */}
                 <div className="lg:hidden mb-8">
                     <Link to="/" className="flex items-center gap-2.5">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#0F172A]">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-luxury-midnight">
                             <BarChart3 className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-semibold text-xl text-[#0D1117]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        <span className="font-semibold text-xl text-luxury-dark" style={{ fontFamily: "'Playfair Display', serif" }}>
                             DataViz
                         </span>
                     </Link>
@@ -265,7 +265,7 @@ const Login = () => {
                     className="w-full max-w-md"
                 >
                     {/* Tab switcher */}
-                    <div className="flex mb-8 border-b border-[#E8E4DC]">
+                    <div className="flex mb-8 border-b border-luxury-silk">
                         {[
                             { id: "login", label: "Sign In", icon: LogIn },
                             { id: "signup", label: "Create Account", icon: UserPlus },
@@ -274,8 +274,8 @@ const Login = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 pb-3 pr-6 transition-all duration-300 luxury-label ${activeTab === tab.id
-                                        ? "border-b-2 border-[#0F172A] text-[#0F172A] -mb-px"
-                                        : "text-[#6B6B6B] hover:text-[#0D1117]"
+                                        ? "border-b-2 border-[#0F172A] text-luxury-midnight -mb-px"
+                                        : "text-luxury-stone hover:text-luxury-dark"
                                     }`}
                             >
                                 <tab.icon className="w-3.5 h-3.5" />
@@ -287,12 +287,12 @@ const Login = () => {
                     {/* Heading */}
                     <div className="mb-8">
                         <h2
-                            className="text-3xl font-bold text-[#0D1117] mb-2"
+                            className="text-3xl font-bold text-luxury-dark mb-2"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                             {activeTab === "login" ? "Welcome back" : "Create your account"}
                         </h2>
-                        <p className="text-sm text-[#6B6B6B] font-body">
+                        <p className="text-sm text-luxury-stone font-body">
                             {activeTab === "login"
                                 ? "Sign in to continue to your dashboard"
                                 : "Start your 14-day free trial, no card required"}
@@ -311,7 +311,7 @@ const Login = () => {
                                     value={loginEmail}
                                     onChange={(e) => setLoginEmail(e.target.value)}
                                     disabled={isLoading}
-                                    className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none text-[#0D1117]"
+                                    className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none text-luxury-dark"
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -324,12 +324,12 @@ const Login = () => {
                                         value={loginPassword}
                                         onChange={(e) => setLoginPassword(e.target.value)}
                                         disabled={isLoading}
-                                        className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none pr-10 text-[#0D1117]"
+                                        className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none pr-10 text-luxury-dark"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowLoginPassword(!showLoginPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#0D1117] transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-stone hover:text-luxury-dark transition-colors"
                                     >
                                         {showLoginPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -338,7 +338,7 @@ const Login = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-11 bg-[#0F172A] text-white luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
+                                className="w-full h-11 bg-luxury-midnight text-white luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
                             >
                                 {isLoading ? (
                                     <Loader className="h-4 w-4 animate-spin" />
@@ -361,7 +361,7 @@ const Login = () => {
                                     value={signupName}
                                     onChange={(e) => setSignupName(e.target.value)}
                                     disabled={isLoading}
-                                    className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none"
+                                    className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none"
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -373,7 +373,7 @@ const Login = () => {
                                     value={signupEmail}
                                     onChange={(e) => setSignupEmail(e.target.value)}
                                     disabled={isLoading}
-                                    className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none"
+                                    className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -387,9 +387,9 @@ const Login = () => {
                                             value={signupPassword}
                                             onChange={(e) => setSignupPassword(e.target.value)}
                                             disabled={isLoading}
-                                            className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none pr-9"
+                                            className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none pr-9"
                                         />
-                                        <button type="button" onClick={() => setShowSignupPassword(!showSignupPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]">
+                                        <button type="button" onClick={() => setShowSignupPassword(!showSignupPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-stone">
                                             {showSignupPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                         </button>
                                     </div>
@@ -404,9 +404,9 @@ const Login = () => {
                                             value={signupConfirmPassword}
                                             onChange={(e) => setSignupConfirmPassword(e.target.value)}
                                             disabled={isLoading}
-                                            className="h-11 bg-white border-[#E8E4DC] focus:border-[#0F172A] focus:ring-[#0F172A]/20 rounded-none pr-9"
+                                            className="h-11 bg-card border-luxury-silk focus:border-luxury-midnight focus:ring-luxury-midnight/20 rounded-none pr-9"
                                         />
-                                        <button type="button" onClick={() => setShowSignupConfirm(!showSignupConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6B6B]">
+                                        <button type="button" onClick={() => setShowSignupConfirm(!showSignupConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-luxury-stone">
                                             {showSignupConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                                         </button>
                                     </div>
@@ -415,7 +415,7 @@ const Login = () => {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-11 bg-[#0F172A] text-white luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
+                                className="w-full h-11 bg-luxury-midnight text-white luxury-label font-semibold hover:bg-[#0B1120] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-60"
                             >
                                 {isLoading ? (
                                     <Loader className="h-4 w-4 animate-spin" />
@@ -427,15 +427,15 @@ const Login = () => {
                     )}
 
                     {/* Footer note */}
-                    <p className="mt-8 text-center text-xs text-[#6B6B6B] font-body">
+                    <p className="mt-8 text-center text-xs text-luxury-stone font-body">
                         By continuing, you agree to our{" "}
-                        <a href="#" className="text-[#0F172A] hover:underline">Terms</a>{" "}
+                        <a href="#" className="text-luxury-midnight hover:underline">Terms</a>{" "}
                         and{" "}
-                        <a href="#" className="text-[#0F172A] hover:underline">Privacy Policy</a>.
+                        <a href="#" className="text-luxury-midnight hover:underline">Privacy Policy</a>.
                     </p>
 
                     <div className="mt-6 text-center">
-                        <Link to="/" className="luxury-link text-xs text-[#6B6B6B] hover:text-[#0F172A]">
+                        <Link to="/" className="luxury-link text-xs text-luxury-stone hover:text-luxury-midnight">
                             ← Back to home
                         </Link>
                     </div>
