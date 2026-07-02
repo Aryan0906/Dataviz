@@ -24,7 +24,7 @@ const ModernManualPlot = () => {
                     <TabsList className="rounded-none bg-card border border-luxury-silk p-0 h-auto w-full">
                         {[
                             { value: 'regression', label: 'Regression Analysis', icon: TrendingUp },
-                            { value: 'curve', label: 'Curve Fitting', icon: Sigma },
+                            { value: 'curve', label: 'Curve Plotter', icon: Sigma },
                             { value: 'categorical', label: 'Categorical Plot', icon: BarChart3 },
                         ].map((tab, idx, arr) => (
                             <TabsTrigger

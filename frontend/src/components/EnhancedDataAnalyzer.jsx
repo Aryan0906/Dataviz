@@ -1334,12 +1334,12 @@ export const EnhancedDataAnalyzer = () => {
                             </CardContent>
                         </Card>
                     )}
-                    {/* Curve Fitting Best Practices Reference */}
+                    {/* Curve Plotter Best Practices Reference */}
                     <Card className="border-2 mt-4">
                         <CardHeader className="pb-3">
                             <CardTitle className="flex items-center gap-2 text-primary">
                                 <BookOpen className="h-5 w-5 text-slate-800 dark:text-slate-100" />
-                                Curve Fitting Principles & Best Practices
+                                Curve Plotter Principles & Best Practices
                             </CardTitle>
                             <CardDescription>
                                 Key guidelines for constructing mathematical functions that accurately reflect physical or statistical trends.
