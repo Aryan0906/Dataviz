@@ -248,21 +248,22 @@ def classify_intent_hf(query: str) -> str:
         except Exception as e:
             print(f"Error running HF pipeline: {e}")
             
-    # Rule-based fallback
-    lower = query.lower().strip()
-    if any(k in lower for k in ["add", "new", "create", "insert"]):
+    # Rule-based fallback using word-level matching
+    words = set(re.findall(r'\b\w+\b', query.lower()))
+    if any(k in words for k in ["add", "new", "create", "insert"]):
         return "add category"
-    if any(k in lower for k in ["remove", "delete", "drop", "exclude"]):
+    if any(k in words for k in ["remove", "delete", "drop", "exclude"]):
         return "remove category"
-    if any(k in lower for k in ["update", "change", "set", "modify"]):
-        if any(c in lower for c in ["chart", "plot", "pie", "bar", "treemap"]):
+    if any(k in words for k in ["update", "change", "set", "modify"]):
+        if any(c in words for c in ["chart", "plot", "pie", "bar", "treemap"]):
             return "change chart type"
         return "update category"
-    if any(k in lower for k in ["clear", "reset", "empty"]):
+    if any(k in words for k in ["clear", "reset", "empty"]):
         return "clear plot"
-    if any(c in lower for c in ["chart", "plot", "pie", "bar", "treemap"]):
+    if any(c in words for c in ["chart", "plot", "pie", "bar", "treemap"]):
         return "change chart type"
     return "ask question"
+
 
 def extract_numerical_value(query: str) -> Optional[float]:
     """
