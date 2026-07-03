@@ -9,7 +9,7 @@ from typing import List, Dict, Optional, Tuple
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
-    print("⚠️  spaCy model not found. Run: python -m spacy download en_core_web_sm")
+    print("[WARNING] spaCy model not found. Run: python -m spacy download en_core_web_sm")
     nlp = None
 
 
@@ -194,3 +194,299 @@ def categorical_chat_view(request):
     
     return JsonResponse({'data': df_filtered.to_dict()})
 """
+
+
+import re
+
+# Lazily initialized HuggingFace zero-shot classification pipeline
+_zero_shot_pipeline = None
+
+def get_zero_shot_pipeline():
+    """
+    Lazily initialize and return the zero-shot classification pipeline.
+    Uses 'typeform/distilbert-base-uncased-mnli' (lightweight, ~268MB, fast).
+    Runs on CPU (device=-1) for maximum compatibility.
+    """
+    global _zero_shot_pipeline
+    if _zero_shot_pipeline is None:
+        try:
+            from transformers import pipeline
+            print("[INFO] Loading HuggingFace zero-shot-classification pipeline...")
+            _zero_shot_pipeline = pipeline(
+                "zero-shot-classification",
+                model="typeform/distilbert-base-uncased-mnli",
+                device=-1
+            )
+            print("[SUCCESS] HuggingFace pipeline loaded successfully.")
+        except Exception as e:
+            print(f"[WARNING] Failed to load HuggingFace pipeline (falling back to rules): {e}")
+            _zero_shot_pipeline = None
+    return _zero_shot_pipeline
+
+def classify_intent_hf(query: str) -> str:
+    """
+    Classify the query into a chat command intent using HuggingFace Zero-Shot Classification.
+    """
+    pipe = get_zero_shot_pipeline()
+    candidate_labels = [
+        "add category",
+        "update category",
+        "remove category",
+        "change chart type",
+        "clear plot",
+        "ask question"
+    ]
+    
+    if pipe:
+        try:
+            res = pipe(query, candidate_labels)
+            intent = res["labels"][0]
+            confidence = res["scores"][0]
+            print(f"[HF NLP] Query: '{query}' -> Intent: '{intent}' (confidence: {confidence:.2f})")
+            if confidence > 0.4:
+                return intent
+        except Exception as e:
+            print(f"Error running HF pipeline: {e}")
+            
+    # Rule-based fallback using word-level matching
+    words = set(re.findall(r'\b\w+\b', query.lower()))
+    if any(k in words for k in ["add", "new", "create", "insert"]):
+        return "add category"
+    if any(k in words for k in ["remove", "delete", "drop", "exclude"]):
+        return "remove category"
+    if any(k in words for k in ["update", "change", "set", "modify"]):
+        if any(c in words for c in ["chart", "plot", "pie", "bar", "treemap"]):
+            return "change chart type"
+        return "update category"
+    if any(k in words for k in ["clear", "reset", "empty"]):
+        return "clear plot"
+    if any(c in words for c in ["chart", "plot", "pie", "bar", "treemap"]):
+        return "change chart type"
+    return "ask question"
+
+
+def extract_numerical_value(query: str) -> Optional[float]:
+    """
+    Helper to extract a numerical value (float/integer) from the query.
+    """
+    match = re.search(r'-?\d+(?:\.\d+)?', query)
+    if match:
+        return float(match.group(0))
+    return None
+
+def extract_chart_type(query: str) -> str:
+    """
+    Extract the chart type requested in the query.
+    """
+    lower = query.lower()
+    if "pie" in lower:
+        return "pie"
+    if "treemap" in lower or "tree" in lower:
+        return "treemap"
+    return "bar"
+
+
+def extract_category_label(query: str, current_labels: List[str]) -> Tuple[str, bool]:
+    """
+    Extract the category name from the query.
+    Fuzzy matches against existing labels first.
+    If no match above threshold, parses a new label out of the text.
+    
+    Returns:
+        (label, is_existing)
+    """
+    # 1. Try fuzzy matching words in query to current labels
+    words = re.findall(r'[A-Za-z0-9_-]+', query)
+    best_label = None
+    highest_score = 0
+    
+    # We test combinations of words (up to 3 consecutive words) to match category names
+    for length in range(1, 4):
+        for i in range(len(words) - length + 1):
+            phrase = " ".join(words[i:i+length])
+            if phrase.lower() in ["add", "update", "set", "delete", "remove", "change", "chart", "pie", "bar", "treemap", "value", "to", "with", "label", "category"]:
+                continue
+            match = fuzzy_match_column(phrase, current_labels, threshold=70)
+            if match:
+                # Get the actual score
+                score = fuzz.ratio(phrase.lower(), match.lower())
+                if score > highest_score:
+                    highest_score = score
+                    best_label = match
+                    
+    if best_label and highest_score >= 70:
+        return best_label, True
+        
+    # 2. Extract new category name if not matching existing
+    text = query.lower()
+    # Remove command verbs and punctuation
+    text = re.sub(r'\b(add|create|insert|update|change|set|to|with|value|category|of|remove|delete|drop)\b', '', text)
+    # Remove numbers
+    text = re.sub(r'-?\d+(?:\.\d+)?', '', text)
+    text = re.sub(r'[^\w\s-]', '', text).strip()
+    
+    # Capitalize the words for presentation
+    cleaned = text.title()
+    if cleaned:
+        return cleaned, False
+    return "Unknown", False
+
+
+def answer_data_question(query: str, current_data: List[Dict[str, any]], x_key: str = 'label', y_key: str = 'value') -> str:
+    """
+    Answer user's question about the dataset using local computation.
+    Uses HuggingFace zero-shot classification to understand which statistical query is asked.
+    """
+    if not current_data:
+        return "The plot data is currently empty. Try adding some categories first!"
+        
+    # Extract values
+    values = []
+    labels = []
+    for item in current_data:
+        if x_key in item and y_key in item and item[y_key] is not None:
+            try:
+                values.append(float(item[y_key]))
+                labels.append(str(item[x_key]))
+            except ValueError:
+                pass
+    
+    if not values:
+        return "There are no numerical values in the categories yet."
+        
+    # Classify the question intent
+    pipe = get_zero_shot_pipeline()
+    candidate_questions = [
+        "maximum value",
+        "minimum value",
+        "average value",
+        "total sum",
+        "category count"
+    ]
+    
+    question_intent = "category count"
+    if pipe:
+        try:
+            res = pipe(query, candidate_questions)
+            question_intent = res["labels"][0]
+        except Exception as e:
+            print(f"Error classifying question: {e}")
+    else:
+        # Simple rule fallback
+        lower = query.lower()
+        if any(k in lower for k in ["max", "highest", "largest", "top", "most", "biggest"]):
+            question_intent = "maximum value"
+        elif any(k in lower for k in ["min", "lowest", "smallest", "bottom", "least"]):
+            question_intent = "minimum value"
+        elif any(k in lower for k in ["average", "mean", "avg"]):
+            question_intent = "average value"
+        elif any(k in lower for k in ["sum", "total", "add up", "overall"]):
+            question_intent = "total sum"
+            
+    # Compute the response
+    if question_intent == "maximum value":
+        max_idx = values.index(max(values))
+        return f"The category with the highest value is **{labels[max_idx]}** with **{values[max_idx]:g}**."
+    elif question_intent == "minimum value":
+        min_idx = values.index(min(values))
+        return f"The category with the lowest value is **{labels[min_idx]}** with **{values[min_idx]:g}**."
+    elif question_intent == "average value":
+        avg_val = sum(values) / len(values)
+        return f"The average value across the **{len(values)}** categories is **{avg_val:.2f}**."
+    elif question_intent == "total sum":
+        total_val = sum(values)
+        return f"The total sum of all categories is **{total_val:g}**."
+    else:
+        return f"There are currently **{len(current_data)}** categories plotted."
+
+
+def process_categorical_chat(query: str, current_data: List[Dict[str, any]], x_key: str = 'label', y_key: str = 'value') -> Dict[str, any]:
+    """
+    Process a natural language query for categorical data chat, classifying intent,
+    updating data, and returning insights.
+    """
+    intent = classify_intent_hf(query)
+    next_data = [dict(item) for item in current_data]  # copy data
+    next_chart = None
+    reply = ""
+    data_changed = False
+    
+    current_labels = [str(item.get(x_key, '')) for item in next_data if x_key in item]
+    
+    if intent == "add category":
+        label, is_existing = extract_category_label(query, current_labels)
+        val = extract_numerical_value(query)
+        if val is None:
+            # If no number specified, default to 1.0
+            val = 1.0
+            reply = f"Added **{label}** with default value of **1**. (Specify a number in your query to set a custom value!)"
+        else:
+            reply = f"Added category **{label}** with a value of **{val:g}**."
+            
+        # Add or update
+        idx = -1
+        for i, item in enumerate(next_data):
+            if str(item.get(x_key, '')).strip().lower() == label.strip().lower():
+                idx = i
+                break
+        if idx >= 0:
+            next_data[idx][y_key] = val
+            reply = f"Updated existing category **{label}** to **{val:g}**."
+        else:
+            next_data.append({x_key: label, y_key: val})
+            
+        data_changed = True
+        
+    elif intent == "update category":
+        label, is_existing = extract_category_label(query, current_labels)
+        val = extract_numerical_value(query)
+        if val is None:
+            reply = f"Please specify a numerical value to update **{label}** to (e.g., 'update {label} to 50')."
+        else:
+            idx = -1
+            for i, item in enumerate(next_data):
+                if str(item.get(x_key, '')).strip().lower() == label.strip().lower():
+                    idx = i
+                    break
+            if idx >= 0:
+                next_data[idx][y_key] = val
+                reply = f"Updated **{label}** to **{val:g}**."
+                data_changed = True
+            else:
+                # fallback to add
+                next_data.append({x_key: label, y_key: val})
+                reply = f"Category **{label}** did not exist, so I added it with a value of **{val:g}**."
+                data_changed = True
+                
+    elif intent == "remove category":
+        label, is_existing = extract_category_label(query, current_labels)
+        before_len = len(next_data)
+        next_data = [item for item in next_data if str(item.get(x_key, '')).strip().lower() != label.strip().lower()]
+        if len(next_data) < before_len:
+            reply = f"Removed category **{label}**."
+            data_changed = True
+        else:
+            reply = f"Could not find category **{label}** to remove."
+            
+    elif intent == "change chart type":
+        next_chart = extract_chart_type(query)
+        reply = f"Switched visualization style to a **{next_chart} chart**."
+        
+    elif intent == "clear plot":
+        next_data = []
+        reply = "Cleared all categories from the plot."
+        data_changed = True
+        
+    elif intent == "ask question":
+        reply = answer_data_question(query, next_data, x_key, y_key)
+        
+    return {
+        "intent": intent,
+        "next_data": next_data,
+        "next_chart": next_chart,
+        "reply": reply,
+        "data_changed": data_changed
+    }
+
+
+

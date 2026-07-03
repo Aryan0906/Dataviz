@@ -26,17 +26,55 @@ import { cn } from "@/lib/utils";
 import { loadCdnGraph, loadLocalGraph } from "./DesmosPlot";
 
 const PRESET_3D_EXPRESSIONS = [
+    { 
+        label: "Flying Bird 3D (Animated)", 
+        expressions: [
+            // Elongated body along x-axis
+            "x^2 + 4y^2 + 4z^2 = 1",
+            // Head sphere at front
+            "\\left(x - 1.2\\right)^2 + 4y^2 + 4z^2 = 0.09",
+            // Wings: Gaussian surface symmetric in y, flapping in z with cos(a)
+            "z = \\cos\\left(a\\right) \\cdot \\left|y\\right| \\cdot e^{-\\frac{y^{2}}{4}} \\cdot e^{-x^{2}}",
+            "a = 0"
+        ]
+    },
+    {
+        label: "Beating Heart 3D (Animated)",
+        expressions: [
+            // Classic heart surface with size parameter a (set slider to animate)
+            "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-a\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0",
+            "a = 1"
+        ]
+    },
+    {
+        label: "Ripple Wave 3D (Animated)",
+        expressions: [
+            // Radially symmetric wave propagating outward as a increases
+            "z = \\sin\\left(x^{2}+y^{2}-a\\right)",
+            "a = 0"
+        ]
+    },
+    {
+        label: "Flapping Butterfly (Animated)",
+        expressions: [
+            // Slender body
+            "x^{2} + 10y^{2} + 10z^{2} = 0.04",
+            // Wings: symmetric Gaussian lobes, flapping via sin(a)
+            "z = \\sin\\left(a\\right) \\cdot \\left|y\\right| \\cdot e^{-y^{2}} \\cdot e^{-x^{2}}",
+            "a = 0"
+        ]
+    },
     { label: "Paraboloid", latex: "z = x^2 + y^2" },
     { label: "Saddle", latex: "z = x^2 - y^2" },
     { label: "Sphere", latex: "x^2 + y^2 + z^2 = 25" },
     { label: "Sine Wave Grid", latex: "z = \\sin(x) \\cdot \\cos(y)" },
     { label: "Cone", latex: "z^2 = x^2 + y^2" },
-    { label: "Ripple", latex: "z = \\sin(x^2 + y^2)" },
+    { label: "Ripple (Static)", latex: "z = \\sin(x^2 + y^2)" },
     { label: "Torus", latex: "z^2 + \\left(\\sqrt{x^2 + y^2} - 3\\right)^2 = 1" },
     { label: "Cylinder", latex: "x^2 + y^2 = 9" },
     { label: "Monkey Saddle", latex: "z = x^3 - 3xy^2" },
     { label: "Damped Wave", latex: "z = \\cos(x + y) \\cdot e^{-0.1(x^2 + y^2)}" },
-    { label: "Heart 3D", latex: "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-1\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0" },
+    { label: "Heart 3D (Static)", latex: "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-1\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0" },
     { label: "Helicoid", latex: "z = \\arctan\\left(\\frac{y}{x}\\right)" },
 ];
 
@@ -191,7 +229,7 @@ const DesmosPlot3D = () => {
         setExportTheme(currentTheme === "dark" ? "dark" : "light");
     }, [currentTheme]);
 
-    const addPreset = (latex) => {
+    const addPreset = (preset) => {
         if (!calculatorRef.current) {
             toast.error("Calculator not initialized");
             return;
@@ -199,9 +237,16 @@ const DesmosPlot3D = () => {
 
         requestAnimationFrame(() => {
             try {
-                const id = `expr-${Date.now()}`;
-                calculatorRef.current.setExpression({ id, latex });
-                toast.success("Preset expression added!");
+                if (preset.expressions && Array.isArray(preset.expressions)) {
+                    preset.expressions.forEach((latex, idx) => {
+                        const id = `expr-${Date.now()}-${idx}`;
+                        calculatorRef.current.setExpression({ id, latex });
+                    });
+                } else if (preset.latex) {
+                    const id = `expr-${Date.now()}`;
+                    calculatorRef.current.setExpression({ id, latex: preset.latex });
+                }
+                toast.success(`Preset "${preset.label}" added!`);
             } catch (error) {
                 console.error("Error adding preset:", error);
                 toast.error(`Invalid expression: ${error.message}`);
@@ -390,12 +435,12 @@ const DesmosPlot3D = () => {
                             {PRESET_3D_EXPRESSIONS.map((preset) => (
                                 <DropdownMenuItem
                                     key={preset.label}
-                                    onSelect={() => addPreset(preset.latex)}
+                                    onSelect={() => addPreset(preset)}
                                     className="flex justify-between items-center gap-3 py-1.5 px-2.5 cursor-pointer"
                                 >
                                     <span className="font-medium text-xs text-foreground shrink-0">{preset.label}</span>
-                                    <code className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[180px]" title={preset.latex}>
-                                        {preset.latex}
+                                    <code className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[180px]" title={preset.latex || (preset.expressions && preset.expressions.join(', '))}>
+                                        {preset.latex || "[Multiple]"}
                                     </code>
                                 </DropdownMenuItem>
                             ))}

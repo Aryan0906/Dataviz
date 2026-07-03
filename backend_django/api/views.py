@@ -827,62 +827,36 @@ def categorical_query(request):
         
         column_names = [col.get("name") for col in columns]
         
-        # 1. Try fuzzy match + entity extraction
-        from .utils.nlp_helpers import smart_column_matcher
-        parsed = smart_column_matcher(query, column_names)
-        matched_columns = parsed.get("matched_columns", [])
+        # 1. Process query using HuggingFace NLP pipeline
+        from .utils.nlp_helpers import process_categorical_chat
         
-        target_column_name = None
-        if matched_columns:
-            target_column_name = matched_columns[0]
-            
-        if target_column_name:
-            df = pd.DataFrame(raw_data)
-            if target_column_name in df.columns:
-                counts = df[target_column_name].value_counts().to_dict()
-                labels = [str(k) for k in counts.keys()]
-                values = [int(v) for v in counts.values()]
-                
-                chart_config = {
-                    "chartType": "bar",
-                    "title": f"Count of {target_column_name}",
-                    "xAxisKey": target_column_name,
-                    "dataKeys": ["Count"]
-                }
-                
-                chart_data = [{"label": l, "Count": v} for l, v in zip(labels, values)]
-                return JsonResponse({
-                    "chart_config": chart_config,
-                    "chart_data": chart_data
-                })
+        # Determine x_key and y_key from columns schema
+        x_key = 'label'
+        y_key = 'value'
+        for col in columns:
+            if col.get("type") == "categorical":
+                x_key = col.get("name")
+            elif col.get("type") == "numerical":
+                y_key = col.get("name")
+
+        res_nlp = process_categorical_chat(query, raw_data, x_key=x_key, y_key=y_key)
         
-        # 2. Fallback to LangChain LLM
-        if not data_schema:
-            df = pd.DataFrame(raw_data)
-            data_schema = generate_metadata_summary(df)
-            
-        from .utils.nlp_query_helpers import nl_query_to_chart_config
-        chart_config = nl_query_to_chart_config(query, data_schema)
-        
-        x_key = chart_config.get('xAxisKey')
-        data_keys = chart_config.get('dataKeys', [])
-        
-        df = pd.DataFrame(raw_data)
-        required_cols = [x_key] + data_keys
-        missing_cols = [col for col in required_cols if col not in df.columns]
-        
-        if missing_cols:
-            return JsonResponse({
-                'error': f'LLM suggested columns not found: {missing_cols}',
-                'code': 'ERR_INVALID_COLUMNS'
-            }, status=400)
-            
-        chart_data = df[required_cols].to_dict(orient='records')
+        chart_config = {
+            "chartType": res_nlp.get("next_chart") or "bar",
+            "title": f"NLP: {query}",
+            "xAxisKey": x_key,
+            "dataKeys": [y_key]
+        }
         
         return JsonResponse({
-            'chart_config': chart_config,
-            'chart_data': chart_data
+            "chart_config": chart_config,
+            "chart_data": res_nlp.get("next_data"),
+            "table_data": res_nlp.get("next_data"),
+            "insights": {
+                "summary": res_nlp.get("reply")
+            }
         })
+
         
     except Exception as e:
         import traceback

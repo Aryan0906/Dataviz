@@ -28,6 +28,11 @@ python-Levenshtein>=0.25.0
 spacy>=3.7.0
 # Download model: python -m spacy download en_core_web_sm
 
+# HuggingFace & PyTorch for local offline models
+torch
+transformers
+huggingface_hub
+
 # LangChain for structured LLM interactions
 langchain>=0.1.0
 langchain-openai>=0.0.5
