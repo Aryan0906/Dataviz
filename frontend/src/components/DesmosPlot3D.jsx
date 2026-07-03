@@ -31,7 +31,7 @@ const PRESET_3D_EXPRESSIONS = [
         expressions: [
             "x^2 + 5y^2 + 5z^2 = 1.5",
             "(y - 1.3)^2 + 9x^2 + 9z^2 = 0.2",
-            "z = 0.4 \\cdot (3 - |x|) \\cdot \\sin(|x|) \\cdot \\sin(a)",
+            "z = 0.4 \\cdot (3 - \\left|x\\right|) \\cdot \\sin(\\left|x\\right|) \\cdot \\sin(a)",
             "a = 0"
         ]
     },
@@ -52,7 +52,7 @@ const PRESET_3D_EXPRESSIONS = [
     {
         label: "Flapping Butterfly (Animated)",
         expressions: [
-            "z = \\sin(|x| + |y| - a) \\cdot e^{-0.1(x^2+y^2)}",
+            "z = \\sin(\\left|x\\right| + \\left|y\\right| - a) \\cdot e^{-0.1(x^2+y^2)}",
             "a = 0"
         ]
     },
