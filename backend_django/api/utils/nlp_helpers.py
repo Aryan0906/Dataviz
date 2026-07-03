@@ -399,3 +399,93 @@ def answer_data_question(query: str, current_data: List[Dict[str, any]], x_key: 
         return f"There are currently **{len(current_data)}** categories plotted."
 
 
+def process_categorical_chat(query: str, current_data: List[Dict[str, any]], x_key: str = 'label', y_key: str = 'value') -> Dict[str, any]:
+    """
+    Process a natural language query for categorical data chat, classifying intent,
+    updating data, and returning insights.
+    """
+    intent = classify_intent_hf(query)
+    next_data = [dict(item) for item in current_data]  # copy data
+    next_chart = None
+    reply = ""
+    data_changed = False
+    
+    current_labels = [str(item.get(x_key, '')) for item in next_data if x_key in item]
+    
+    if intent == "add category":
+        label, is_existing = extract_category_label(query, current_labels)
+        val = extract_numerical_value(query)
+        if val is None:
+            # If no number specified, default to 1.0
+            val = 1.0
+            reply = f"Added **{label}** with default value of **1**. (Specify a number in your query to set a custom value!)"
+        else:
+            reply = f"Added category **{label}** with a value of **{val:g}**."
+            
+        # Add or update
+        idx = -1
+        for i, item in enumerate(next_data):
+            if str(item.get(x_key, '')).strip().lower() == label.strip().lower():
+                idx = i
+                break
+        if idx >= 0:
+            next_data[idx][y_key] = val
+            reply = f"Updated existing category **{label}** to **{val:g}**."
+        else:
+            next_data.append({x_key: label, y_key: val})
+            
+        data_changed = True
+        
+    elif intent == "update category":
+        label, is_existing = extract_category_label(query, current_labels)
+        val = extract_numerical_value(query)
+        if val is None:
+            reply = f"Please specify a numerical value to update **{label}** to (e.g., 'update {label} to 50')."
+        else:
+            idx = -1
+            for i, item in enumerate(next_data):
+                if str(item.get(x_key, '')).strip().lower() == label.strip().lower():
+                    idx = i
+                    break
+            if idx >= 0:
+                next_data[idx][y_key] = val
+                reply = f"Updated **{label}** to **{val:g}**."
+                data_changed = True
+            else:
+                # fallback to add
+                next_data.append({x_key: label, y_key: val})
+                reply = f"Category **{label}** did not exist, so I added it with a value of **{val:g}**."
+                data_changed = True
+                
+    elif intent == "remove category":
+        label, is_existing = extract_category_label(query, current_labels)
+        before_len = len(next_data)
+        next_data = [item for item in next_data if str(item.get(x_key, '')).strip().lower() != label.strip().lower()]
+        if len(next_data) < before_len:
+            reply = f"Removed category **{label}**."
+            data_changed = True
+        else:
+            reply = f"Could not find category **{label}** to remove."
+            
+    elif intent == "change chart type":
+        next_chart = extract_chart_type(query)
+        reply = f"Switched visualization style to a **{next_chart} chart**."
+        
+    elif intent == "clear plot":
+        next_data = []
+        reply = "Cleared all categories from the plot."
+        data_changed = True
+        
+    elif intent == "ask question":
+        reply = answer_data_question(query, next_data, x_key, y_key)
+        
+    return {
+        "intent": intent,
+        "next_data": next_data,
+        "next_chart": next_chart,
+        "reply": reply,
+        "data_changed": data_changed
+    }
+
+
+
