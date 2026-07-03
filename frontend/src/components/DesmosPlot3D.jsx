@@ -26,17 +26,47 @@ import { cn } from "@/lib/utils";
 import { loadCdnGraph, loadLocalGraph } from "./DesmosPlot";
 
 const PRESET_3D_EXPRESSIONS = [
+    { 
+        label: "Flying Bird 3D (Animated)", 
+        expressions: [
+            "x^2 + 5y^2 + 5z^2 = 1.5",
+            "(y - 1.3)^2 + 9x^2 + 9z^2 = 0.2",
+            "z = 0.4 \\cdot (3 - |x|) \\cdot \\sin(|x|) \\cdot \\sin(a)",
+            "a = 0"
+        ]
+    },
+    {
+        label: "Beating Heart 3D (Animated)",
+        expressions: [
+            "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-a\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0",
+            "a = 1"
+        ]
+    },
+    {
+        label: "Ripple Wave 3D (Animated)",
+        expressions: [
+            "z = \\sin(x^2 + y^2 - a)",
+            "a = 0"
+        ]
+    },
+    {
+        label: "Flapping Butterfly (Animated)",
+        expressions: [
+            "z = \\sin(|x| + |y| - a) \\cdot e^{-0.1(x^2+y^2)}",
+            "a = 0"
+        ]
+    },
     { label: "Paraboloid", latex: "z = x^2 + y^2" },
     { label: "Saddle", latex: "z = x^2 - y^2" },
     { label: "Sphere", latex: "x^2 + y^2 + z^2 = 25" },
     { label: "Sine Wave Grid", latex: "z = \\sin(x) \\cdot \\cos(y)" },
     { label: "Cone", latex: "z^2 = x^2 + y^2" },
-    { label: "Ripple", latex: "z = \\sin(x^2 + y^2)" },
+    { label: "Ripple (Static)", latex: "z = \\sin(x^2 + y^2)" },
     { label: "Torus", latex: "z^2 + \\left(\\sqrt{x^2 + y^2} - 3\\right)^2 = 1" },
     { label: "Cylinder", latex: "x^2 + y^2 = 9" },
     { label: "Monkey Saddle", latex: "z = x^3 - 3xy^2" },
     { label: "Damped Wave", latex: "z = \\cos(x + y) \\cdot e^{-0.1(x^2 + y^2)}" },
-    { label: "Heart 3D", latex: "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-1\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0" },
+    { label: "Heart 3D (Static)", latex: "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-1\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0" },
     { label: "Helicoid", latex: "z = \\arctan\\left(\\frac{y}{x}\\right)" },
 ];
 
