@@ -427,12 +427,12 @@ const DesmosPlot3D = () => {
                             {PRESET_3D_EXPRESSIONS.map((preset) => (
                                 <DropdownMenuItem
                                     key={preset.label}
-                                    onSelect={() => addPreset(preset.latex)}
+                                    onSelect={() => addPreset(preset)}
                                     className="flex justify-between items-center gap-3 py-1.5 px-2.5 cursor-pointer"
                                 >
                                     <span className="font-medium text-xs text-foreground shrink-0">{preset.label}</span>
-                                    <code className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[180px]" title={preset.latex}>
-                                        {preset.latex}
+                                    <code className="text-[10px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[180px]" title={preset.latex || (preset.expressions && preset.expressions.join(', '))}>
+                                        {preset.latex || "[Multiple]"}
                                     </code>
                                 </DropdownMenuItem>
                             ))}
