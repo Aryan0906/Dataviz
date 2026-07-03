@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext } from 'react';
 import { useLocation, Link, Outlet } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -13,12 +13,25 @@ import {
     TrendingUp,
     ChevronRight,
     Building,
+    Command,
+    X,
 } from 'lucide-react';
 import { useStorytelling } from '@/context/StorytellingContext';
 import NavigationGuide from './NavigationGuide';
 import ProgressTracker from './ProgressTracker';
 import NetworkStatus from './NetworkStatus';
 import AchievementModal from './AchievementModal';
+import {
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+    CommandShortcut,
+} from '@/components/ui/command';
+import { commands } from '@/utils/commands';
 import {
     Sidebar,
     SidebarContent,
@@ -62,6 +75,7 @@ const AppLayout = ({ children }) => {
     const location = useLocation();
     const { user, signOut } = useAuth();
     const [helpMode, setHelpMode] = useState(false);
+    const [commandOpen, setCommandOpen] = useState(false);
     const { journeyProgress, userPreferences } = useStorytelling();
 
     const navItems = [
@@ -126,6 +140,18 @@ const AppLayout = ({ children }) => {
         if (path === '/manual-plot') return location.pathname.startsWith('/manual-plot');
         return location.pathname === path;
     };
+
+    useEffect(() => {
+        const onKeyDown = (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                setCommandOpen(prev => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, []);
 
     const getPageInfo = () => {
         const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -372,6 +398,16 @@ const AppLayout = ({ children }) => {
                         </div>
 
                         <div className="ml-auto flex items-center gap-2">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setCommandOpen(true)}
+                                className="gap-2 rounded-none text-xs text-luxury-stone hover:text-luxury-midnight hover:bg-luxury-midnight/5"
+                                style={{ letterSpacing: "0.05em" }}
+                            >
+                                <Command className="h-3.5 w-3.5" />
+                                <span className="hidden md:inline uppercase" style={{ fontSize: "0.65rem" }}>Command</span>
+                            </Button>
                             {userPreferences.showProgressBar && (
                                 <ProgressTracker compact />
                             )}
@@ -428,6 +464,42 @@ const AppLayout = ({ children }) => {
                         {children || <Outlet />}
                     </main>
                 </SidebarInset>
+                <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+                    <CommandInput placeholder="Search actions or jump to a section..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup heading="Quick Actions">
+                            {commands.map((command) => (
+                                <CommandItem
+                                    key={command.id}
+                                    value={command.name}
+                                    onSelect={() => {
+                                        command.action?.((path) => window.location.assign(path));
+                                        setCommandOpen(false);
+                                    }}
+                                >
+                                    <span>{command.name}</span>
+                                    <CommandShortcut>{command.shortcut}</CommandShortcut>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup heading="Navigation">
+                            {navItems.map((item) => (
+                                <CommandItem
+                                    key={item.title}
+                                    value={item.title}
+                                    onSelect={() => {
+                                        window.location.assign(item.url);
+                                        setCommandOpen(false);
+                                    }}
+                                >
+                                    <span>{item.title}</span>
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </CommandDialog>
             </SidebarProvider>
         </HelpModeContext.Provider>
     );

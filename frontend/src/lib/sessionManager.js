@@ -253,6 +253,18 @@ export const restoreFromHistory = async (historyId) => {
 };
 
 /**
+ * Store a one-time history snapshot that can be restored by a page session hook.
+ * @param {string} pageType
+ * @param {object} snapshotData
+ */
+export const queueHistoryRestore = (pageType, snapshotData) => {
+    sessionStorage.setItem(
+        'pending_history_restore',
+        JSON.stringify({ pageType, snapshotData })
+    );
+};
+
+/**
  * Auto-save hook - Debounced save function
  * @param {Function} callback - Function to call for saving
  * @param {number} delay - Debounce delay in ms (default: 2000)

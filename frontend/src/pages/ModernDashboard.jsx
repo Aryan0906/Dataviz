@@ -28,7 +28,7 @@ import { DashboardTour } from "@/components/DashboardTour";
 import { useAuth } from "@/context/AuthContext";
 import { useWorkspace } from "@/context/WorkspaceContext";
 import { dataAPI } from "@/lib/api";
-import { getUserSessions, deletePageSession } from "@/lib/sessionManager";
+import { getUserSessions, deletePageSession, getUserHistory, queueHistoryRestore } from "@/lib/sessionManager";
 import { analysisTemplates } from "@/lib/templates";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -156,6 +156,7 @@ const ModernDashboard = () => {
     const [analyses, setAnalyses] = useState([]);
     const [draft, setDraft] = useState(null);
     const [savedSessions, setSavedSessions] = useState([]);
+    const [historyEntries, setHistoryEntries] = useState([]);
 
     const fetchHistory = async () => {
         if (!session) return;
@@ -181,9 +182,19 @@ const ModernDashboard = () => {
         }
     };
 
+    const fetchHistoryEntries = async () => {
+        try {
+            const entries = await getUserHistory(null, null, 8);
+            setHistoryEntries(entries);
+        } catch (error) {
+            console.error('Failed to fetch history:', error);
+        }
+    };
+
     useEffect(() => {
         fetchHistory();
         fetchSessions();
+        fetchHistoryEntries();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [session, activeWorkspace]);
 
@@ -196,6 +207,24 @@ const ModernDashboard = () => {
         } catch {
             toast.error("Delete failed");
         }
+    };
+
+    const handleRestoreHistory = (entry) => {
+        const pageTypeMap = {
+            regression: '/manual-plot/regression',
+            categorical: '/manual-plot/categorical',
+            curve: '/manual-plot/curve',
+        };
+
+        const targetPath = pageTypeMap[entry.page_type];
+        if (!targetPath) {
+            toast.error('This history entry cannot be restored from the UI yet.');
+            return;
+        }
+
+        queueHistoryRestore(entry.page_type, entry.snapshot_data);
+        navigate(targetPath);
+        toast.success('Restoring history snapshot...');
     };
 
     const features = [
@@ -327,6 +356,7 @@ const ModernDashboard = () => {
                                 { value: "templates", label: "Templates" },
                                 { value: "recent", label: "Saved Analyses", id: "recent-tab" },
                                 { value: "charts", label: "Saved Charts" },
+                                { value: "history", label: "Activity" },
                             ].map((tab) => (
                                 <TabsTrigger
                                     key={tab.value}
@@ -530,6 +560,47 @@ const ModernDashboard = () => {
                                                 <Trash2 className="h-3 w-3" />
                                                 Delete
                                             </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </TabsContent>
+
+                        <TabsContent value="history" className="mt-5">
+                            {historyEntries.length === 0 ? (
+                                <div className="bg-white border border-dashed border-luxury-silk p-12 text-center">
+                                    <History className="h-10 w-10 text-[#D4AF37]/40 mx-auto mb-3" />
+                                    <p className="text-luxury-stone text-sm mb-4">No activity yet</p>
+                                    <button
+                                        onClick={() => navigate('/manual-plot')}
+                                        className="luxury-link text-xs text-luxury-midnight uppercase tracking-widest"
+                                    >
+                                        Start a New Analysis <span className="ml-1 text-base">›</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {historyEntries.map((entry) => (
+                                        <div key={entry.id} className="bg-card border border-luxury-silk p-5 luxury-card-hover group">
+                                            <div className="flex items-start justify-between gap-3 mb-3">
+                                                <div className="min-w-0">
+                                                    <h4 className="text-sm font-semibold text-luxury-dark truncate" style={{ fontFamily: "'Playfair Display', serif" }}>
+                                                        {entry.title || `${entry.action_type} ${entry.page_type}`}
+                                                    </h4>
+                                                    <p className="text-xs text-luxury-stone mt-0.5">
+                                                        {entry.page_type} • {entry.action_type} • {new Date(entry.created_at).toLocaleString()}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRestoreHistory(entry)}
+                                                    className="text-luxury-midnight hover:text-[#D4AF37] transition-colors text-xs uppercase tracking-wider"
+                                                >
+                                                    Restore
+                                                </button>
+                                            </div>
+                                            <p className="text-sm text-luxury-stone line-clamp-2">
+                                                {entry.metadata?.action || 'History snapshot available for restore.'}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>

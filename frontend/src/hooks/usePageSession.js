@@ -27,6 +27,23 @@ export const usePageSession = (pageType, currentState, setStateCallback, autoSav
             try {
                 isRestoringRef.current = true;
                 console.log(`[PageSession] Attempting to restore ${pageType} session...`);
+
+                const queuedRestore = sessionStorage.getItem('pending_history_restore');
+                if (queuedRestore) {
+                    const parsed = JSON.parse(queuedRestore);
+                    if (parsed?.pageType === pageType && parsed?.snapshotData) {
+                        sessionStorage.removeItem('pending_history_restore');
+                        console.log(`[PageSession] Restoring queued history snapshot for ${pageType}`);
+                        setStateCallback(parsed.snapshotData);
+                        hasRestoredRef.current = true;
+                        toast.success('History entry restored!', {
+                            description: 'Your previous snapshot has been loaded.',
+                            duration: 3000,
+                        });
+                        return;
+                    }
+                }
+
                 const savedState = await restorePageSession(pageType);
                 
                 if (savedState && setStateCallback) {
