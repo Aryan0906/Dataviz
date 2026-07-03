@@ -538,6 +538,73 @@ const DesmosPlot = () => {
             exprList.forEach(e => { if (e.latex && e.type !== 'folder') latexLines.push(e.latex); });
             if (latexLines.length === 0) return '# No expressions to export';
 
+            const latexToPython = (latex) => {
+                let expr = latex
+                    .replace(/\s+/g, '')
+                    .replace(/\\left/g, '')
+                    .replace(/\\right/g, '')
+                    .replace(/\\cdot/g, '*')
+                    .replace(/\\pi/g, 'np.pi')
+                    .replace(/\\sin/g, 'np.sin')
+                    .replace(/\\cos/g, 'np.cos')
+                    .replace(/\\tan/g, 'np.tan')
+                    .replace(/\\ln/g, 'np.log')
+                    .replace(/\\log/g, 'np.log')
+                    .replace(/\\sqrt/g, 'np.sqrt')
+                    .replace(/\\exp/g, 'np.exp')
+                    .replace(/\\abs/g, 'np.abs');
+
+                expr = expr.replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)');
+                expr = expr.replace(/e\^\{([^{}]+)\}/g, 'np.exp($1)');
+                expr = expr.replace(/e\^([A-Za-z0-9_().+-]+)/g, 'np.exp($1)');
+                expr = expr.replace(/\|([^|]+)\|/g, 'np.abs($1)');
+                expr = expr.replace(/\^\{([^{}]+)\}/g, '**($1)');
+                expr = expr.replace(/\^([A-Za-z0-9_.()/-]+)/g, '**$1');
+                return expr;
+            };
+
+            const buildExpressionBlock = (latex, index) => {
+                const compact = latex.replace(/\s+/g, '');
+                const pythonLabel = JSON.stringify(latex);
+                const equalsIndex = compact.indexOf('=');
+
+                if (compact.startsWith('y=')) {
+                    const rhs = latexToPython(compact.slice(2));
+                    return [
+                        `def f${index}(x):`,
+                        `    return ${rhs}`,
+                        `ax.plot(x, f${index}(x), label=${pythonLabel})`,
+                    ];
+                }
+
+                if (compact.startsWith('x=')) {
+                    const rhs = latexToPython(compact.slice(2));
+                    return [
+                        `x_value_${index} = ${rhs}`,
+                        `ax.axvline(x=x_value_${index}, label=${pythonLabel}, linestyle="--")`,
+                    ];
+                }
+
+                if (equalsIndex !== -1) {
+                    const left = latexToPython(compact.slice(0, equalsIndex));
+                    const right = latexToPython(compact.slice(equalsIndex + 1));
+                    return [
+                        `def g${index}(x, y):`,
+                        `    return (${left}) - (${right})`,
+                        `ax.contour(X, Y, g${index}(X, Y), levels=[0], linewidths=2)`,
+                    ];
+                }
+
+                return [`# Unsupported expression skipped: ${latex}`];
+            };
+
+            const plottedBlocks = latexLines.flatMap((latex, index) => buildExpressionBlock(latex, index));
+            const hasCurvePlots = latexLines.some(latex => latex.replace(/\s+/g, '').startsWith('y='));
+            const hasImplicitPlots = latexLines.some(latex => {
+                const compact = latex.replace(/\s+/g, '');
+                return compact.includes('=') && !compact.startsWith('y=') && !compact.startsWith('x=');
+            });
+
             const lines = [
                 'import numpy as np',
                 'import matplotlib.pyplot as plt',
@@ -545,12 +612,15 @@ const DesmosPlot = () => {
                 '',
                 'rc("text", usetex=True)',
                 'x = np.linspace(-10, 10, 500)',
+                hasImplicitPlots ? 'X, Y = np.meshgrid(x, x)' : '# No implicit expressions detected',
                 '',
                 '# Expressions (LaTeX):',
                 ...latexLines.map(l => `# ${l}`),
                 '',
                 'fig, ax = plt.subplots(figsize=(10, 8))',
-                '# TODO: Add manual function definitions for each expression above',
+                ...plottedBlocks,
+                ...(hasCurvePlots || hasImplicitPlots ? ['ax.legend(loc="best")'] : []),
+                ...(hasImplicitPlots ? ['ax.set_aspect("equal", adjustable="box")'] : []),
                 'ax.set_xlabel("x")',
                 'ax.set_ylabel("y")',
                 'ax.grid(True, alpha=0.3)',
