@@ -221,7 +221,7 @@ const DesmosPlot3D = () => {
         setExportTheme(currentTheme === "dark" ? "dark" : "light");
     }, [currentTheme]);
 
-    const addPreset = (latex) => {
+    const addPreset = (preset) => {
         if (!calculatorRef.current) {
             toast.error("Calculator not initialized");
             return;
@@ -229,9 +229,16 @@ const DesmosPlot3D = () => {
 
         requestAnimationFrame(() => {
             try {
-                const id = `expr-${Date.now()}`;
-                calculatorRef.current.setExpression({ id, latex });
-                toast.success("Preset expression added!");
+                if (preset.expressions && Array.isArray(preset.expressions)) {
+                    preset.expressions.forEach((latex, idx) => {
+                        const id = `expr-${Date.now()}-${idx}`;
+                        calculatorRef.current.setExpression({ id, latex });
+                    });
+                } else if (preset.latex) {
+                    const id = `expr-${Date.now()}`;
+                    calculatorRef.current.setExpression({ id, latex: preset.latex });
+                }
+                toast.success(`Preset "${preset.label}" added!`);
             } catch (error) {
                 console.error("Error adding preset:", error);
                 toast.error(`Invalid expression: ${error.message}`);
