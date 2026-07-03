@@ -9,7 +9,7 @@ from typing import List, Dict, Optional, Tuple
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
-    print("⚠️  spaCy model not found. Run: python -m spacy download en_core_web_sm")
+    print("[WARNING] spaCy model not found. Run: python -m spacy download en_core_web_sm")
     nlp = None
 
 
@@ -211,15 +211,15 @@ def get_zero_shot_pipeline():
     if _zero_shot_pipeline is None:
         try:
             from transformers import pipeline
-            print("🚀 Loading HuggingFace zero-shot-classification pipeline...")
+            print("[INFO] Loading HuggingFace zero-shot-classification pipeline...")
             _zero_shot_pipeline = pipeline(
                 "zero-shot-classification",
                 model="typeform/distilbert-base-uncased-mnli",
                 device=-1
             )
-            print("✅ HuggingFace pipeline loaded successfully.")
+            print("[SUCCESS] HuggingFace pipeline loaded successfully.")
         except Exception as e:
-            print(f"⚠️ Failed to load HuggingFace pipeline (falling back to rules): {e}")
+            print(f"[WARNING] Failed to load HuggingFace pipeline (falling back to rules): {e}")
             _zero_shot_pipeline = None
     return _zero_shot_pipeline
 
