@@ -705,6 +705,27 @@ export const CategoricalChatPanel = () => {
                             ))}
                         </div>
 
+                        {/* Prompt Suggestions */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                            {[
+                                { text: "Add Banana 35", label: "+ Add Category" },
+                                { text: "Update Apples to 50", label: "✎ Update Value" },
+                                { text: "Remove Oranges", label: "✗ Remove Category" },
+                                { text: "Switch to pie chart", label: "📊 Pie Chart" },
+                                { text: "Show average value", label: "µ Show Avg" },
+                                { text: "Show maximum value", label: "▲ Show Max" }
+                            ].map((chip, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setChatInput(chip.text)}
+                                    className="text-[10px] px-2 py-1 rounded bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium transition-colors border"
+                                >
+                                    {chip.label}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Input bar */}
                         <div className="flex gap-2">
                             <Input
