@@ -29,15 +29,19 @@ const PRESET_3D_EXPRESSIONS = [
     { 
         label: "Flying Bird 3D (Animated)", 
         expressions: [
-            "x^2 + 5y^2 + 5z^2 = 1.5",
-            "(y - 1.3)^2 + 9x^2 + 9z^2 = 0.2",
-            "z = 0.4 \\cdot (3 - \\left|x\\right|) \\cdot \\sin(\\left|x\\right|) \\cdot \\sin(a)",
+            // Elongated body along x-axis
+            "x^2 + 4y^2 + 4z^2 = 1",
+            // Head sphere at front
+            "\\left(x - 1.2\\right)^2 + 4y^2 + 4z^2 = 0.09",
+            // Wings: Gaussian surface symmetric in y, flapping in z with cos(a)
+            "z = \\cos\\left(a\\right) \\cdot \\left|y\\right| \\cdot e^{-\\frac{y^{2}}{4}} \\cdot e^{-x^{2}}",
             "a = 0"
         ]
     },
     {
         label: "Beating Heart 3D (Animated)",
         expressions: [
+            // Classic heart surface with size parameter a (set slider to animate)
             "\\left(x^{2}+\\frac{9}{4}y^{2}+z^{2}-a\\right)^{3}-x^{2}z^{3}-\\frac{9}{80}y^{2}z^{3}=0",
             "a = 1"
         ]
@@ -45,14 +49,18 @@ const PRESET_3D_EXPRESSIONS = [
     {
         label: "Ripple Wave 3D (Animated)",
         expressions: [
-            "z = \\sin(x^2 + y^2 - a)",
+            // Radially symmetric wave propagating outward as a increases
+            "z = \\sin\\left(x^{2}+y^{2}-a\\right)",
             "a = 0"
         ]
     },
     {
         label: "Flapping Butterfly (Animated)",
         expressions: [
-            "z = \\sin(\\left|x\\right| + \\left|y\\right| - a) \\cdot e^{-0.1(x^2+y^2)}",
+            // Slender body
+            "x^{2} + 10y^{2} + 10z^{2} = 0.04",
+            // Wings: symmetric Gaussian lobes, flapping via sin(a)
+            "z = \\sin\\left(a\\right) \\cdot \\left|y\\right| \\cdot e^{-y^{2}} \\cdot e^{-x^{2}}",
             "a = 0"
         ]
     },
