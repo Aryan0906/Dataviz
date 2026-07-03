@@ -284,3 +284,118 @@ def extract_chart_type(query: str) -> str:
         return "treemap"
     return "bar"
 
+
+def extract_category_label(query: str, current_labels: List[str]) -> Tuple[str, bool]:
+    """
+    Extract the category name from the query.
+    Fuzzy matches against existing labels first.
+    If no match above threshold, parses a new label out of the text.
+    
+    Returns:
+        (label, is_existing)
+    """
+    # 1. Try fuzzy matching words in query to current labels
+    words = re.findall(r'[A-Za-z0-9_-]+', query)
+    best_label = None
+    highest_score = 0
+    
+    # We test combinations of words (up to 3 consecutive words) to match category names
+    for length in range(1, 4):
+        for i in range(len(words) - length + 1):
+            phrase = " ".join(words[i:i+length])
+            if phrase.lower() in ["add", "update", "set", "delete", "remove", "change", "chart", "pie", "bar", "treemap", "value", "to", "with", "label", "category"]:
+                continue
+            match = fuzzy_match_column(phrase, current_labels, threshold=70)
+            if match:
+                # Get the actual score
+                score = fuzz.ratio(phrase.lower(), match.lower())
+                if score > highest_score:
+                    highest_score = score
+                    best_label = match
+                    
+    if best_label and highest_score >= 70:
+        return best_label, True
+        
+    # 2. Extract new category name if not matching existing
+    text = query.lower()
+    # Remove command verbs and punctuation
+    text = re.sub(r'\b(add|create|insert|update|change|set|to|with|value|category|of|remove|delete|drop)\b', '', text)
+    # Remove numbers
+    text = re.sub(r'-?\d+(?:\.\d+)?', '', text)
+    text = re.sub(r'[^\w\s-]', '', text).strip()
+    
+    # Capitalize the words for presentation
+    cleaned = text.title()
+    if cleaned:
+        return cleaned, False
+    return "Unknown", False
+
+
+def answer_data_question(query: str, current_data: List[Dict[str, any]], x_key: str = 'label', y_key: str = 'value') -> str:
+    """
+    Answer user's question about the dataset using local computation.
+    Uses HuggingFace zero-shot classification to understand which statistical query is asked.
+    """
+    if not current_data:
+        return "The plot data is currently empty. Try adding some categories first!"
+        
+    # Extract values
+    values = []
+    labels = []
+    for item in current_data:
+        if x_key in item and y_key in item and item[y_key] is not None:
+            try:
+                values.append(float(item[y_key]))
+                labels.append(str(item[x_key]))
+            except ValueError:
+                pass
+    
+    if not values:
+        return "There are no numerical values in the categories yet."
+        
+    # Classify the question intent
+    pipe = get_zero_shot_pipeline()
+    candidate_questions = [
+        "maximum value",
+        "minimum value",
+        "average value",
+        "total sum",
+        "category count"
+    ]
+    
+    question_intent = "category count"
+    if pipe:
+        try:
+            res = pipe(query, candidate_questions)
+            question_intent = res["labels"][0]
+        except Exception as e:
+            print(f"Error classifying question: {e}")
+    else:
+        # Simple rule fallback
+        lower = query.lower()
+        if any(k in lower for k in ["max", "highest", "largest", "top", "most", "biggest"]):
+            question_intent = "maximum value"
+        elif any(k in lower for k in ["min", "lowest", "smallest", "bottom", "least"]):
+            question_intent = "minimum value"
+        elif any(k in lower for k in ["average", "mean", "avg"]):
+            question_intent = "average value"
+        elif any(k in lower for k in ["sum", "total", "add up", "overall"]):
+            question_intent = "total sum"
+            
+    # Compute the response
+    if question_intent == "maximum value":
+        max_idx = values.index(max(values))
+        return f"The category with the highest value is **{labels[max_idx]}** with **{values[max_idx]:g}**."
+    elif question_intent == "minimum value":
+        min_idx = values.index(min(values))
+        return f"The category with the lowest value is **{labels[min_idx]}** with **{values[min_idx]:g}**."
+    elif question_intent == "average value":
+        avg_val = sum(values) / len(values)
+        return f"The average value across the **{len(values)}** categories is **{avg_val:.2f}**."
+    elif question_intent == "total sum":
+        total_val = sum(values)
+        return f"The total sum of all categories is **{total_val:g}**."
+    else:
+        return f"There are currently **{len(current_data)}** categories plotted."
+
+
