@@ -194,3 +194,93 @@ def categorical_chat_view(request):
     
     return JsonResponse({'data': df_filtered.to_dict()})
 """
+
+
+import re
+
+# Lazily initialized HuggingFace zero-shot classification pipeline
+_zero_shot_pipeline = None
+
+def get_zero_shot_pipeline():
+    """
+    Lazily initialize and return the zero-shot classification pipeline.
+    Uses 'typeform/distilbert-base-uncased-mnli' (lightweight, ~268MB, fast).
+    Runs on CPU (device=-1) for maximum compatibility.
+    """
+    global _zero_shot_pipeline
+    if _zero_shot_pipeline is None:
+        try:
+            from transformers import pipeline
+            print("🚀 Loading HuggingFace zero-shot-classification pipeline...")
+            _zero_shot_pipeline = pipeline(
+                "zero-shot-classification",
+                model="typeform/distilbert-base-uncased-mnli",
+                device=-1
+            )
+            print("✅ HuggingFace pipeline loaded successfully.")
+        except Exception as e:
+            print(f"⚠️ Failed to load HuggingFace pipeline (falling back to rules): {e}")
+            _zero_shot_pipeline = None
+    return _zero_shot_pipeline
+
+def classify_intent_hf(query: str) -> str:
+    """
+    Classify the query into a chat command intent using HuggingFace Zero-Shot Classification.
+    """
+    pipe = get_zero_shot_pipeline()
+    candidate_labels = [
+        "add category",
+        "update category",
+        "remove category",
+        "change chart type",
+        "clear plot",
+        "ask question"
+    ]
+    
+    if pipe:
+        try:
+            res = pipe(query, candidate_labels)
+            intent = res["labels"][0]
+            confidence = res["scores"][0]
+            print(f"[HF NLP] Query: '{query}' -> Intent: '{intent}' (confidence: {confidence:.2f})")
+            if confidence > 0.4:
+                return intent
+        except Exception as e:
+            print(f"Error running HF pipeline: {e}")
+            
+    # Rule-based fallback
+    lower = query.lower().strip()
+    if any(k in lower for k in ["add", "new", "create", "insert"]):
+        return "add category"
+    if any(k in lower for k in ["remove", "delete", "drop", "exclude"]):
+        return "remove category"
+    if any(k in lower for k in ["update", "change", "set", "modify"]):
+        if any(c in lower for c in ["chart", "plot", "pie", "bar", "treemap"]):
+            return "change chart type"
+        return "update category"
+    if any(k in lower for k in ["clear", "reset", "empty"]):
+        return "clear plot"
+    if any(c in lower for c in ["chart", "plot", "pie", "bar", "treemap"]):
+        return "change chart type"
+    return "ask question"
+
+def extract_numerical_value(query: str) -> Optional[float]:
+    """
+    Helper to extract a numerical value (float/integer) from the query.
+    """
+    match = re.search(r'-?\d+(?:\.\d+)?', query)
+    if match:
+        return float(match.group(0))
+    return None
+
+def extract_chart_type(query: str) -> str:
+    """
+    Extract the chart type requested in the query.
+    """
+    lower = query.lower()
+    if "pie" in lower:
+        return "pie"
+    if "treemap" in lower or "tree" in lower:
+        return "treemap"
+    return "bar"
+
