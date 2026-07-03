@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import CelebrationModal from '@/components/CelebrationModal';
 
 const StorytellingContext = createContext({
     currentStep: 0,
@@ -139,6 +140,20 @@ export const StorytellingProvider = ({ children }) => {
             const updated = [...prev, { ...achievement, unlockedAt: new Date().toISOString() }];
             localStorage.setItem('storytelling_achievements', JSON.stringify(updated));
 
+            if (userPreferences.celebrateAchievements) {
+                setCelebrationData({
+                    type: 'achievement',
+                    data: {
+                        achievement: achievement.title,
+                        message: achievement.description,
+                        details: `You earned ${achievement.points} points for ${achievement.title.toLowerCase()}.`,
+                        total: updated.length,
+                        encouragement: "Keep building momentum. More milestones are waiting.",
+                    },
+                });
+                setShowCelebration(true);
+            }
+
             // Celebrate achievement
             if (userPreferences.celebrateAchievements) {
                 toast.success(
@@ -259,6 +274,12 @@ export const StorytellingProvider = ({ children }) => {
     return (
         <StorytellingContext.Provider value={value}>
             {children}
+            <CelebrationModal
+                open={showCelebration}
+                onClose={() => setShowCelebration(false)}
+                type={celebrationData.type}
+                data={celebrationData.data}
+            />
         </StorytellingContext.Provider>
     );
 };
